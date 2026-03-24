@@ -4,42 +4,51 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-A stock exchange board game engine (2-6 players, 10 days, 3 rounds/day) refactored for WebSocket multiplayer. Pure Python, no external dependencies. All game logic is I/O-free — no `input()` or `print()` in the engine.
+A multiplayer stock exchange board game (2-6 players, 10 days, 3 rounds/day) with a FastAPI WebSocket server and a pure-function game engine.
 
-## Running Tests
+## Running
 
 ```bash
+# Backend server (from backend/ directory)
+cd backend
+pip install -r requirements.txt
+uvicorn server:app --reload --host 0.0.0.0 --port 8000
+
+# Integration test (from repo root)
 python tests/test_game.py
 ```
 
-There is no test framework — `tests/test_game.py` is a manual integration test that simulates a full game day and prints results. Verify correctness by reading the output.
-
 ## Architecture
 
-**Entry point:** `game_engine.py` — thin wrapper that re-exports everything from `engine/` and adds `create_game()`.
+### Backend (`backend/`)
 
-**`engine/` package** (import via `import game_engine as ge`):
+**`server.py`** — FastAPI WebSocket server. Players connect at `/ws/{room_code}/{player_name}`. Handles lobby (join/start), dispatches player actions to the game engine, auto-advances through automated phases (fluctuation → currency → suspend → day_end → deal), and broadcasts per-player state after each action.
 
-- `constants.py` — All game config (company names/values, card counts, cash/share defaults)
-- `models.py` — `Card`, `Company`, `Player`, `GameState` classes with `to_dict()` serialization
-- `deck.py` — `build_deck()` generates the 100-card deck (84 company + 16 power)
-- `helpers.py` — Shared validation (`validate_turn`, `validate_company`, `advance_turn`) and the `result()` response builder
-- `actions.py` — Player turn actions: `buy_stock`, `sell_stock`, `pass_turn`, `use_loan_stock`, `use_debenture`, `use_rights_issue`, `rights_issue_buy`
+**`room_manager.py`** — `RoomManager` creates/tracks rooms with 4-char codes. `Room` holds player connections, game state, host ID. Supports reconnection by name. `broadcast_game_state()` sends each player only their visible state.
+
+**`game_engine.py`** — Thin wrapper that re-exports the `engine/` package and adds `create_game()`.
+
+**`engine/` package:**
+- `constants.py` — Game config (company names/values, card counts, cash/share defaults)
+- `models.py` — `Card`, `Company`, `Player`, `GameState` with `to_dict()` / `to_player_dict()`
+- `deck.py` — `build_deck()` produces the 100-card deck
+- `helpers.py` — Shared validation (`validate_turn`, `validate_company`, `advance_turn`) and `result()` builder
+- `actions.py` — Player turn actions: `buy_stock`, `sell_stock`, `pass_turn`, power card functions
 - `phases.py` — Phase transitions: `deal_cards`, `fluctuate_values`, `currency_settlement`, `share_suspend_action`, `end_day`
 
 **Dependency flow:** `constants` ← `models` ← `deck`, `helpers` ← `actions`, `phases`. No circular imports.
 
 ## Key Design Contracts
 
-**Every action/phase function** returns `{"success": bool, "message": str, "new_state": dict}`. Failed actions return early without mutating state.
+**Every engine function** returns `{"success": bool, "message": str, "new_state": dict}`. Failed actions return early without mutating state.
 
-**Phase state machine:** `dealing → player_turn → fluctuation → currency_settlement → share_suspend → day_end → (dealing | game_over)`. The `rights_issue` sub-phase interrupts `player_turn` and returns to it when complete.
+**Phase state machine:** `dealing → player_turn → fluctuation → currency_settlement → share_suspend → day_end → (dealing | game_over)`. The `rights_issue` sub-phase interrupts `player_turn`. The server auto-advances through phases that don't need player input.
 
-**Company numbers are 1-based** in the public API (matching the original game UI), converted to 0-based internally.
+**Company numbers are 1-based** in the API (1=Vodafone through 6=Infosys).
 
-**`GameState.to_player_dict(player_id)`** hides other players' hands (shows only `hand_count`). `to_dict()` exposes everything (for server/admin use).
+**WebSocket message protocol:** Client sends `{"type": "buy", "company_num": 4, "quantity": 5}` etc. Server responds with `{"type": "action_result", ...}` to the actor and `{"type": "game_state", "state": ...}` to all players.
 
 ## Other Directories
 
-- `base_logic_old/` — Original 6-file implementation kept for reference. Do not modify.
-- `development-history/` — Design documents. `phase_0.md` details the refactoring, bugs fixed, and game mechanics.
+- `base_logic_old/` — Original 6-file implementation. Do not modify.
+- `development-history/` — Design docs. `phase_0.md` covers the engine refactoring and bug fixes.
