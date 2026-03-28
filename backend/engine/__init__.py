@@ -33,9 +33,12 @@ from .actions import (
 
 from .phases import (
     deal_cards,
-    fluctuate_values,
-    currency_settlement,
+    begin_card_reveal,
+    complete_card_reveal,
+    chairman_director_action,
     share_suspend_action,
+    currency_settlement,
+    complete_currency_settlement,
     end_day,
 )
 
@@ -53,6 +56,7 @@ __all__ = [
     "buy_stock", "sell_stock", "pass_turn",
     "use_loan_stock", "use_debenture", "use_rights_issue", "rights_issue_buy",
     # Phases
-    "deal_cards", "fluctuate_values", "currency_settlement",
-    "share_suspend_action", "end_day",
+    "deal_cards", "begin_card_reveal", "complete_card_reveal",
+    "chairman_director_action", "share_suspend_action",
+    "currency_settlement", "complete_currency_settlement", "end_day",
 ]

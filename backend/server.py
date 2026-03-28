@@ -54,7 +54,7 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
     if reconnected and room.started and room.game:
         await room.send_to(player_id, {
             "type": "game_state",
-            "state": room.game.to_player_dict(player_id),
+            "state": build_client_state(room, player_id),
         })
 
     # Notify everyone
@@ -77,6 +77,131 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
         })
         if room.connected_count() == 0:
             rooms.remove_room(room.code)
+
+
+# ── State transformation ─────────────────────────────────────────────────────
+
+
+def build_client_state(room, player_id):
+    """Transform engine state into the frontend JSON contract.
+
+    Reshapes to_player_dict() output: injects player names, separates hand,
+    filters zero-stock holdings, includes prev_value per company, and appends
+    the accumulated game log.
+
+    During card_reveal phase, all hands are visible (reveal_data has card details,
+    and to_player_dict exposes all hands).
+    """
+    game = room.game
+    raw = game.to_player_dict(player_id)
+    phase = raw["game_phase"]
+
+    # Build player list with names, is_you flag, sparse stocks
+    players = []
+    your_hand = []
+    all_hands = {}  # player_id -> hand cards (during card_reveal)
+    for p in raw["players"]:
+        conn = room.players.get(p["id"])
+        name = conn.name if conn else f"Player {p['id']}"
+        sparse_stocks = {k: v for k, v in p["stocks"].items() if v > 0}
+
+        entry = {
+            "id": p["id"],
+            "name": name,
+            "cash": p["cash"],
+            "stocks": sparse_stocks,
+            "is_you": p["id"] == player_id,
+        }
+        players.append(entry)
+
+        # Extract hand for the requesting player
+        if p["id"] == player_id and "hand" in p:
+            your_hand = [
+                {
+                    "company": c["company_name"],
+                    "value": c["value"],
+                    "positive": c["positive"],
+                    "is_power": c["is_power"],
+                }
+                for c in p["hand"]
+            ]
+
+        # During card_reveal, collect all hands for the reveal animation
+        if phase == "card_reveal" and "hand" in p:
+            all_hands[p["id"]] = [
+                {
+                    "company": c["company_name"],
+                    "value": c["value"],
+                    "positive": c["positive"],
+                    "is_power": c["is_power"],
+                }
+                for c in p["hand"]
+            ]
+
+    # Build companies with prev_value
+    prev_values = game.previous_values or [c.base_value for c in game.companies]
+    companies = []
+    for i, c in enumerate(raw["companies"]):
+        companies.append({
+            "name": c["name"],
+            "value": c["value"],
+            "is_open": c["open"],
+            "prev_value": prev_values[i] if i < len(prev_values) else c["base_value"],
+        })
+
+    # Resolve current player name — during sub-phases, the active player
+    # comes from the queue, not the regular current_turn index.
+    active_player_id = None
+
+    if phase == "rights_issue" and raw.get("rights_issue_queue"):
+        active_player_id = raw["rights_issue_queue"][0]
+    elif phase == "share_suspend" and raw.get("suspend_queue"):
+        active_player_id = raw["suspend_queue"][0]
+    elif phase == "card_reveal" and raw.get("chairman_director_queue"):
+        active_player_id = raw["chairman_director_queue"][0][0]
+    else:
+        current_turn_idx = raw["current_turn"]
+        if current_turn_idx < len(raw["players"]):
+            active_player_id = raw["players"][current_turn_idx]["id"]
+
+    current_player_name = ""
+    if active_player_id is not None:
+        conn = room.players.get(active_player_id)
+        current_player_name = conn.name if conn else f"Player {active_player_id}"
+
+    # Enrich reveal_data with player names for the frontend
+    reveal_data = raw.get("reveal_data", [])
+    if reveal_data:
+        for company_reveal in reveal_data:
+            for card in company_reveal.get("cards", []):
+                pid = card["player_id"]
+                conn = room.players.get(pid)
+                card["player_name"] = conn.name if conn else f"Player {pid}"
+
+    return {
+        "room_code": room.code,
+        "phase": phase,
+        "day": raw["current_day"],
+        "round": raw["current_round"],
+        "current_turn": raw["current_turn"],
+        "current_player_name": current_player_name,
+        "companies": companies,
+        "available_shares": raw["available_shares"],
+        "players": players,
+        "your_hand": your_hand,
+        "game_log": list(room.game_log),
+        # Sub-phase data
+        "rights_issue_company": raw.get("rights_issue_company"),
+        "rights_issue_queue": raw.get("rights_issue_queue", []),
+        "suspend_queue": raw.get("suspend_queue", []),
+        # Chairman / Director data
+        "chairman": raw.get("chairman", {}),
+        "directors": raw.get("directors", {}),
+        "chairman_director_queue": raw.get("chairman_director_queue", []),
+        # Card reveal animation data
+        "reveal_data": reveal_data,
+        "all_hands": all_hands if all_hands else None,
+    }
 
 
 # ── Action handling ──────────────────────────────────────────────────────────
@@ -113,8 +238,14 @@ async def handle_action(room, player_id, data):
     })
 
     if result["success"]:
-        await auto_advance(room)
-        await room.broadcast_game_state()
+        # Skip logging and broadcasting for idempotent no-ops (e.g. duplicate reveal_complete)
+        if "already" not in result["message"]:
+            conn = room.players.get(player_id)
+            actor = conn.name if conn else f"Player {player_id}"
+            room.game_log.append(f"{actor}: {result['message']}")
+
+            await auto_advance(room)
+            await broadcast_game_state(room)
 
 
 def dispatch_action(game, player_id, data):
@@ -146,6 +277,20 @@ def dispatch_action(game, player_id, data):
         if action == "share_suspend":
             return ge.share_suspend_action(game, player_id, data.get("company_num", 0))
 
+        if action == "chairman_director":
+            return ge.chairman_director_action(
+                game, player_id,
+                data["discard_own_idx"],
+                data.get("discard_other_player_id"),
+                data.get("discard_other_idx"),
+            )
+
+        if action == "reveal_complete":
+            return ge.complete_card_reveal(game)
+
+        if action == "complete_currency_settlement":
+            return ge.complete_currency_settlement(game)
+
     except (KeyError, TypeError) as exc:
         return {"success": False, "message": f"Missing field: {exc}", "new_state": game.to_dict()}
 
@@ -173,8 +318,25 @@ async def handle_start_game(room, player_id):
     room.started = True
     ge.deal_cards(room.game)
 
+    room.game_log.append("Game started — cards dealt")
     await room.broadcast({"type": "game_started", "num_players": num_players})
-    await room.broadcast_game_state()
+    await broadcast_game_state(room)
+
+
+# ── Broadcast game state ─────────────────────────────────────────────────────
+
+
+async def broadcast_game_state(room):
+    """Send each player their personalised state using the frontend contract."""
+    if not room.game:
+        return
+    for player in room.players.values():
+        if player.connected:
+            try:
+                state = build_client_state(room, player.id)
+                await player.ws.send_json({"type": "game_state", "state": state})
+            except Exception:
+                player.connected = False
 
 
 # ── Auto-advance through automated phases ────────────────────────────────────
@@ -183,10 +345,12 @@ async def handle_start_game(room, player_id):
 async def auto_advance(room):
     """Push the game through phases that don't need player input.
 
-    Phase machine (stops when player input is needed):
-        fluctuation  →  currency_settlement  →  share_suspend¹  →  day_end  →  dealing  →  player_turn
-                                                                                              ↑ STOP
-    ¹ stops only if suspend_queue has entries (players must act)
+    Phase machine (stops when frontend animation / player input is needed):
+        card_reveal¹ → share_suspend² → currency_settlement³ → day_end → dealing → player_turn
+                                                                                      ↑ STOP
+    ¹ always stops — frontend animates card reveal, sends reveal_complete
+    ² stops if suspend_queue has entries (player chooses)
+    ³ always stops — frontend animates, sends complete_currency_settlement
     """
     game = room.game
     advanced = True
@@ -195,34 +359,35 @@ async def auto_advance(room):
         advanced = False
         phase = game.game_phase
 
-        if phase == "fluctuation":
-            result = ge.fluctuate_values(game)
-            await room.broadcast({"type": "phase_change", "phase": "fluctuation", "message": result["message"]})
+        if phase == "card_reveal" and not game.reveal_data:
+            # Just entered card_reveal — compute reveal data and CD queue
+            r = ge.begin_card_reveal(game)
+            room.game_log.append(r["message"])
+            await room.broadcast({"type": "phase_change", "phase": "card_reveal", "message": r["message"]})
+            # reveal_data is now populated — loop will stop (condition won't match)
             advanced = True
 
-        elif phase == "currency_settlement":
-            result = ge.currency_settlement(game)
-            await room.broadcast({"type": "phase_change", "phase": "currency_settlement", "message": result["message"]})
-            advanced = True
-
-        elif phase == "share_suspend" and not game.suspend_queue:
-            # No suspend cards — _finalize_suspend already moved to day_end
-            advanced = True
+        # card_reveal (with reveal_data) → STOP — frontend animates
+        # share_suspend (with queue) → STOP — player acts
+        # currency_settlement → STOP — frontend animates
 
         elif phase == "day_end":
-            result = ge.end_day(game)
-            await room.broadcast({"type": "phase_change", "phase": "day_end", "message": result["message"]})
+            r = ge.end_day(game)
+            room.game_log.append(r["message"])
+            await room.broadcast({"type": "phase_change", "phase": "day_end", "message": r["message"]})
             if game.game_phase == "game_over":
                 await broadcast_game_over(room)
                 return
             advanced = True
 
         elif phase == "dealing":
-            result = ge.deal_cards(game)
-            await room.broadcast({"type": "phase_change", "phase": "dealing", "message": result["message"]})
+            r = ge.deal_cards(game)
+            room.game_log.append(r["message"])
+            await room.broadcast({"type": "phase_change", "phase": "dealing", "message": r["message"]})
             advanced = True
 
-        # player_turn, rights_issue, share_suspend (with queue) → stop and wait
+        # card_reveal (with CD queue), share_suspend (with queue),
+        # player_turn, rights_issue → stop and wait for player input
 
 
 # ── Game over ────────────────────────────────────────────────────────────────
@@ -251,4 +416,5 @@ async def broadcast_game_over(room):
 
     rankings.sort(key=lambda r: r["net_worth"], reverse=True)
 
+    room.game_log.append("Game over!")
     await room.broadcast({"type": "game_over", "rankings": rankings})

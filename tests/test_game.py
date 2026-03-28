@@ -106,15 +106,28 @@ act("Ansh  — pass", ge.pass_turn(gs, 1))
 act("Rahul — pass", ge.pass_turn(gs, 2))
 act("Priya — pass", ge.pass_turn(gs, 3))
 
-print(f"\n  Phase after trading: {gs.game_phase}")  # should be "fluctuation"
+print(f"\n  Phase after trading: {gs.game_phase}")  # should be "card_reveal"
 
 
-# ── 5 & 6. Fluctuate values ───────────────────────────────────────────────────
+# ── 5 & 6. Card Reveal (replaces fluctuation) ───────────────────────────────
 
-header("5 & 6. Value Fluctuation")
+header("5 & 6. Card Reveal & Value Fluctuation")
 
 before = {c.name: c.value for c in gs.companies}
-act("Fluctuating company values based on all hands", ge.fluctuate_values(gs))
+act("Revealing cards (stays in card_reveal for animation)", ge.begin_card_reveal(gs))
+assert gs.game_phase == "card_reveal", f"Expected card_reveal, got {gs.game_phase}"
+assert gs.reveal_data, "reveal_data should be populated"
+
+# Frontend animation plays here... then sends reveal_complete
+act("Completing card reveal (frontend sends reveal_complete)", ge.complete_card_reveal(gs))
+
+# Handle share suspend: auto-pass everyone (demo purposes)
+if gs.game_phase == "share_suspend":
+    section("Share Suspend")
+    while gs.suspend_queue:
+        pid = gs.suspend_queue[0]
+        act(f"{NAMES[pid]} passes on share suspend", ge.share_suspend_action(gs, pid, 0))
+
 after  = {c.name: c.value for c in gs.companies}
 closed = {c.name for c in gs.companies if not c.open}
 
@@ -129,14 +142,8 @@ for name in ge.COMPANY_NAMES:
 # ── Currency settlement ───────────────────────────────────────────────────────
 
 section("Currency Settlement")
-act("Applying Currency +/- card effects", ge.currency_settlement(gs))
-
-# Handle share suspend: auto-pass everyone (demo purposes)
-if gs.game_phase == "share_suspend":
-    section("Share Suspend")
-    while gs.suspend_queue:
-        pid = gs.suspend_queue[0]
-        act(f"{NAMES[pid]} passes on share suspend", ge.share_suspend_action(gs, pid, 0))
+assert gs.game_phase == "currency_settlement", f"Expected currency_settlement, got {gs.game_phase}"
+act("Applying Currency +/- card effects", ge.complete_currency_settlement(gs))
 
 
 # ── 7. End-of-day portfolios ──────────────────────────────────────────────────

@@ -11,6 +11,10 @@ import sys
 import random
 import websockets
 
+# Company name → index mapping (1-based company_num for the API)
+COMPANY_NAMES = ["Vodafone", "YesBank", "Cred", "TCS", "Reliance", "Infosys"]
+COMPANY_INDEX = {name: i + 1 for i, name in enumerate(COMPANY_NAMES)}
+
 
 async def play(name, room_code, is_host, stop_day=5, delay=2.0):
     uri = f"ws://localhost:8000/ws/{room_code}/{name}"
@@ -54,54 +58,82 @@ async def play(name, room_code, is_host, stop_day=5, delay=2.0):
 
             elif mtype == "game_state":
                 state = msg["state"]
-                day = state["current_day"]
-                phase = state["game_phase"]
-                my_id = state["your_id"]
+                day = state["day"]
+                phase = state["phase"]
 
                 if day > stop_day:
                     print(f"[{name}] Day {day} reached — stopping (target was day {stop_day}).")
                     return
 
-                action = choose_action(state, my_id, phase)
+                action = choose_action(state, name, phase)
                 if action:
                     await asyncio.sleep(delay)
                     label = action["type"]
                     if "company_num" in action and action["type"] in ("buy", "sell"):
                         co = state["companies"][action["company_num"] - 1]["name"]
                         label += f" {action.get('quantity', '')} {co}"
-                    print(f"[{name}] Day {day} R{state['current_round']} | {label}")
+                    print(f"[{name}] Day {day} R{state['round']} | {label}")
                     await ws.send(json.dumps(action))
 
             elif mtype == "error":
                 print(f"[{name}] ERROR: {msg['message']}")
 
 
-def choose_action(state, my_id, phase):
+def choose_action(state, my_name, phase):
     """Return an action dict if it's our turn, else None."""
     if phase == "player_turn":
-        current_id = state["players"][state["current_turn"]]["id"]
-        if current_id != my_id:
+        if state["current_player_name"] != my_name:
             return None
-        return pick_move(state, my_id)
+        return pick_move(state, my_name)
 
     if phase == "rights_issue":
+        # rights_issue_queue contains player IDs, but we can check current_player_name
+        # For simplicity, just pass on rights issue buys
         queue = state.get("rights_issue_queue", [])
-        if queue and queue[0] == my_id:
+        if queue:
             return {"type": "rights_issue_buy", "quantity": 0}
         return None
 
     if phase == "share_suspend":
         queue = state.get("suspend_queue", [])
-        if queue and queue[0] == my_id:
+        if queue:
             return {"type": "share_suspend", "company_num": 0}
         return None
+
+    if phase == "card_reveal":
+        # If reveal_data is present and no CD queue, send reveal_complete to advance
+        if state.get("reveal_data") and not state.get("chairman_director_queue"):
+            return {"type": "reveal_complete"}
+        queue = state.get("chairman_director_queue", [])
+        if queue and state["current_player_name"] == my_name:
+            _pid, _company, role = queue[0]
+            if role == "double_director":
+                return {"type": "chairman_director", "discard_own_idx": [0, 1]}
+            elif role == "chairman":
+                # Discard own card 0, pick first other player
+                others = [p for p in state["players"] if not p.get("is_you")]
+                target_id = 1  # fallback
+                if others:
+                    target_id = others[0].get("id", 1)
+                return {
+                    "type": "chairman_director",
+                    "discard_own_idx": 0,
+                    "discard_other_player_id": target_id,
+                    "discard_other_idx": 0,
+                }
+            else:
+                return {"type": "chairman_director", "discard_own_idx": 0}
+        return None
+
+    if phase == "currency_settlement":
+        return {"type": "complete_currency_settlement"}
 
     return None
 
 
-def pick_move(state, my_id):
+def pick_move(state, my_name):
     """Simple bot AI: 50% buy, 20% sell, 30% pass."""
-    me = next(p for p in state["players"] if p["id"] == my_id)
+    me = next(p for p in state["players"] if p["name"] == my_name)
     companies = state["companies"]
     available = state["available_shares"]
     cash = me["cash"]
@@ -111,7 +143,7 @@ def pick_move(state, my_id):
     if roll < 0.5 and cash > 0:
         open_cos = [
             (i, c) for i, c in enumerate(companies)
-            if c["open"] and c["value"] > 0 and available[i] > 0
+            if c["is_open"] and c["value"] > 0 and available[i] > 0
         ]
         if open_cos:
             idx, co = random.choice(open_cos)
@@ -122,15 +154,16 @@ def pick_move(state, my_id):
                 return {"type": "buy", "company_num": idx + 1, "quantity": qty}
 
     if roll < 0.7:
+        # stocks is now a sparse dict {company_name: count}
         held = [
-            (i, count)
-            for i, (_, count) in enumerate(me["stocks"].items())
+            (COMPANY_INDEX[comp_name], count)
+            for comp_name, count in me["stocks"].items()
             if count > 0
         ]
         if held:
-            idx, count = random.choice(held)
+            company_num, count = random.choice(held)
             qty = random.randint(1, min(count, 3))
-            return {"type": "sell", "company_num": idx + 1, "quantity": qty}
+            return {"type": "sell", "company_num": company_num, "quantity": qty}
 
     return {"type": "pass"}
 

@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/700.css";
+@import "@fontsource-variable/playfair-display";
+
+@theme {
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Playfair Display Variable", "Georgia", serif;
+  --color-company-vodafone: #dc2626;
+  --color-company-yesbank: #2563eb;
+  --color-company-cred: #9333ea;
+  --color-company-tcs: #0891b2;
+  --color-company-reliance: #ea580c;
+  --color-company-infosys: #16a34a;
+}
+
+body {
+  @apply bg-gray-950 text-gray-200 antialiased;
+  margin: 0;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
