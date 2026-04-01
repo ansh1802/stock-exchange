@@ -51,6 +51,7 @@ export interface GameState {
   day: number
   round: number
   current_turn: number
+  num_players: number
   current_player_name: string
   companies: Company[]
   available_shares: number[]
@@ -68,6 +69,7 @@ export interface GameState {
   // Card reveal animation data
   reveal_data: RevealCompanyData[]
   all_hands: Record<number, Card[]> | null
+  price_history: number[][]
 }
 
 export interface Ranking {

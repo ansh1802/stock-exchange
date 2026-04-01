@@ -20,7 +20,7 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
 
   if (!gameState || !gameState.chairman_director_queue.length) return null
 
-  const [activePlayerId, companyName, role] = gameState.chairman_director_queue[0]
+  const [, companyName, role] = gameState.chairman_director_queue[0]
   const isMyTurn = gameState.current_player_name === playerName
 
   const isChairman = role === 'chairman'
@@ -57,6 +57,13 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
     if (selectedOwn.length !== requiredOwn) return false
     if (isChairman && (selectedTargetPlayer === null || selectedTargetCard === null)) return false
     return true
+  }
+
+  const handlePass = () => {
+    send({ type: 'chairman_director', discard_own_idx: -1 })
+    setSelectedOwn([])
+    setSelectedTargetPlayer(null)
+    setSelectedTargetCard(null)
   }
 
   const handleSubmit = () => {
@@ -193,6 +200,15 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
             )}
           >
             Confirm Discard
+          </motion.button>
+
+          <motion.button
+            onClick={handlePass}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full py-2 rounded-lg text-sm text-gray-400 hover:text-gray-300 bg-gray-800/30 hover:bg-gray-700/30 border border-gray-800 transition-colors"
+          >
+            Pass
           </motion.button>
         </>
       ) : (

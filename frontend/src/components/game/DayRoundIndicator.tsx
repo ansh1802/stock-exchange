@@ -21,6 +21,9 @@ export default function DayRoundIndicator({ isConnected }: Props) {
         <span className="font-mono text-gray-300">
           Round <span className="text-white font-bold">{gameState.round + 1}</span>/3
         </span>
+        <span className="font-mono text-gray-300">
+          Turn <span className="text-white font-bold">{gameState.current_turn + 1}</span>/{gameState.num_players}
+        </span>
       </div>
 
       <div className={cn(

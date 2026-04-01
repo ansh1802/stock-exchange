@@ -138,15 +138,15 @@ def build_client_state(room, player_id):
                 for c in p["hand"]
             ]
 
-    # Build companies with prev_value
-    prev_values = game.previous_values or [c.base_value for c in game.companies]
+    # Build companies with prev_value (last day's closing price, not base value)
+    last_day_values = game.price_history[-1] if game.price_history else [c.base_value for c in game.companies]
     companies = []
     for i, c in enumerate(raw["companies"]):
         companies.append({
             "name": c["name"],
             "value": c["value"],
             "is_open": c["open"],
-            "prev_value": prev_values[i] if i < len(prev_values) else c["base_value"],
+            "prev_value": last_day_values[i] if i < len(last_day_values) else c["base_value"],
         })
 
     # Resolve current player name — during sub-phases, the active player
@@ -184,6 +184,7 @@ def build_client_state(room, player_id):
         "day": raw["current_day"],
         "round": raw["current_round"],
         "current_turn": raw["current_turn"],
+        "num_players": raw["num_players"],
         "current_player_name": current_player_name,
         "companies": companies,
         "available_shares": raw["available_shares"],
@@ -201,6 +202,7 @@ def build_client_state(room, player_id):
         # Card reveal animation data
         "reveal_data": reveal_data,
         "all_hands": all_hands if all_hands else None,
+        "price_history": raw.get("price_history", []),
     }
 
 
@@ -286,7 +288,7 @@ def dispatch_action(game, player_id, data):
             )
 
         if action == "reveal_complete":
-            return ge.complete_card_reveal(game)
+            return ge.complete_card_reveal(game, player_id)
 
         if action == "complete_currency_settlement":
             return ge.complete_currency_settlement(game)

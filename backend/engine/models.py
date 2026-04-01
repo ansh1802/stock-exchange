@@ -111,6 +111,11 @@ class GameState:
         # Card reveal data — per-company card breakdown for frontend animation
         # List of dicts: {company_name, cards: [{player_id, value, positive}], delta, old_value, new_value}
         self.reveal_data = []
+        # Track which players have finished the card reveal animation
+        self.reveal_complete_players = set()
+
+        # Price history — list of [value_per_company] snapshots at end of each day
+        self.price_history = []
 
     def to_dict(self):
         return {
@@ -132,6 +137,7 @@ class GameState:
             "directors": {k: list(v) for k, v in self.directors.items()},
             "chairman_director_queue": list(self.chairman_director_queue),
             "reveal_data": list(self.reveal_data),
+            "price_history": [list(day) for day in self.price_history],
         }
 
     def to_player_dict(self, player_id):
@@ -165,4 +171,5 @@ class GameState:
             "directors": {k: list(v) for k, v in self.directors.items()},
             "chairman_director_queue": list(self.chairman_director_queue),
             "reveal_data": list(self.reveal_data),
+            "price_history": [list(day) for day in self.price_history],
         }

@@ -25,6 +25,7 @@ def deal_cards(game_state):
 
     # Clear reveal data from previous day
     game_state.reveal_data = []
+    game_state.reveal_complete_players = set()
 
     game_state.game_phase = "player_turn"
     game_state.current_turn = 0
@@ -87,40 +88,60 @@ def begin_card_reveal(game_state):
     return result(True, "Cards revealed.", game_state)
 
 
-def complete_card_reveal(game_state):
-    """Called by frontend after card reveal animation finishes (no CD queue case).
+def complete_card_reveal(game_state, player_id=None):
+    """Called by each player's frontend after card reveal animation finishes.
 
+    Waits for ALL players to send reveal_complete before finalizing.
     When CD queue exists, _finalize_card_reveal is called by chairman_director_action
     after the last CD action resolves.
     """
     if game_state.game_phase != "card_reveal":
-        # Already advanced (another player sent this first) — silently succeed
+        # Already advanced — silently succeed
         return result(True, "Card reveal already complete.", game_state)
     if game_state.chairman_director_queue:
         return result(False, "Chairman/director actions still pending.", game_state)
+
+    if player_id is not None:
+        game_state.reveal_complete_players.add(player_id)
+        # Only finalize when all players have completed the animation
+        if len(game_state.reveal_complete_players) < game_state.num_players:
+            waiting = game_state.num_players - len(game_state.reveal_complete_players)
+            return result(True, f"Waiting for {waiting} more player(s) to finish reveal.", game_state)
+
+    game_state.reveal_complete_players.clear()
     _finalize_card_reveal(game_state)
     return result(True, "Card reveal complete — values applied.", game_state)
 
 
 def _build_chairman_director_queue(game_state):
-    """Build queue of (player_id, company_name, role) for end-of-day discards."""
+    """Build queue of (player_id, company_name, role) for end-of-day discards.
+
+    Within each company, entries are ordered by the day's turn priority.
+    """
+    player_order = {p.id: i for i, p in enumerate(game_state.players)}
     queue = []
+
     for name in COMPANY_NAMES:
+        company_entries = []
+
         chair_id = game_state.chairman[name]
         if chair_id is not None:
             player = player_by_id(game_state, chair_id)
             own_cards = [c for c in player.hand if c.company_name == name and not c.is_power]
             if own_cards:
-                queue.append((chair_id, name, "chairman"))
+                company_entries.append((chair_id, name, "chairman"))
 
         for dir_id in game_state.directors[name]:
             player = player_by_id(game_state, dir_id)
             own_cards = [c for c in player.hand if c.company_name == name and not c.is_power]
             is_double = player.stocks[name] >= 100
             if is_double and len(own_cards) >= 2:
-                queue.append((dir_id, name, "double_director"))
+                company_entries.append((dir_id, name, "double_director"))
             elif own_cards:
-                queue.append((dir_id, name, "director"))
+                company_entries.append((dir_id, name, "director"))
+
+        company_entries.sort(key=lambda e: player_order.get(e[0], 999))
+        queue.extend(company_entries)
 
     game_state.chairman_director_queue = queue
 
@@ -139,6 +160,14 @@ def chairman_director_action(game_state, player_id, discard_own_idx, discard_oth
         return result(False, "It's not your turn for chairman/director action.", game_state)
 
     player = player_by_id(game_state, player_id)
+
+    # Pass — skip discard
+    if discard_own_idx == -1:
+        game_state.chairman_director_queue.pop(0)
+        if not game_state.chairman_director_queue:
+            _finalize_card_reveal(game_state)
+        return result(True, f"{role.replace('_', ' ').title()} passed on {company_name} discard.", game_state)
+
     own_cards = [c for c in player.hand if c.company_name == company_name and not c.is_power]
 
     if role == "double_director":
@@ -340,6 +369,9 @@ def end_day(game_state):
     """End the current day: rotate player order, advance or end game."""
     if game_state.game_phase != "day_end":
         return result(False, "Not in day end phase.", game_state)
+
+    # Snapshot end-of-day prices for sparkline history
+    game_state.price_history.append([c.value for c in game_state.companies])
 
     # Rotate: first player moves to end (changes who goes first next day)
     game_state.players.append(game_state.players.pop(0))

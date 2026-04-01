@@ -5,15 +5,17 @@ import type { ClientMessage } from '../../types/messages'
 import type { RevealCompanyData } from '../../types/game'
 import StockTicker from './StockTicker'
 import DayRoundIndicator from './DayRoundIndicator'
+import PlayerBoard from './PlayerBoard'
 import PlayerHand from './PlayerHand'
-import TradePanel from './TradePanel'
-import Portfolio from './Portfolio'
+import ActionBar from './ActionBar'
 import GameLog from './GameLog'
 import RightsIssueModal from './RightsIssueModal'
 import CardRevealOverlay from './CardRevealOverlay'
 import ShareSuspendOverlay from './ShareSuspendOverlay'
 import CurrencySettlementOverlay from './CurrencySettlementOverlay'
 import ChairmanDirectorModal from './ChairmanDirectorModal'
+import RightsIssueOverlay from './RightsIssueOverlay'
+import DebentureOverlay from './DebentureOverlay'
 
 interface Props {
   send: (msg: ClientMessage) => void
@@ -30,66 +32,92 @@ export default function GameBoard({ send }: Props) {
   const [cachedRevealData, setCachedRevealData] = useState<RevealCompanyData[] | null>(null)
   const lastRevealDay = useRef<number>(0)
 
+  // Power card overlay state
+  const [showRightsIssueOverlay, setShowRightsIssueOverlay] = useState(false)
+  const [rightsIssueCompanyName, setRightsIssueCompanyName] = useState('')
+  const [showDebentureOverlay, setShowDebentureOverlay] = useState(false)
+  const [debentureCompanyName, setDebentureCompanyName] = useState('')
+  const prevPhaseRef = useRef<string>('')
+  const prevLogLen = useRef<number>(0)
+
   // Detect when card_reveal phase starts and cache the reveal data
   useEffect(() => {
     if (!gameState) return
 
-    // When we receive reveal_data for a new day, start the reveal animation
     if (
       gameState.reveal_data &&
-      gameState.reveal_data.length > 0 &&
-      gameState.day !== lastRevealDay.current
+      gameState.reveal_data.length > 0
     ) {
-      lastRevealDay.current = gameState.day
+      if (gameState.day !== lastRevealDay.current) {
+        lastRevealDay.current = gameState.day
+        setAnimPhase('card_reveal')
+      }
+      // Always update cached data so CD discards refresh delta/new_value
       setCachedRevealData(gameState.reveal_data)
-      setAnimPhase('card_reveal')
     }
   }, [gameState?.reveal_data, gameState?.day, gameState])
+
+  // Detect rights_issue phase entry → show overlay
+  useEffect(() => {
+    if (!gameState) return
+    if (gameState.phase === 'rights_issue' && prevPhaseRef.current !== 'rights_issue') {
+      const companyIdx = gameState.rights_issue_company
+      if (companyIdx !== null) {
+        setRightsIssueCompanyName(gameState.companies[companyIdx - 1]?.name ?? '')
+        setShowRightsIssueOverlay(true)
+      }
+    }
+    prevPhaseRef.current = gameState.phase
+  }, [gameState?.phase, gameState?.rights_issue_company, gameState])
+
+  // Detect debenture action via game log
+  useEffect(() => {
+    if (!gameState) return
+    const log = gameState.game_log
+    if (log.length > prevLogLen.current) {
+      const latest = log[log.length - 1]
+      if (latest.includes('reopened at')) {
+        const match = latest.match(/(\w+) reopened/)
+        if (match) {
+          setDebentureCompanyName(match[1])
+          setShowDebentureOverlay(true)
+        }
+      }
+    }
+    prevLogLen.current = log.length
+  }, [gameState?.game_log])
 
   // When card_reveal animation completes
   const handleRevealComplete = useCallback(() => {
     setAnimPhase('none')
     setCachedRevealData(null)
 
-    // Check if we should transition to share_suspend or currency_settlement
-    if (gameState?.phase === 'share_suspend' && gameState.suspend_queue.length > 0) {
-      setAnimPhase('share_suspend')
-    } else if (gameState?.phase === 'currency_settlement') {
-      setAnimPhase('currency_settlement')
-    }
-  }, [gameState?.phase, gameState?.suspend_queue])
+    // Always show share_suspend overlay after card reveal.
+    // The overlay handles both cases: active suspend queue (player picks) and
+    // empty queue (shows timer then transitions to currency settlement).
+    // Backend may already be in share_suspend or currency_settlement by now.
+    setAnimPhase('share_suspend')
+  }, [])
 
-  // Watch for phase transitions to show share_suspend / currency_settlement overlays
-  // after card_reveal finishes (or directly if no reveal was needed)
+  // Watch for phase transitions — only for cases where card_reveal animation
+  // was skipped (e.g., reconnect). Don't auto-set share_suspend here since
+  // handleRevealComplete handles the normal flow.
   useEffect(() => {
-    if (animPhase !== 'none') return // Don't interrupt running animations
+    if (animPhase !== 'none') return
     if (!gameState) return
 
     if (gameState.phase === 'share_suspend' && gameState.suspend_queue.length > 0) {
       setAnimPhase('share_suspend')
-    } else if (gameState.phase === 'currency_settlement') {
-      setAnimPhase('currency_settlement')
     }
+    // Don't auto-set currency_settlement here — it's reached via handleSuspendComplete
   }, [gameState?.phase, gameState?.suspend_queue, animPhase])
 
-  // When share_suspend completes (queue drains), check for currency_settlement
-  useEffect(() => {
-    if (animPhase !== 'share_suspend') return
-    if (!gameState) return
-
-    if (gameState.phase !== 'share_suspend') {
-      // Phase moved on — dismiss the overlay
-      // Brief delay to show the result
-      const t = setTimeout(() => {
-        if (gameState.phase === 'currency_settlement') {
-          setAnimPhase('currency_settlement')
-        } else {
-          setAnimPhase('none')
-        }
-      }, 800)
-      return () => clearTimeout(t)
-    }
-  }, [gameState?.phase, animPhase])
+  // When share_suspend overlay completes (timer expired), transition to currency
+  const handleSuspendComplete = useCallback(() => {
+    // Backend is likely already in currency_settlement (auto-advanced when suspend queue emptied).
+    // Always show the currency settlement overlay — it will send the completion message.
+    setAnimPhase('currency_settlement')
+  }, [])
 
   const handleCurrencyComplete = useCallback(() => {
     setAnimPhase('none')
@@ -98,7 +126,6 @@ export default function GameBoard({ send }: Props) {
   if (!gameState) return null
 
   const { phase } = gameState
-  const showingOverlay = animPhase !== 'none'
 
   // During card_reveal with CD queue but NO reveal animation (e.g., reconnect),
   // show the CD modal directly
@@ -117,26 +144,49 @@ export default function GameBoard({ send }: Props) {
 
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Trade panel + Game log */}
-        <div className="flex-1 flex flex-col p-4 gap-4 overflow-hidden">
-          <TradePanel send={send} />
-          <GameLog />
+        {/* Center: Player Board */}
+        <div className="flex-1 p-4 overflow-y-auto">
+          <PlayerBoard />
         </div>
 
-        {/* Right: Portfolio sidebar */}
-        <div className="w-64 border-l border-gray-800 overflow-y-auto">
-          <Portfolio />
+        {/* Right: Game Log */}
+        <div className="w-72 border-l border-gray-800 flex flex-col">
+          <GameLog />
         </div>
       </div>
+
+      {/* Action bar (Buy/Sell/Pass) */}
+      <ActionBar send={send} />
 
       {/* Bottom: Player hand */}
       <PlayerHand send={send} />
 
       {/* Modals for sub-phases */}
-      {phase === 'rights_issue' && <RightsIssueModal send={send} />}
+      {phase === 'rights_issue' && !showRightsIssueOverlay && <RightsIssueModal send={send} />}
 
       {/* Standalone CD modal (fallback when no reveal animation) */}
       {showStandaloneCdModal && <ChairmanDirectorModal send={send} />}
+
+      {/* Power card overlays */}
+      <AnimatePresence>
+        {showRightsIssueOverlay && (
+          <RightsIssueOverlay
+            key="rights-issue-overlay"
+            companyName={rightsIssueCompanyName}
+            onComplete={() => setShowRightsIssueOverlay(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showDebentureOverlay && (
+          <DebentureOverlay
+            key="debenture-overlay"
+            companyName={debentureCompanyName}
+            onComplete={() => setShowDebentureOverlay(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Animated overlays */}
       <AnimatePresence>
@@ -150,7 +200,7 @@ export default function GameBoard({ send }: Props) {
         )}
 
         {animPhase === 'share_suspend' && (
-          <ShareSuspendOverlay key="share-suspend" send={send} />
+          <ShareSuspendOverlay key="share-suspend" send={send} onComplete={handleSuspendComplete} />
         )}
 
         {animPhase === 'currency_settlement' && (

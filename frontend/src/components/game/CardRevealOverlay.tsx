@@ -26,7 +26,7 @@ type Stage =
 export default function CardRevealOverlay({ revealData, onComplete, send }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const [stage, setStage] = useState<Stage>({ type: 'company_intro', companyIdx: 0 })
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const sentRevealComplete = useRef(false)
 
   const currentCompany = stage.type !== 'complete' ? revealData[stage.companyIdx] : null

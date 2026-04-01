@@ -181,6 +181,7 @@ def rights_issue_buy(game_state, player_id, num_shares):
         player.stocks[company.name] += num_shares
         game_state.available_shares[idx] -= num_shares
         player.cash -= cost
+        update_positions(game_state, player, company.name)
 
     game_state.rights_issue_queue.pop(0)
 
