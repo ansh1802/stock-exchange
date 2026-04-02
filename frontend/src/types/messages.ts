@@ -23,6 +23,6 @@ export type ClientMessage =
   | { type: 'rights_issue'; company_num: number }
   | { type: 'rights_issue_buy'; quantity: number }
   | { type: 'share_suspend'; company_num: number }
-  | { type: 'chairman_director'; discard_own_idx: number | number[]; discard_other_player_id?: number; discard_other_idx?: number }
+  | { type: 'chairman_director'; discard_own_idx: number | number[]; discard_other_player_id?: number | null; discard_other_idx?: number | null }
   | { type: 'reveal_complete' }
   | { type: 'complete_currency_settlement' }

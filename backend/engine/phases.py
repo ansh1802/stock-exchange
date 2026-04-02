@@ -124,11 +124,19 @@ def _build_chairman_director_queue(game_state):
     for name in COMPANY_NAMES:
         company_entries = []
 
+        # Count total company cards across all players (to check if chairman has targets)
+        total_cards = sum(
+            1 for p in game_state.players for c in p.hand
+            if c.company_name == name and not c.is_power
+        )
+
         chair_id = game_state.chairman[name]
         if chair_id is not None:
             player = player_by_id(game_state, chair_id)
             own_cards = [c for c in player.hand if c.company_name == name and not c.is_power]
-            if own_cards:
+            other_cards_exist = total_cards > len(own_cards)
+            # Chairman is queued if they have own cards to discard OR other players have cards to remove
+            if own_cards or other_cards_exist:
                 company_entries.append((chair_id, name, "chairman"))
 
         for dir_id in game_state.directors[name]:
@@ -192,20 +200,41 @@ def chairman_director_action(game_state, player_id, discard_own_idx, discard_oth
         msg = f"Director discarded a {company_name} card."
 
     elif role == "chairman":
-        if not isinstance(discard_own_idx, int) or discard_own_idx < 0 or discard_own_idx >= len(own_cards):
-            return result(False, "Invalid own card index.", game_state)
-        player.hand.remove(own_cards[discard_own_idx])
+        # Chairman can partially exercise: own card only, other card only, or both.
+        # discard_own_idx == -1 means skip own discard.
+        discarded_own = False
+        discarded_other = False
 
-        if discard_other_player_id is None or discard_other_idx is None:
-            return result(False, "Chairman must choose a card from another player.", game_state)
-        target = player_by_id(game_state, discard_other_player_id)
-        if target is None or target.id == player_id:
-            return result(False, "Invalid target player.", game_state)
-        target_cards = [c for c in target.hand if c.company_name == company_name and not c.is_power]
-        if not isinstance(discard_other_idx, int) or discard_other_idx < 0 or discard_other_idx >= len(target_cards):
-            return result(False, "Invalid target card index.", game_state)
-        target.hand.remove(target_cards[discard_other_idx])
-        msg = f"Chairman discarded a {company_name} card and removed one from Player {discard_other_player_id}."
+        if isinstance(discard_own_idx, int) and discard_own_idx >= 0:
+            if discard_own_idx >= len(own_cards):
+                return result(False, "Invalid own card index.", game_state)
+            player.hand.remove(own_cards[discard_own_idx])
+            discarded_own = True
+
+        if discard_other_player_id is not None and discard_other_idx is not None:
+            target = player_by_id(game_state, discard_other_player_id)
+            if target is None or target.id == player_id:
+                return result(False, "Invalid target player.", game_state)
+            target_cards = [c for c in target.hand if c.company_name == company_name and not c.is_power]
+            if not isinstance(discard_other_idx, int) or discard_other_idx < 0 or discard_other_idx >= len(target_cards):
+                return result(False, "Invalid target card index.", game_state)
+            target.hand.remove(target_cards[discard_other_idx])
+            discarded_other = True
+
+        if not discarded_own and not discarded_other:
+            # Neither selected — treat as pass
+            game_state.chairman_director_queue.pop(0)
+            if not game_state.chairman_director_queue:
+                _finalize_card_reveal(game_state)
+            return result(True, f"Chairman passed on {company_name} discard.", game_state)
+
+        parts = []
+        if discarded_own:
+            parts.append(f"discarded a {company_name} card")
+        if discarded_other:
+            target_conn_name = f"Player {discard_other_player_id}"
+            parts.append(f"removed one from {target_conn_name}")
+        msg = f"Chairman {' and '.join(parts)}."
     else:
         return result(False, "Unknown role.", game_state)
 

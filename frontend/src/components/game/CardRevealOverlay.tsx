@@ -183,7 +183,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
       </div>
 
       {/* Main content */}
-      <div className="relative w-full max-w-2xl mx-auto px-8">
+      <div className="relative w-full max-w-2xl mx-auto px-8 mt-20 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
         <AnimatePresence mode="wait">
           {currentCompany && stage.type !== 'complete' && (
             <motion.div
@@ -192,10 +192,10 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -30 }}
               transition={{ duration: 0.4 }}
-              className="space-y-6"
+              className="space-y-4"
             >
               {/* Company name + value */}
-              <div className="text-center space-y-2">
+              <div className="text-center space-y-1">
                 <div className="flex items-center justify-center gap-3">
                   <span className={cn('w-3 h-3 rounded-full', COMPANY_COLOR[currentCompany.company_name])} />
                   <h2
