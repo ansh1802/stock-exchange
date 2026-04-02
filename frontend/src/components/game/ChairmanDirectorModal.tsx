@@ -12,7 +12,7 @@ interface Props {
 
 interface OtherCard {
   playerId: number
-  cardIdx: number // index within that player's company cards
+  cardIdx: number
   positive: boolean
   value: number
 }
@@ -20,44 +20,56 @@ interface OtherCard {
 export default function ChairmanDirectorModal({ send, inline }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
-
   const [selectedOwn, setSelectedOwn] = useState<number[]>([])
   const [selectedOther, setSelectedOther] = useState<OtherCard | null>(null)
 
-  if (!gameState || !gameState.chairman_director_queue.length) return null
-
-  const [, companyName, role] = gameState.chairman_director_queue[0]
-  const isMyTurn = gameState.current_player_name === playerName
+  // Derive everything from queue — hooks are ALL above, safe to return null below
+  const queueEntry = gameState?.chairman_director_queue?.[0] ?? null
+  const companyName = queueEntry?.[1] ?? ''
+  const role = queueEntry?.[2] ?? ''
+  const isMyTurn = gameState?.current_player_name === playerName
 
   const isChairman = role === 'chairman'
   const isDouble = role === 'double_director'
-  const requiredOwn = isDouble ? 2 : 1
+  const isDirector = role === 'director'
 
-  // Own cards of this company
-  const ownCards = gameState.your_hand
-    .map((c, i) => ({ ...c, handIdx: i }))
-    .filter((c) => c.company === companyName && !c.is_power)
+  // Own cards of this company in your hand
+  const ownCards = useMemo(() => {
+    if (!gameState || !companyName) return []
+    return gameState.your_hand
+      .map((c, i) => ({ ...c, handIdx: i }))
+      .filter((c) => c.company === companyName && !c.is_power)
+  }, [gameState, companyName])
 
   // Chairman: aggregate all other players' cards into a flat list
   const otherCards = useMemo((): OtherCard[] => {
-    if (!isChairman || !isMyTurn) return []
+    if (!isChairman || !isMyTurn || !gameState) return []
     const cards: OtherCard[] = []
     for (const p of gameState.players) {
       if (p.is_you) continue
       const hand = gameState.all_hands?.[p.id] ?? []
-      hand.forEach((c, ci) => {
+      // cardIdx must be the index within company-only cards (matching backend's filtered list)
+      let companyIdx = 0
+      for (const c of hand) {
         if (c.company === companyName && !c.is_power) {
-          cards.push({ playerId: p.id, cardIdx: ci, positive: c.positive, value: c.value })
+          cards.push({ playerId: p.id, cardIdx: companyIdx, positive: c.positive, value: c.value })
+          companyIdx++
         }
-      })
+      }
     }
     return cards
-  }, [isChairman, isMyTurn, gameState.players, gameState.all_hands, companyName])
+  }, [isChairman, isMyTurn, gameState, companyName])
+
+  // ── All hooks called above. Safe to early-return now. ──
+
+  if (!queueEntry) return null
+
+  const maxOwn = isDouble ? 2 : 1
 
   const toggleOwn = (idx: number) => {
     setSelectedOwn((prev) => {
       if (prev.includes(idx)) return prev.filter((i) => i !== idx)
-      if (prev.length >= requiredOwn) return [...prev.slice(1), idx]
+      if (prev.length >= maxOwn) return [...prev.slice(1), idx]
       return [...prev, idx]
     })
   }
@@ -68,21 +80,17 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
     )
   }
 
-  // Chairman can partially exercise: own only, other only, both, or pass
-  // Director/Double director: must select required own cards or pass
+  // Chairman: can exercise own, other, both, or pass
+  // Director: discard exactly 1 own card or pass
+  // Double Director: discard 1 or 2 own cards, or pass
   const canSubmit = () => {
-    if (isChairman) {
-      return selectedOwn.length > 0 || selectedOther !== null
-    }
-    return selectedOwn.length === requiredOwn
+    if (isChairman) return selectedOwn.length > 0 || selectedOther !== null
+    if (isDouble) return selectedOwn.length >= 1 && selectedOwn.length <= 2
+    return selectedOwn.length === 1
   }
 
   const handlePass = () => {
     send({ type: 'chairman_director', discard_own_idx: -1 })
-    resetSelection()
-  }
-
-  const resetSelection = () => {
     setSelectedOwn([])
     setSelectedOther(null)
   }
@@ -98,12 +106,14 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
         discard_other_idx: selectedOther?.cardIdx ?? null,
       })
     } else if (isDouble) {
+      // Send as array for double director (1 or 2 cards)
       send({ type: 'chairman_director', discard_own_idx: selectedOwn })
     } else {
       send({ type: 'chairman_director', discard_own_idx: selectedOwn[0] })
     }
 
-    resetSelection()
+    setSelectedOwn([])
+    setSelectedOther(null)
   }
 
   const roleLabel = isChairman ? 'Chairman' : isDouble ? 'Double Director' : 'Director'
@@ -123,8 +133,9 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
           {/* Own cards */}
           <div>
             <p className="text-xs text-gray-500 mb-1.5">
-              {isChairman ? 'Your' : `Discard ${requiredOwn} of your`} {companyName} card{requiredOwn > 1 ? 's' : ''}
-              {isChairman && <span className="text-gray-600 ml-1">(optional)</span>}
+              {isChairman && <>Your {companyName} cards <span className="text-gray-600">(optional)</span></>}
+              {isDirector && <>Discard 1 of your {companyName} cards</>}
+              {isDouble && <>Discard 1–2 of your {companyName} cards</>}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {ownCards.map((card, i) => (
@@ -205,7 +216,7 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
         </>
       ) : (
         <p className="text-gray-500 text-center py-2 text-sm">
-          Waiting for <span className="text-white">{gameState.current_player_name}</span>
+          Waiting for <span className="text-white">{gameState?.current_player_name}</span>
           <span className={cn('ml-1', roleColor)}>({roleLabel})</span>
         </p>
       )}

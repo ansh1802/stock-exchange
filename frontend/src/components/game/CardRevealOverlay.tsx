@@ -94,7 +94,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
       timerRef.current = setTimeout(onComplete, 800)
       return () => clearTimeout(timerRef.current)
     }
-    if (stage.type === 'chairman_director') return
+    if (stage.type === 'chairman_director') return // controlled by cdQueue watcher below
 
     const delays: Record<string, number> = {
       company_intro: 1000,
@@ -104,16 +104,33 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
 
     timerRef.current = setTimeout(advance, delays[stage.type] ?? 1000)
     return () => clearTimeout(timerRef.current)
-  }, [stage, advance, onComplete])
+  }, [stage, advance, onComplete, send])
 
-  // When CD queue changes (action was taken), try to advance past chairman_director stage
-  const prevQueueLen = useRef(cdQueue.length)
+  // Watch CD queue: when all actions for current company are done, advance.
+  // Uses a separate ref timer so game state re-renders don't cancel it.
+  const cdTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => {
-    if (stage.type === 'chairman_director' && cdQueue.length < prevQueueLen.current) {
-      setTimeout(advance, 600)
+    if (stage.type !== 'chairman_director') return
+
+    const companyName = revealData[stage.companyIdx]?.company_name
+    const stillNeeded = cdQueue.some(([, cn]) => cn === companyName)
+
+    if (!stillNeeded) {
+      // No more CD actions for this company — advance after brief pause
+      clearTimeout(cdTimerRef.current)
+      cdTimerRef.current = setTimeout(() => {
+        setStage((prev) => {
+          if (prev.type !== 'chairman_director') return prev
+          if (prev.companyIdx + 1 < revealData.length) {
+            return { type: 'company_intro', companyIdx: prev.companyIdx + 1 }
+          }
+          return { type: 'complete' }
+        })
+      }, 600)
     }
-    prevQueueLen.current = cdQueue.length
-  }, [cdQueue.length, stage.type, advance])
+
+    return () => clearTimeout(cdTimerRef.current)
+  }, [cdQueue, stage, revealData])
 
   // Derive revealed cards from stage — no separate state needed.
   // At revealing_cards cardIdx N: cards 0..N are visible (current card just appeared).

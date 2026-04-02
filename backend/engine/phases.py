@@ -6,7 +6,7 @@ Phase order after trading:
 
 import random
 
-from .constants import CARDS_PER_HAND, CURRENCY_RATE, MAX_DAYS, COMPANY_NAMES
+from .constants import CARDS_PER_HAND, CURRENCY_RATE, MAX_DAYS, COMPANY_NAMES, CHAIRMAN_THRESHOLD, DIRECTOR_THRESHOLD
 from .deck import build_deck
 from .helpers import result, player_by_id, validate_company, advance_turn
 
@@ -116,13 +116,16 @@ def complete_card_reveal(game_state, player_id=None):
 def _build_chairman_director_queue(game_state):
     """Build queue of (player_id, company_name, role) for end-of-day discards.
 
-    Within each company, entries are ordered by the day's turn priority.
+    A player with 150+ shares is both chairman AND director (queued sequentially).
+    A player with 200+ shares is both chairman AND double director.
+    Within each company, chairman acts first, then directors, ordered by turn priority.
     """
     player_order = {p.id: i for i, p in enumerate(game_state.players)}
     queue = []
 
     for name in COMPANY_NAMES:
-        company_entries = []
+        chairman_entries = []
+        director_entries = []
 
         # Count total company cards across all players (to check if chairman has targets)
         total_cards = sum(
@@ -137,19 +140,30 @@ def _build_chairman_director_queue(game_state):
             other_cards_exist = total_cards > len(own_cards)
             # Chairman is queued if they have own cards to discard OR other players have cards to remove
             if own_cards or other_cards_exist:
-                company_entries.append((chair_id, name, "chairman"))
+                chairman_entries.append((chair_id, name, "chairman"))
+
+            # Chairman with 150+ shares also gets director power (played after chairman)
+            holdings = player.stocks[name]
+            if holdings >= CHAIRMAN_THRESHOLD + DIRECTOR_THRESHOLD:
+                if holdings >= CHAIRMAN_THRESHOLD * 2 and len(own_cards) >= 2:
+                    director_entries.append((chair_id, name, "double_director"))
+                elif own_cards:
+                    director_entries.append((chair_id, name, "director"))
 
         for dir_id in game_state.directors[name]:
             player = player_by_id(game_state, dir_id)
             own_cards = [c for c in player.hand if c.company_name == name and not c.is_power]
-            is_double = player.stocks[name] >= 100
+            is_double = player.stocks[name] >= CHAIRMAN_THRESHOLD
             if is_double and len(own_cards) >= 2:
-                company_entries.append((dir_id, name, "double_director"))
+                director_entries.append((dir_id, name, "double_director"))
             elif own_cards:
-                company_entries.append((dir_id, name, "director"))
+                director_entries.append((dir_id, name, "director"))
 
-        company_entries.sort(key=lambda e: player_order.get(e[0], 999))
-        queue.extend(company_entries)
+        # Chairman first, then directors — each group sorted by turn order
+        chairman_entries.sort(key=lambda e: player_order.get(e[0], 999))
+        director_entries.sort(key=lambda e: player_order.get(e[0], 999))
+        queue.extend(chairman_entries)
+        queue.extend(director_entries)
 
     game_state.chairman_director_queue = queue
 
@@ -169,8 +183,8 @@ def chairman_director_action(game_state, player_id, discard_own_idx, discard_oth
 
     player = player_by_id(game_state, player_id)
 
-    # Pass — skip discard
-    if discard_own_idx == -1:
+    # Pass — skip discard (only a true pass if no other-card selection either)
+    if discard_own_idx == -1 and discard_other_player_id is None:
         game_state.chairman_director_queue.pop(0)
         if not game_state.chairman_director_queue:
             _finalize_card_reveal(game_state)
@@ -179,19 +193,17 @@ def chairman_director_action(game_state, player_id, discard_own_idx, discard_oth
     own_cards = [c for c in player.hand if c.company_name == company_name and not c.is_power]
 
     if role == "double_director":
-        if not isinstance(discard_own_idx, list) or len(discard_own_idx) != 2:
-            return result(False, "Double director must select 2 cards to discard.", game_state)
-        if len(own_cards) < 2:
-            return result(False, "Not enough cards to discard.", game_state)
+        if not isinstance(discard_own_idx, list) or len(discard_own_idx) not in (1, 2):
+            return result(False, "Double director must select 1 or 2 cards to discard.", game_state)
         for idx in discard_own_idx:
-            if idx < 0 or idx >= len(own_cards):
+            if not isinstance(idx, int) or idx < 0 or idx >= len(own_cards):
                 return result(False, f"Invalid card index: {idx}.", game_state)
-        if discard_own_idx[0] == discard_own_idx[1]:
+        if len(discard_own_idx) == 2 and discard_own_idx[0] == discard_own_idx[1]:
             return result(False, "Must select two different cards.", game_state)
         to_remove = sorted(discard_own_idx, reverse=True)
         for idx in to_remove:
             player.hand.remove(own_cards[idx])
-        msg = f"Double director discarded 2 {company_name} cards."
+        msg = f"Double director discarded {len(discard_own_idx)} {company_name} card(s)."
 
     elif role == "director":
         if not isinstance(discard_own_idx, int) or discard_own_idx < 0 or discard_own_idx >= len(own_cards):

@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import game_engine as ge
 from room_manager import RoomManager
+from engine.debug_presets import apply_preset, PRESETS
 
 app = FastAPI(title="Stock Exchange Game")
 
@@ -67,7 +68,15 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
     try:
         while True:
             data = await websocket.receive_json()
-            await handle_action(room, player_id, data)
+            try:
+                await handle_action(room, player_id, data)
+            except Exception as exc:
+                import traceback
+                traceback.print_exc()
+                try:
+                    await websocket.send_json({"type": "error", "message": f"Server error: {exc}"})
+                except Exception:
+                    pass
     except WebSocketDisconnect:
         room.disconnect_player(player_id)
         await room.broadcast({
@@ -219,7 +228,14 @@ async def handle_action(room, player_id, data):
 
     # ── Lobby action ─────────────────────────────────────────────────────
     if action_type == "start_game":
-        await handle_start_game(room, player_id)
+        await handle_start_game(room, player_id, debug_preset=data.get("preset"))
+        return
+
+    if action_type == "list_presets":
+        await room.send_to(player_id, {
+            "type": "presets",
+            "presets": {k: v["description"] for k, v in PRESETS.items()},
+        })
         return
 
     # ── All other actions require a running game ─────────────────────────
@@ -293,8 +309,10 @@ def dispatch_action(game, player_id, data):
         if action == "complete_currency_settlement":
             return ge.complete_currency_settlement(game)
 
-    except (KeyError, TypeError) as exc:
-        return {"success": False, "message": f"Missing field: {exc}", "new_state": game.to_dict()}
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "message": f"Server error: {exc}", "new_state": game.to_dict()}
 
     return None
 
@@ -302,7 +320,7 @@ def dispatch_action(game, player_id, data):
 # ── Game start ───────────────────────────────────────────────────────────────
 
 
-async def handle_start_game(room, player_id):
+async def handle_start_game(room, player_id, debug_preset=None):
     if player_id != room.host_id:
         await room.send_to(player_id, {"type": "error", "message": "Only the host can start the game."})
         return
@@ -319,6 +337,13 @@ async def handle_start_game(room, player_id):
     room.game = ge.GameState(num_players)
     room.started = True
     ge.deal_cards(room.game)
+
+    if debug_preset:
+        ok, msg = apply_preset(room.game, debug_preset)
+        if not ok:
+            await room.send_to(player_id, {"type": "error", "message": msg})
+            return
+        room.game_log.append(f"Debug preset '{debug_preset}' applied")
 
     room.game_log.append("Game started — cards dealt")
     await room.broadcast({"type": "game_started", "num_players": num_players})
@@ -337,7 +362,9 @@ async def broadcast_game_state(room):
             try:
                 state = build_client_state(room, player.id)
                 await player.ws.send_json({"type": "game_state", "state": state})
-            except Exception:
+            except Exception as exc:
+                import traceback
+                traceback.print_exc()
                 player.connected = False
 
 

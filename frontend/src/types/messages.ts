@@ -14,7 +14,7 @@ export type ServerMessage =
 
 // Client → Server
 export type ClientMessage =
-  | { type: 'start_game' }
+  | { type: 'start_game'; preset?: string }
   | { type: 'buy'; company_num: number; quantity: number }
   | { type: 'sell'; company_num: number; quantity: number }
   | { type: 'pass' }
