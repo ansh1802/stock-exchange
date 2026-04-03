@@ -98,7 +98,17 @@ The server auto-advances through phases that don't need player input. Card revea
 
 **WebSocket message protocol:** Client sends `{"type": "buy", "company_num": 4, "quantity": 5}` etc. Server responds with `{"type": "action_result", ...}` to the actor and `{"type": "game_state", "state": ...}` to all players.
 
-**Animation state is decoupled from backend state.** The frontend maintains its own `animPhase` to drive overlays independently of the backend phase. This prevents re-animation on reconnect and allows smooth transitions.
+**Animation state is decoupled from backend state.** The frontend maintains its own `animPhase` to drive overlays independently of the backend phase. This prevents re-animation on reconnect and allows smooth transitions. **Important caveat:** Components that react to value changes during animated phases (e.g., ShareSuspendOverlay) must wait for the backend phase to confirm before tracking diffs — the frontend animation may finish before the backend has finalized.
+
+## Deployment
+
+**Hosted on Railway** (single service, Dockerfile-based). Multi-stage build: Node builds frontend → Python serves everything.
+
+- `Dockerfile` — Stage 1: `node:20-slim` builds frontend. Stage 2: `python:3.12-slim` runs uvicorn.
+- `railway.toml` — Points to Dockerfile, health check at `/`, restart on failure.
+- `.dockerignore` — Excludes dev files from image.
+
+In production, FastAPI serves both WebSocket connections (`/ws/...`) and frontend static files (`/*` catch-all with SPA fallback). The catch-all uses direct `FileResponse` (not `StaticFiles`) to avoid 301 redirects. WebSocket URL auto-detects `ws://` vs `wss://` from `window.location.protocol`.
 
 ## Development History
 
@@ -111,6 +121,7 @@ Detailed design docs for each phase of development live in `development-history/
 | Phase 2 | [`development-history/phase_2.md`](development-history/phase_2.md) | Full React frontend with animations. Chairman/Director feature. Phase machine changes (card_reveal replaces fluctuation, pausing phases). 5 bugs fixed (duplicate cards, overflow, key collision, sub-phase active player, power card consumption). |
 | Phase 3 | [`development-history/phase_3.md`](development-history/phase_3.md) | UI restructure (PlayerBoard, ActionBar, TradeModal), share suspend sync with animation queue and countdown, sparkline charts, rights issue / debenture overlays, card reveal sync across players. |
 | Phase 4 | [`development-history/phase_4.md`](development-history/phase_4.md) | Chairman/director fixes (hooks crash, index mismatch, partial exercise), debug preset system, chairman+director stacking for 150+/200+ shares, double director flexibility. |
+| Phase 5 | [`development-history/phase_5_deployment.md`](development-history/phase_5_deployment.md) | Railway deployment (Dockerfile, static serving from FastAPI). Production bug fixes: 3xx redirects from StaticFiles, share suspend ghost animations from animation/backend phase desync, ws/wss auto-detection. |
 | Architecture | [`development-history/game_arch_deploy_numbers.md`](development-history/game_arch_deploy_numbers.md) | Full architectural deep-dive: server-authoritative pattern, phase state machine, auto-advance loop, deployment guide, NFR numbers, scaling progression. |
 
 ## Other Directories
