@@ -41,18 +41,26 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
     if (hasQueue) setEverHadQueue(true)
   }, [hasQueue])
 
-  // Detect company value changes → queue animation
+  // Snapshot current values on mount so card-reveal changes don't trigger animations
+  const initialized = useRef(false)
   useEffect(() => {
-    if (!gameState) return
+    if (!gameState || initialized.current) return
+    const curr: Record<string, number> = {}
+    for (const co of gameState.companies) curr[co.name] = co.value
+    prevValues.current = curr
+    initialized.current = true
+  }, [gameState])
+
+  // Detect company value changes → queue animation (only after init)
+  useEffect(() => {
+    if (!gameState || !initialized.current) return
     const curr: Record<string, number> = {}
     for (const co of gameState.companies) curr[co.name] = co.value
 
     const prev = prevValues.current
-    if (Object.keys(prev).length > 0) {
-      for (const co of gameState.companies) {
-        if (prev[co.name] !== undefined && prev[co.name] !== co.value) {
-          setAnimQueue((q) => [...q, { name: co.name, oldValue: prev[co.name], newValue: co.value }])
-        }
+    for (const co of gameState.companies) {
+      if (prev[co.name] !== undefined && prev[co.name] !== co.value) {
+        setAnimQueue((q) => [...q, { name: co.name, oldValue: prev[co.name], newValue: co.value }])
       }
     }
     prevValues.current = curr
