@@ -41,17 +41,23 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
     if (hasQueue) setEverHadQueue(true)
   }, [hasQueue])
 
-  // Snapshot current values on mount so card-reveal changes don't trigger animations
+  // Wait for backend to reach share_suspend phase before tracking value changes.
+  // The overlay mounts when the frontend animation finishes, but the backend may
+  // still be in card_reveal (waiting for other players' reveal_complete). Values
+  // change when the backend finalizes — we must ignore that transition.
   const initialized = useRef(false)
   useEffect(() => {
     if (!gameState || initialized.current) return
+    // Only snapshot once backend has finalized card reveal
+    const phase = gameState.phase
+    if (phase !== 'share_suspend' && phase !== 'currency_settlement' && phase !== 'day_end') return
     const curr: Record<string, number> = {}
     for (const co of gameState.companies) curr[co.name] = co.value
     prevValues.current = curr
     initialized.current = true
   }, [gameState])
 
-  // Detect company value changes → queue animation (only after init)
+  // Detect company value changes → queue animation (only after backend is ready)
   useEffect(() => {
     if (!gameState || !initialized.current) return
     const curr: Record<string, number> = {}
