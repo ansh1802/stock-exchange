@@ -1,7 +1,7 @@
 """Player turn actions: buy, sell, pass, and power card usage."""
 
 from .constants import LOAN_STOCK_AMOUNT, RIGHTS_ISSUE_VALUE
-from .helpers import result, player_by_id, validate_turn, validate_company, advance_turn
+from .helpers import result, player_by_id, validate_turn, validate_company, advance_turn, update_positions
 
 
 def buy_stock(game_state, player_id, company_num, num_shares):
@@ -30,6 +30,7 @@ def buy_stock(game_state, player_id, company_num, num_shares):
     game_state.available_shares[idx] -= num_shares
     player.cash -= cost
 
+    update_positions(game_state, player, company.name)
     advance_turn(game_state)
     return result(True, f"Bought {num_shares} of {company.name} for {cost}. Balance: {player.cash}.", game_state)
 
@@ -55,6 +56,7 @@ def sell_stock(game_state, player_id, company_num, num_shares):
     game_state.available_shares[idx] += num_shares
     player.cash += revenue
 
+    update_positions(game_state, player, company.name)
     advance_turn(game_state)
     return result(True, f"Sold {num_shares} of {company.name} for {revenue}. Balance: {player.cash}.", game_state)
 
@@ -73,9 +75,11 @@ def use_loan_stock(game_state, player_id):
     player, err = validate_turn(game_state, player_id)
     if err:
         return err
-    if not any(c.company_name == "LoanStock" and c.is_power for c in player.hand):
+    card = next((c for c in player.hand if c.company_name == "LoanStock" and c.is_power), None)
+    if not card:
         return result(False, "You don't have a Loan Stock card.", game_state)
 
+    player.hand.remove(card)
     player.cash += LOAN_STOCK_AMOUNT
     advance_turn(game_state)
     return result(True, f"Loan Stock used. Cash: {player.cash}.", game_state)
@@ -86,7 +90,8 @@ def use_debenture(game_state, player_id, company_num):
     player, err = validate_turn(game_state, player_id)
     if err:
         return err
-    if not any(c.company_name == "Debenture" and c.is_power for c in player.hand):
+    card = next((c for c in player.hand if c.company_name == "Debenture" and c.is_power), None)
+    if not card:
         return result(False, "You don't have a Debenture card.", game_state)
 
     idx, err = validate_company(game_state, company_num)
@@ -97,6 +102,7 @@ def use_debenture(game_state, player_id, company_num):
     if company.open:
         return result(False, f"{company.name} is already open.", game_state)
 
+    player.hand.remove(card)
     company.value = company.base_value
     company.open = True
     advance_turn(game_state)
@@ -113,13 +119,15 @@ def use_rights_issue(game_state, player_id, company_num):
     player, err = validate_turn(game_state, player_id)
     if err:
         return err
-    if not any(c.company_name == "RightsIssue" and c.is_power for c in player.hand):
+    card = next((c for c in player.hand if c.company_name == "RightsIssue" and c.is_power), None)
+    if not card:
         return result(False, "You don't have a Rights Issue card.", game_state)
 
     idx, err = validate_company(game_state, company_num)
     if err:
         return err
 
+    player.hand.remove(card)
     company = game_state.companies[idx]
     game_state.rights_issue_original_value = company.value
     game_state.rights_issue_company = company_num
@@ -173,6 +181,7 @@ def rights_issue_buy(game_state, player_id, num_shares):
         player.stocks[company.name] += num_shares
         game_state.available_shares[idx] -= num_shares
         player.cash -= cost
+        update_positions(game_state, player, company.name)
 
     game_state.rights_issue_queue.pop(0)
 

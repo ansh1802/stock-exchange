@@ -66,9 +66,10 @@ class Player:
 class GameState:
     """Single source of truth for all mutable game state.
 
-    Phases: dealing -> player_turn -> fluctuation ->
-            currency_settlement -> share_suspend -> day_end -> (loop | game_over)
-    Sub-phase: player_turn -> rights_issue -> player_turn
+    Phases: dealing -> player_turn -> card_reveal -> share_suspend ->
+            currency_settlement -> day_end -> (loop | game_over)
+    Sub-phases: player_turn -> rights_issue -> player_turn
+    card_reveal includes chairman/director discard actions.
     """
 
     def __init__(self, num_players):
@@ -99,6 +100,23 @@ class GameState:
         # Share-suspend sub-phase
         self.suspend_queue = []           # player IDs (one per card held)
 
+        # Chairman / Director positions
+        # chairman: company_name -> player_id (first to hold 100 shares)
+        self.chairman = {name: None for name in COMPANY_NAMES}
+        # directors: company_name -> [player_ids] (hold 50+ shares, max 2)
+        self.directors = {name: [] for name in COMPANY_NAMES}
+        # End-of-day discard queue: [(player_id, company_name, role), ...]
+        self.chairman_director_queue = []
+
+        # Card reveal data — per-company card breakdown for frontend animation
+        # List of dicts: {company_name, cards: [{player_id, value, positive}], delta, old_value, new_value}
+        self.reveal_data = []
+        # Track which players have finished the card reveal animation
+        self.reveal_complete_players = set()
+
+        # Price history — list of [value_per_company] snapshots at end of each day
+        self.price_history = []
+
     def to_dict(self):
         return {
             "num_players": self.num_players,
@@ -115,14 +133,27 @@ class GameState:
             "rights_issue_queue": list(self.rights_issue_queue),
             "rights_issue_original_value": self.rights_issue_original_value,
             "suspend_queue": list(self.suspend_queue),
+            "chairman": dict(self.chairman),
+            "directors": {k: list(v) for k, v in self.directors.items()},
+            "chairman_director_queue": list(self.chairman_director_queue),
+            "reveal_data": list(self.reveal_data),
+            "price_history": [list(day) for day in self.price_history],
         }
 
     def to_player_dict(self, player_id):
-        """State visible to one player — own hand shown, others hidden."""
-        players_view = [
-            p.to_dict() if p.id == player_id else p.to_public_dict()
-            for p in self.players
-        ]
+        """State visible to one player.
+
+        During card_reveal, ALL hands are visible (cards are being revealed).
+        Otherwise, only own hand is shown, others hidden.
+        """
+        if self.game_phase == "card_reveal":
+            # All hands revealed during card reveal
+            players_view = [p.to_dict() for p in self.players]
+        else:
+            players_view = [
+                p.to_dict() if p.id == player_id else p.to_public_dict()
+                for p in self.players
+            ]
         return {
             "your_id": player_id,
             "num_players": self.num_players,
@@ -136,4 +167,9 @@ class GameState:
             "rights_issue_company": self.rights_issue_company,
             "rights_issue_queue": list(self.rights_issue_queue),
             "suspend_queue": list(self.suspend_queue),
+            "chairman": dict(self.chairman),
+            "directors": {k: list(v) for k, v in self.directors.items()},
+            "chairman_director_queue": list(self.chairman_director_queue),
+            "reveal_data": list(self.reveal_data),
+            "price_history": [list(day) for day in self.price_history],
         }

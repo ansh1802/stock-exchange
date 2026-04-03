@@ -1,0 +1,7 @@
+node_modules
+__pycache__
+*.pyc
+.git
+base_logic_old
+development-history
+tests

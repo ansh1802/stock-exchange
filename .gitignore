@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.*
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# IDE
+.idea/
+.vscode/
+.DS_Store
+*.sw?
+
+# Test artifacts
+*.png
+.playwright-mcp/

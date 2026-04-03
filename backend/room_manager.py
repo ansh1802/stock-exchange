@@ -25,6 +25,7 @@ class Room:
         self.started = False
         self._next_id = 1
         self._name_to_id = {}   # for reconnection lookup
+        self.game_log = []      # accumulated log entries for frontend
 
     # ── Player management ────────────────────────────────────────────────
 
