@@ -3,7 +3,8 @@ import { toast } from 'sonner'
 import { useGameStore } from '../store/useGameStore'
 import type { ServerMessage, ClientMessage } from '../types/messages'
 
-const WS_BASE = import.meta.env.VITE_WS_URL || `ws://${window.location.host}`
+const WS_BASE = import.meta.env.VITE_WS_URL ||
+  `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
 
 export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null)

@@ -4,8 +4,12 @@ Run from the backend/ directory:
     uvicorn server:app --reload --host 0.0.0.0 --port 8000
 """
 
+import os
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 import game_engine as ge
 from room_manager import RoomManager
@@ -447,3 +451,14 @@ async def broadcast_game_over(room):
 
     room.game_log.append("Game over!")
     await room.broadcast({"type": "game_over", "rankings": rankings})
+
+
+# ── Serve frontend static files (production) ────────────────────────────────
+
+frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+if os.path.isdir(frontend_dist):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        return FileResponse(os.path.join(frontend_dist, "index.html"))
