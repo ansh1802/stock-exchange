@@ -10,16 +10,19 @@ export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<number>(0)
   const backoff = useRef(1000)
+  const pendingRef = useRef<ClientMessage[]>([])
 
   const {
     roomCode,
     playerName,
     setConnected,
+    setReconnecting,
     setLobby,
     updateLobbyPlayers,
     setGameStarted,
     setGameState,
     setGameOver,
+    setAwayPlayer,
   } = useGameStore()
 
   const connect = useCallback(() => {
@@ -30,14 +33,33 @@ export function useWebSocket() {
     const ws = new WebSocket(url)
 
     ws.onopen = () => {
+      const wasReconnecting = useGameStore.getState().isReconnecting
       setConnected(true)
+      setReconnecting(false)
       backoff.current = 1000
+
+      // Flush any queued messages
+      const pending = pendingRef.current
+      pendingRef.current = []
+      for (const msg of pending) {
+        ws.send(JSON.stringify(msg))
+      }
+
+      if (wasReconnecting && useGameStore.getState().gameStarted) {
+        toast.success('Reconnected to game')
+      }
     }
 
     ws.onmessage = (event) => {
       const msg: ServerMessage = JSON.parse(event.data)
 
       switch (msg.type) {
+        case 'ping':
+          // Respond to server heartbeat
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ type: 'pong' }))
+          }
+          break
         case 'lobby':
           setLobby(msg.players, msg.is_host)
           break
@@ -66,6 +88,12 @@ export function useWebSocket() {
         case 'game_over':
           setGameOver(msg.rankings)
           break
+        case 'player_away':
+          setAwayPlayer({ name: msg.player_name, timeout: msg.timeout_seconds })
+          break
+        case 'player_back':
+          setAwayPlayer(null)
+          break
         case 'error':
           toast.error(msg.message)
           break
@@ -74,6 +102,7 @@ export function useWebSocket() {
 
     ws.onclose = () => {
       setConnected(false)
+      setReconnecting(true)
       wsRef.current = null
       // Auto-reconnect with exponential backoff
       reconnectTimer.current = window.setTimeout(() => {
@@ -83,11 +112,18 @@ export function useWebSocket() {
     }
 
     wsRef.current = ws
-  }, [roomCode, playerName, setConnected, setLobby, updateLobbyPlayers, setGameStarted, setGameState, setGameOver])
+  }, [roomCode, playerName, setConnected, setReconnecting, setLobby, updateLobbyPlayers, setGameStarted, setGameState, setGameOver, setAwayPlayer])
 
   const send = useCallback((msg: ClientMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(msg))
+    } else {
+      // Queue player actions for retry on reconnect (skip animation signals)
+      const animSignals = ['reveal_complete', 'complete_currency_settlement', 'pong']
+      if (!animSignals.includes(msg.type)) {
+        pendingRef.current.push(msg)
+        toast.warning('Action queued — will send when reconnected')
+      }
     }
   }, [])
 

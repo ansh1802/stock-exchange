@@ -2,6 +2,7 @@
 
 import string
 import random
+import time
 
 
 class PlayerConn:
@@ -12,6 +13,7 @@ class PlayerConn:
         self.name = name
         self.ws = websocket
         self.connected = True
+        self.last_pong = time.time()
 
 
 class Room:
@@ -26,6 +28,40 @@ class Room:
         self._next_id = 1
         self._name_to_id = {}   # for reconnection lookup
         self.game_log = []      # accumulated log entries for frontend
+        self.last_activity = time.time()
+        self.disconnect_timer = None          # asyncio.Task for auto-action
+        self.disconnect_timer_player_id = None  # who the timer is for
+
+    def touch(self):
+        """Update last activity timestamp."""
+        self.last_activity = time.time()
+
+    @property
+    def has_active_game(self):
+        return self.started and self.game is not None and self.game.game_phase != "game_over"
+
+    def get_active_player_id(self):
+        """Resolve who currently needs to act, based on phase and queues."""
+        if not self.game:
+            return None
+        game = self.game
+        phase = game.game_phase
+
+        if phase == "rights_issue" and game.rights_issue_queue:
+            return game.rights_issue_queue[0]
+        if phase == "share_suspend" and game.suspend_queue:
+            return game.suspend_queue[0]
+        if phase == "card_reveal":
+            if game.chairman_director_queue:
+                return game.chairman_director_queue[0][0]
+            # During card_reveal without CD queue, all players need to send
+            # reveal_complete — return None (handled separately)
+            return None
+        if phase == "player_turn":
+            idx = game.current_turn
+            if idx < len(game.players):
+                return game.players[idx].id
+        return None
 
     # ── Player management ────────────────────────────────────────────────
 
@@ -36,6 +72,8 @@ class Room:
             pid = self._name_to_id[name]
             self.players[pid].ws = websocket
             self.players[pid].connected = True
+            self.players[pid].last_pong = time.time()
+            self.touch()
             return pid, True
 
         if self.started:
@@ -47,6 +85,7 @@ class Room:
         self._next_id += 1
         self.players[pid] = PlayerConn(pid, name, websocket)
         self._name_to_id[name] = pid
+        self.touch()
 
         if self.host_id is None:
             self.host_id = pid
@@ -110,6 +149,23 @@ class RoomManager:
 
     def remove_room(self, code):
         self.rooms.pop(code, None)
+
+    def cleanup_stale_rooms(self):
+        """Remove rooms where all players disconnected and TTL expired."""
+        now = time.time()
+        to_remove = []
+        for code, room in self.rooms.items():
+            if room.connected_count() > 0:
+                continue
+            age = now - room.last_activity
+            if room.has_active_game:
+                if age > 7200:  # 2 hours for active games
+                    to_remove.append(code)
+            else:
+                if age > 300:   # 5 minutes for lobbies / finished games
+                    to_remove.append(code)
+        for code in to_remove:
+            self.rooms.pop(code, None)
 
     def create_room(self):
         code = self._generate_code()

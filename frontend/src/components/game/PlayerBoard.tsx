@@ -4,7 +4,7 @@ import { useGameStore } from '../../store/useGameStore'
 import { cn } from '../../lib/cn'
 import { COMPANY_COLOR, COMPANY_TEXT_COLOR } from '../../lib/constants'
 import { formatCash } from '../../lib/format'
-import { Crown, Target, PiggyBank } from 'lucide-react'
+import { Crown, Target, PiggyBank, WifiOff } from 'lucide-react'
 
 export default function PlayerBoard() {
   const gameState = useGameStore((s) => s.gameState)
@@ -76,6 +76,7 @@ export default function PlayerBoard() {
 
         const isCurrent = player.name === current_player_name
         const isYou = player.name === playerName
+        const isDisconnected = player.connected === false && !isYou
         const holdings = Object.entries(player.stocks).filter(([, qty]) => qty > 0)
         const netWorth = portfolioValue(player)
 
@@ -84,20 +85,24 @@ export default function PlayerBoard() {
             key={player.id}
             className={cn(
               'rounded-xl border p-4 flex flex-col gap-2.5 transition-all duration-300',
-              isCurrent && 'ring-2 ring-emerald-500/70 border-emerald-800/50',
+              isCurrent && !isDisconnected && 'ring-2 ring-emerald-500/70 border-emerald-800/50',
               isYou && !isCurrent && 'bg-emerald-950/10 border-gray-700',
-              !isYou && !isCurrent && 'bg-gray-900/50 border-gray-800',
+              !isYou && !isCurrent && !isDisconnected && 'bg-gray-900/50 border-gray-800',
               isCurrent && isYou && 'bg-emerald-950/20 border-emerald-800/50',
+              isDisconnected && 'opacity-50 bg-gray-900/30 border-gray-800/50',
             )}
           >
             {/* Name + Net Worth row */}
             <div className="flex items-center gap-2">
-              {isCurrent && (
+              {isCurrent && !isDisconnected && (
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              )}
+              {isDisconnected && (
+                <WifiOff size={14} className="text-red-400 flex-shrink-0" />
               )}
               <span className={cn(
                 'text-base font-bold truncate',
-                isCurrent ? 'text-emerald-300' : isYou ? 'text-white' : 'text-gray-300',
+                isDisconnected ? 'text-gray-500' : isCurrent ? 'text-emerald-300' : isYou ? 'text-white' : 'text-gray-300',
               )}>
                 {player.name}
                 {isYou && <span className="text-gray-500 font-normal text-sm ml-1">(you)</span>}

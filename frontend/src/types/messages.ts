@@ -11,6 +11,9 @@ export type ServerMessage =
   | { type: 'phase_change'; phase: string; message: string }
   | { type: 'game_over'; rankings: Ranking[] }
   | { type: 'error'; message: string }
+  | { type: 'ping' }
+  | { type: 'player_away'; player_name: string; timeout_seconds: number }
+  | { type: 'player_back'; player_name: string }
 
 // Client → Server
 export type ClientMessage =
@@ -26,3 +29,4 @@ export type ClientMessage =
   | { type: 'chairman_director'; discard_own_idx: number | number[]; discard_other_player_id?: number | null; discard_other_idx?: number | null }
   | { type: 'reveal_complete' }
   | { type: 'complete_currency_settlement' }
+  | { type: 'pong' }

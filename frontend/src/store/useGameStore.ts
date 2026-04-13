@@ -1,27 +1,36 @@
 import { create } from 'zustand'
 import type { GameState, Ranking } from '../types/game'
 
+interface AwayPlayer {
+  name: string
+  timeout: number
+}
+
 interface GameStore {
   // Connection
   roomCode: string | null
   playerName: string | null
   isHost: boolean
   isConnected: boolean
+  isReconnecting: boolean
   lobbyPlayers: string[]
 
   // Game
   gameState: GameState | null
   gameStarted: boolean
   gameOver: Ranking[] | null
+  awayPlayer: AwayPlayer | null
 
   // Actions
   setConnection: (roomCode: string, playerName: string) => void
   setLobby: (players: string[], isHost: boolean) => void
   setConnected: (connected: boolean) => void
+  setReconnecting: (reconnecting: boolean) => void
   updateLobbyPlayers: (players: string[]) => void
   setGameStarted: () => void
   setGameState: (state: GameState) => void
   setGameOver: (rankings: Ranking[]) => void
+  setAwayPlayer: (away: AwayPlayer | null) => void
   reset: () => void
 }
 
@@ -30,10 +39,12 @@ const initialState = {
   playerName: null,
   isHost: false,
   isConnected: false,
+  isReconnecting: false,
   lobbyPlayers: [],
   gameState: null,
   gameStarted: false,
   gameOver: null,
+  awayPlayer: null,
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -48,6 +59,9 @@ export const useGameStore = create<GameStore>((set) => ({
   setConnected: (connected) =>
     set({ isConnected: connected }),
 
+  setReconnecting: (reconnecting) =>
+    set({ isReconnecting: reconnecting }),
+
   updateLobbyPlayers: (players) =>
     set({ lobbyPlayers: players }),
 
@@ -59,6 +73,9 @@ export const useGameStore = create<GameStore>((set) => ({
 
   setGameOver: (rankings) =>
     set({ gameOver: rankings }),
+
+  setAwayPlayer: (away) =>
+    set({ awayPlayer: away }),
 
   reset: () => set(initialState),
 }))
