@@ -29,9 +29,9 @@ Frontend runs at `http://localhost:5173` and proxies WebSocket to `localhost:800
 
 ### Backend (`backend/`)
 
-**`server.py`** — FastAPI WebSocket server. Players connect at `/ws/{room_code}/{player_name}`. Handles lobby (join/start), dispatches player actions to the game engine, auto-advances through automated phases, and broadcasts per-player state after each action. Resolves active player from sub-phase queues (rights_issue, share_suspend, chairman_director) rather than just `current_turn`.
+**`server.py`** — FastAPI WebSocket server. Players connect at `/ws/{room_code}/{player_name}`. Handles lobby (join/start), dispatches player actions to the game engine, auto-advances through automated phases, and broadcasts per-player state after each action. Resolves active player from sub-phase queues (rights_issue, share_suspend, chairman_director) rather than just `current_turn`. Includes heartbeat ping/pong (15s interval, 45s stale threshold), disconnect timer system (auto-passes for offline players), and a background room cleanup loop.
 
-**`room_manager.py`** — `RoomManager` creates/tracks rooms with 4-char codes. `Room` holds player connections, game state, host ID, game log. Supports reconnection by name.
+**`room_manager.py`** — `RoomManager` creates/tracks rooms with 4-char codes. `Room` holds player connections, game state, host ID, game log. Supports reconnection by name. Rooms persist with TTL-based cleanup (5 min for empty lobbies, 2 hours for active games) — never deleted immediately on disconnect.
 
 **`game_engine.py`** — Thin wrapper that re-exports the `engine/` package and adds `create_game()`.
 
@@ -50,9 +50,9 @@ Frontend runs at `http://localhost:5173` and proxies WebSocket to `localhost:800
 
 **Stack:** React 19, Zustand 5, Framer Motion 12, Tailwind CSS 4, Vite 8, TypeScript 5.9, Lucide icons, Sonner toasts.
 
-**`store/useGameStore.ts`** — Zustand store: connection state, lobby state, game state, game over rankings.
+**`store/useGameStore.ts`** — Zustand store: connection state (isConnected, isReconnecting), lobby state, game state, game over rankings, awayPlayer (disconnect timer info).
 
-**`hooks/useWebSocket.ts`** — WebSocket connect/send/disconnect with exponential backoff reconnect. Routes all server message types to the store.
+**`hooks/useWebSocket.ts`** — WebSocket connect/send/disconnect with exponential backoff reconnect. Routes all server message types to the store. Handles ping/pong heartbeat, queues outbound messages during disconnects (flushed on reconnect), and manages reconnecting state.
 
 **`hooks/useIsMyTurn.ts`, `useMyPlayer.ts`** — Derived state helpers.
 
@@ -98,7 +98,25 @@ The server auto-advances through phases that don't need player input. Card revea
 
 **WebSocket message protocol:** Client sends `{"type": "buy", "company_num": 4, "quantity": 5}` etc. Server responds with `{"type": "action_result", ...}` to the actor and `{"type": "game_state", "state": ...}` to all players.
 
-**Animation state is decoupled from backend state.** The frontend maintains its own `animPhase` to drive overlays independently of the backend phase. This prevents re-animation on reconnect and allows smooth transitions.
+**Animation state is decoupled from backend state.** The frontend maintains its own `animPhase` to drive overlays independently of the backend phase. This prevents re-animation on reconnect and allows smooth transitions. **Important caveat:** Components that react to value changes during animated phases (e.g., ShareSuspendOverlay) must wait for the backend phase to confirm before tracking diffs — the frontend animation may finish before the backend has finalized.
+
+**Connection resilience:**
+- Rooms persist with TTL-based cleanup (5 min empty lobbies, 2 hours active games). Never deleted immediately — all players can disconnect and reconnect.
+- Server-side heartbeat: pings every 15s, marks stale after 45s (3 missed pongs).
+- Disconnect timers: when the active player disconnects, auto-passes after timeout (90s player_turn, 60s sub-phases, 15s reveal_complete).
+- Frontend: `ReconnectingBanner` shows during disconnects, `AwayPlayerBanner` shows countdown for offline active player, `PlayerBoard` dims disconnected players with WifiOff icon.
+- Outbound message queue: actions sent while disconnected are queued and flushed on reconnect.
+- Server broadcasts `player_away`/`player_back` messages for disconnect timer UI.
+
+## Deployment
+
+**Hosted on Railway** (single service, Dockerfile-based). Multi-stage build: Node builds frontend → Python serves everything.
+
+- `Dockerfile` — Stage 1: `node:20-slim` builds frontend. Stage 2: `python:3.12-slim` runs uvicorn.
+- `railway.toml` — Points to Dockerfile, health check at `/`, restart on failure.
+- `.dockerignore` — Excludes dev files from image.
+
+In production, FastAPI serves both WebSocket connections (`/ws/...`) and frontend static files (`/*` catch-all with SPA fallback). The catch-all uses direct `FileResponse` (not `StaticFiles`) to avoid 301 redirects. WebSocket URL auto-detects `ws://` vs `wss://` from `window.location.protocol`.
 
 ## Development History
 
@@ -111,6 +129,8 @@ Detailed design docs for each phase of development live in `development-history/
 | Phase 2 | [`development-history/phase_2.md`](development-history/phase_2.md) | Full React frontend with animations. Chairman/Director feature. Phase machine changes (card_reveal replaces fluctuation, pausing phases). 5 bugs fixed (duplicate cards, overflow, key collision, sub-phase active player, power card consumption). |
 | Phase 3 | [`development-history/phase_3.md`](development-history/phase_3.md) | UI restructure (PlayerBoard, ActionBar, TradeModal), share suspend sync with animation queue and countdown, sparkline charts, rights issue / debenture overlays, card reveal sync across players. |
 | Phase 4 | [`development-history/phase_4.md`](development-history/phase_4.md) | Chairman/director fixes (hooks crash, index mismatch, partial exercise), debug preset system, chairman+director stacking for 150+/200+ shares, double director flexibility. |
+| Phase 5 | [`development-history/phase_5_deployment.md`](development-history/phase_5_deployment.md) | Railway deployment (Dockerfile, static serving from FastAPI). Production bug fixes: 3xx redirects from StaticFiles, share suspend ghost animations from animation/backend phase desync, ws/wss auto-detection. |
+| Phase 6 | [`development-history/phase_6_connection_resilience.md`](development-history/phase_6_connection_resilience.md) | Connection resilience: TTL-based room persistence (no more instant deletion), ping/pong heartbeat, disconnect timer auto-pass system, reconnection UX (banners, dimmed players, message queue). Zero engine changes. |
 | Architecture | [`development-history/game_arch_deploy_numbers.md`](development-history/game_arch_deploy_numbers.md) | Full architectural deep-dive: server-authoritative pattern, phase state machine, auto-advance loop, deployment guide, NFR numbers, scaling progression. |
 
 ## Other Directories

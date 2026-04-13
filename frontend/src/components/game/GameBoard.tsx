@@ -16,6 +16,8 @@ import CurrencySettlementOverlay from './CurrencySettlementOverlay'
 import ChairmanDirectorModal from './ChairmanDirectorModal'
 import RightsIssueOverlay from './RightsIssueOverlay'
 import DebentureOverlay from './DebentureOverlay'
+import ReconnectingBanner from './ReconnectingBanner'
+import AwayPlayerBanner from './AwayPlayerBanner'
 
 interface Props {
   send: (msg: ClientMessage) => void
@@ -136,6 +138,10 @@ export default function GameBoard({ send }: Props) {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
+      {/* Connection banners */}
+      <ReconnectingBanner />
+      <AwayPlayerBanner />
+
       {/* Top bar */}
       <DayRoundIndicator isConnected={isConnected} />
 

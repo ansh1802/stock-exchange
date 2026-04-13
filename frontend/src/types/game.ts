@@ -18,6 +18,7 @@ export interface Player {
   cash: number
   stocks: Record<string, number>
   is_you: boolean
+  connected?: boolean
 }
 
 export type GamePhase =
