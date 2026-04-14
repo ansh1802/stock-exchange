@@ -155,7 +155,7 @@ export default function GameBoard({ send }: Props) {
 
         {/* Right: Game Log */}
         <div className="w-72 border-l border-gray-800 flex flex-col">
-          <GameLog />
+          <GameLog send={send} />
         </div>
       </div>
 

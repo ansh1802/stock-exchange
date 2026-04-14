@@ -1,5 +1,11 @@
 import type { GameState, Ranking } from './game'
 
+export interface ChatMessage {
+  name: string
+  text: string
+  ts: number
+}
+
 // Server → Client
 export type ServerMessage =
   | { type: 'lobby'; room_code: string; players: string[]; is_host: boolean; reconnected: boolean }
@@ -12,6 +18,8 @@ export type ServerMessage =
   | { type: 'game_over'; rankings: Ranking[] }
   | { type: 'error'; message: string }
   | { type: 'ping' }
+  | { type: 'chat_message'; name: string; text: string; ts: number }
+  | { type: 'chat_history'; messages: ChatMessage[] }
 
 // Client → Server
 export type ClientMessage =
@@ -28,3 +36,4 @@ export type ClientMessage =
   | { type: 'reveal_complete' }
   | { type: 'complete_currency_settlement' }
   | { type: 'pong' }
+  | { type: 'chat'; text: string }

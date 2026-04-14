@@ -22,6 +22,8 @@ export function useWebSocket() {
     setGameStarted,
     setGameState,
     setGameOver,
+    setChatMessages,
+    appendChatMessage,
   } = useGameStore()
 
   const connect = useCallback(() => {
@@ -90,6 +92,12 @@ export function useWebSocket() {
         case 'error':
           toast.error(msg.message)
           break
+        case 'chat_history':
+          setChatMessages(msg.messages)
+          break
+        case 'chat_message':
+          appendChatMessage({ name: msg.name, text: msg.text, ts: msg.ts })
+          break
       }
     }
 
@@ -105,7 +113,7 @@ export function useWebSocket() {
     }
 
     wsRef.current = ws
-  }, [roomCode, playerName, setConnected, setReconnecting, setLobby, updateLobbyPlayers, setGameStarted, setGameState, setGameOver])
+  }, [roomCode, playerName, setConnected, setReconnecting, setLobby, updateLobbyPlayers, setGameStarted, setGameState, setGameOver, setChatMessages, appendChatMessage])
 
   const send = useCallback((msg: ClientMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

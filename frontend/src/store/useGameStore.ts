@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { GameState, Ranking } from '../types/game'
+import type { ChatMessage } from '../types/messages'
 
 interface GameStore {
   // Connection
@@ -15,6 +16,10 @@ interface GameStore {
   gameStarted: boolean
   gameOver: Ranking[] | null
 
+  // Chat
+  chatMessages: ChatMessage[]
+  chatUnread: number
+
   // Actions
   setConnection: (roomCode: string, playerName: string) => void
   setLobby: (players: string[], isHost: boolean) => void
@@ -24,6 +29,9 @@ interface GameStore {
   setGameStarted: () => void
   setGameState: (state: GameState) => void
   setGameOver: (rankings: Ranking[]) => void
+  setChatMessages: (messages: ChatMessage[]) => void
+  appendChatMessage: (message: ChatMessage) => void
+  clearChatUnread: () => void
   reset: () => void
 }
 
@@ -37,6 +45,8 @@ const initialState = {
   gameState: null,
   gameStarted: false,
   gameOver: null,
+  chatMessages: [] as ChatMessage[],
+  chatUnread: 0,
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -65,6 +75,17 @@ export const useGameStore = create<GameStore>((set) => ({
 
   setGameOver: (rankings) =>
     set({ gameOver: rankings }),
+
+  setChatMessages: (messages) =>
+    set({ chatMessages: messages, chatUnread: 0 }),
+
+  appendChatMessage: (message) =>
+    set((s) => ({
+      chatMessages: [...s.chatMessages, message],
+      chatUnread: s.chatUnread + 1,
+    })),
+
+  clearChatUnread: () => set({ chatUnread: 0 }),
 
   reset: () => set(initialState),
 }))
