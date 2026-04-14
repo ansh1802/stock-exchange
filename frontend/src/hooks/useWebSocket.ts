@@ -22,7 +22,6 @@ export function useWebSocket() {
     setGameStarted,
     setGameState,
     setGameOver,
-    setAwayPlayer,
   } = useGameStore()
 
   const connect = useCallback(() => {
@@ -88,12 +87,6 @@ export function useWebSocket() {
         case 'game_over':
           setGameOver(msg.rankings)
           break
-        case 'player_away':
-          setAwayPlayer({ name: msg.player_name, timeout: msg.timeout_seconds })
-          break
-        case 'player_back':
-          setAwayPlayer(null)
-          break
         case 'error':
           toast.error(msg.message)
           break
@@ -112,7 +105,7 @@ export function useWebSocket() {
     }
 
     wsRef.current = ws
-  }, [roomCode, playerName, setConnected, setReconnecting, setLobby, updateLobbyPlayers, setGameStarted, setGameState, setGameOver, setAwayPlayer])
+  }, [roomCode, playerName, setConnected, setReconnecting, setLobby, updateLobbyPlayers, setGameStarted, setGameState, setGameOver])
 
   const send = useCallback((msg: ClientMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

@@ -50,7 +50,7 @@ Frontend runs at `http://localhost:5173` and proxies WebSocket to `localhost:800
 
 **Stack:** React 19, Zustand 5, Framer Motion 12, Tailwind CSS 4, Vite 8, TypeScript 5.9, Lucide icons, Sonner toasts.
 
-**`store/useGameStore.ts`** — Zustand store: connection state (isConnected, isReconnecting), lobby state, game state, game over rankings, awayPlayer (disconnect timer info).
+**`store/useGameStore.ts`** — Zustand store: connection state (isConnected, isReconnecting), lobby state, game state, game over rankings.
 
 **`hooks/useWebSocket.ts`** — WebSocket connect/send/disconnect with exponential backoff reconnect. Routes all server message types to the store. Handles ping/pong heartbeat, queues outbound messages during disconnects (flushed on reconnect), and manages reconnecting state.
 
@@ -103,10 +103,17 @@ The server auto-advances through phases that don't need player input. Card revea
 **Connection resilience:**
 - Rooms persist with TTL-based cleanup (5 min empty lobbies, 2 hours active games). Never deleted immediately — all players can disconnect and reconnect.
 - Server-side heartbeat: pings every 15s, marks stale after 45s (3 missed pongs).
-- Disconnect timers: when the active player disconnects, auto-passes after timeout (90s player_turn, 60s sub-phases, 15s reveal_complete).
-- Frontend: `ReconnectingBanner` shows during disconnects, `AwayPlayerBanner` shows countdown for offline active player, `PlayerBoard` dims disconnected players with WifiOff icon.
+- Disconnect timers: for sub-phases, when the active player disconnects, auto-skips after timeout (60s share_suspend/rights_issue/chairman_director, 15s reveal_complete).
+- Frontend: `ReconnectingBanner` shows during your own disconnects, `PlayerBoard` dims disconnected players with WifiOff icon.
 - Outbound message queue: actions sent while disconnected are queued and flushed on reconnect.
-- Server broadcasts `player_away`/`player_back` messages for disconnect timer UI.
+- Disconnect / reconnect / timeout events are surfaced in the game log, not as banners.
+
+**Turn timer (Phase 7):**
+- Host picks duration in lobby: 15/30/45/60/75/90s (default 90). Stored on `Room.turn_timer_seconds`.
+- Runs on every `player_turn` regardless of connection state. Auto-passes on expiry via the same `dispatch_action` + `auto_advance` path as human actions.
+- Deadline broadcast via `build_client_state` (`turn_timer_deadline` is an absolute unix timestamp) so reconnecting clients get the correct remaining time automatically.
+- `useTurnUrgency` hook computes fraction-based urgency (>0.5 calm, >0.25 warning, ≤0.25 critical) — drives both the top-right `TurnTimerDisplay` and the active player's card ring/dot/name color (green → amber → red with faster pulse at critical).
+- `check_and_start_turn_timer` must be called *before* `broadcast_game_state` at every advancement site so the broadcast carries the fresh deadline.
 
 ## Deployment
 
@@ -131,6 +138,7 @@ Detailed design docs for each phase of development live in `development-history/
 | Phase 4 | [`development-history/phase_4.md`](development-history/phase_4.md) | Chairman/director fixes (hooks crash, index mismatch, partial exercise), debug preset system, chairman+director stacking for 150+/200+ shares, double director flexibility. |
 | Phase 5 | [`development-history/phase_5_deployment.md`](development-history/phase_5_deployment.md) | Railway deployment (Dockerfile, static serving from FastAPI). Production bug fixes: 3xx redirects from StaticFiles, share suspend ghost animations from animation/backend phase desync, ws/wss auto-detection. |
 | Phase 6 | [`development-history/phase_6_connection_resilience.md`](development-history/phase_6_connection_resilience.md) | Connection resilience: TTL-based room persistence (no more instant deletion), ping/pong heartbeat, disconnect timer auto-pass system, reconnection UX (banners, dimmed players, message queue). Zero engine changes. |
+| Phase 7 | [`development-history/phase_7_turn_timer.md`](development-history/phase_7_turn_timer.md) | Configurable turn timer (15/30/45/60/75/90s) picked in lobby, visible countdown in top-right replacing room code, green→amber→red urgency colors on active player card. `AwayPlayerBanner` + `player_away`/`player_back` messages removed — disconnects now surface via game log. |
 | Architecture | [`development-history/game_arch_deploy_numbers.md`](development-history/game_arch_deploy_numbers.md) | Full architectural deep-dive: server-authoritative pattern, phase state machine, auto-advance loop, deployment guide, NFR numbers, scaling progression. |
 
 ## Other Directories
