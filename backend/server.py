@@ -313,6 +313,12 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
         "reconnected": reconnected,
     })
 
+    # Seed chat history for joining / reconnecting player
+    await websocket.send_json({
+        "type": "chat_history",
+        "messages": list(room.chat_messages),
+    })
+
     # If reconnecting to a live game, send current state and cancel any disconnect timer
     if reconnected and room.started and room.game:
         room.game_log.append(f"{player_name} reconnected")
@@ -511,6 +517,21 @@ async def handle_action(room, player_id, data):
         action_type = data.get("type")
     except (AttributeError, TypeError):
         await room.send_to(player_id, {"type": "error", "message": "Invalid message format."})
+        return
+
+    # ── Chat (works in lobby and in-game) ────────────────────────────────
+    if action_type == "chat":
+        text = (data.get("text") or "").strip()
+        if not text:
+            return
+        if len(text) > 300:
+            text = text[:300]
+        conn = room.players.get(player_id)
+        name = conn.name if conn else f"Player {player_id}"
+        msg = {"name": name, "text": text, "ts": _time.time()}
+        room.chat_messages.append(msg)
+        room.touch()
+        await room.broadcast({"type": "chat_message", **msg})
         return
 
     # ── Lobby action ─────────────────────────────────────────────────────

@@ -28,6 +28,7 @@ class Room:
         self._next_id = 1
         self._name_to_id = {}   # for reconnection lookup
         self.game_log = []      # accumulated log entries for frontend
+        self.chat_messages = [] # list of {"name": str, "text": str, "ts": float}
         self.last_activity = time.time()
         self.disconnect_timer = None          # asyncio.Task for auto-action
         self.disconnect_timer_player_id = None  # who the timer is for
