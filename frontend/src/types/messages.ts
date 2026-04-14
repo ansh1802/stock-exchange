@@ -12,12 +12,10 @@ export type ServerMessage =
   | { type: 'game_over'; rankings: Ranking[] }
   | { type: 'error'; message: string }
   | { type: 'ping' }
-  | { type: 'player_away'; player_name: string; timeout_seconds: number }
-  | { type: 'player_back'; player_name: string }
 
 // Client → Server
 export type ClientMessage =
-  | { type: 'start_game'; preset?: string }
+  | { type: 'start_game'; preset?: string; turn_timer_seconds?: number }
   | { type: 'buy'; company_num: number; quantity: number }
   | { type: 'sell'; company_num: number; quantity: number }
   | { type: 'pass' }

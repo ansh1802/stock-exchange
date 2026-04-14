@@ -1,5 +1,7 @@
 import { useGameStore } from '../../store/useGameStore'
 import { cn } from '../../lib/cn'
+import { useTurnUrgency } from '../../hooks/useTurnUrgency'
+import TurnTimerDisplay from './TurnTimerDisplay'
 
 interface Props {
   isConnected: boolean
@@ -8,6 +10,7 @@ interface Props {
 export default function DayRoundIndicator({ isConnected }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
+  const turnUrgency = useTurnUrgency()
   if (!gameState) return null
 
   const isMyTurn = gameState.phase === 'player_turn' && gameState.current_player_name === playerName
@@ -36,8 +39,14 @@ export default function DayRoundIndicator({ isConnected }: Props) {
       </div>
 
       <div className="flex items-center gap-2">
-        <span className={cn('w-2 h-2 rounded-full', isConnected ? 'bg-emerald-400' : 'bg-red-400')} />
-        <span className="text-gray-500 text-xs">{gameState.room_code}</span>
+        {turnUrgency.active ? (
+          <TurnTimerDisplay />
+        ) : (
+          <>
+            <span className={cn('w-2 h-2 rounded-full', isConnected ? 'bg-emerald-400' : 'bg-red-400')} />
+            <span className="text-gray-500 text-xs">{gameState.room_code}</span>
+          </>
+        )}
       </div>
     </div>
   )

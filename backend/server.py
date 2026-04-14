@@ -71,12 +71,15 @@ async def ping_loop(ws, player_conn):
 
 
 # Phase → (timeout_seconds, auto-action builder)
+# player_turn is handled by the dedicated turn timer (configurable per room),
+# not this table.
 DISCONNECT_TIMEOUTS = {
-    "player_turn":    (90,  lambda pid: ("pass",                {"type": "pass"})),
     "rights_issue":   (60,  lambda pid: ("rights_issue_buy",    {"type": "rights_issue_buy", "quantity": 0})),
     "share_suspend":  (60,  lambda pid: ("share_suspend",       {"type": "share_suspend", "company_num": 0})),
     "card_reveal_cd": (60,  lambda pid: ("chairman_director",   {"type": "chairman_director", "discard_own_idx": -1})),
 }
+
+VALID_TURN_TIMERS = {15, 30, 45, 60, 75, 90}
 
 
 async def check_and_start_disconnect_timer(room):
@@ -148,13 +151,12 @@ async def check_and_start_disconnect_timer(room):
         _run_disconnect_timer(room, active_pid, timeout_secs, action_data)
     )
 
-    # Notify other players
+    # Surface via game log (no banner)
     player_name = player_conn.name
-    await room.broadcast({
-        "type": "player_away",
-        "player_name": player_name,
-        "timeout_seconds": timeout_secs,
-    })
+    room.game_log.append(
+        f"{player_name} disconnected — auto-skip in {timeout_secs}s"
+    )
+    await broadcast_game_state(room)
 
 
 async def _run_disconnect_timer(room, player_id, timeout_secs, action_data):
@@ -172,6 +174,7 @@ async def _run_disconnect_timer(room, player_id, timeout_secs, action_data):
         result = dispatch_action(room.game, player_id, action_data)
         if result and result["success"]:
             await auto_advance(room)
+            await check_and_start_turn_timer(room)
             await broadcast_game_state(room)
             # Check if the NEW active player is also disconnected
             await check_and_start_disconnect_timer(room)
@@ -196,6 +199,7 @@ async def _auto_reveal_complete(room, player_ids):
                 result = ge.complete_card_reveal(room.game, pid)
                 if result and result["success"]:
                     await auto_advance(room)
+                    await check_and_start_turn_timer(room)
                     await broadcast_game_state(room)
         # Check if next phase also needs a timer
         await check_and_start_disconnect_timer(room)
@@ -218,6 +222,66 @@ def cancel_disconnect_timer(room):
         room.disconnect_timer.cancel()
         room.disconnect_timer = None
         room.disconnect_timer_player_id = None
+
+
+def cancel_turn_timer(room):
+    """Cancel any running player_turn auto-pass timer."""
+    if room.turn_timer_task:
+        room.turn_timer_task.cancel()
+    room.turn_timer_task = None
+    room.turn_timer_deadline = None
+    room.turn_timer_player_id = None
+
+
+async def check_and_start_turn_timer(room):
+    """Start/refresh the player_turn auto-pass timer for the current active player.
+
+    Safe to call repeatedly — only starts a new timer if the active player changed.
+    """
+    if not room.game or room.game.game_phase != "player_turn":
+        cancel_turn_timer(room)
+        return
+
+    active_pid = room.get_active_player_id()
+    if active_pid is None:
+        cancel_turn_timer(room)
+        return
+
+    if room.turn_timer_task and room.turn_timer_player_id == active_pid:
+        return  # already ticking for this player
+
+    cancel_turn_timer(room)
+    duration = room.turn_timer_seconds
+    room.turn_timer_player_id = active_pid
+    room.turn_timer_deadline = _time.time() + duration
+    room.turn_timer_task = asyncio.create_task(
+        _run_turn_timer(room, active_pid, duration)
+    )
+
+
+async def _run_turn_timer(room, player_id, duration):
+    """Wait the configured duration, then auto-pass if still the same turn."""
+    try:
+        await asyncio.sleep(duration)
+        if (room.game
+                and room.game.game_phase == "player_turn"
+                and room.get_active_player_id() == player_id):
+            conn = room.players.get(player_id)
+            actor = conn.name if conn else f"Player {player_id}"
+            room.game_log.append(f"{actor} ran out of time — auto-passed")
+            result = ge.pass_turn(room.game, player_id)
+            if result and result["success"]:
+                await auto_advance(room)
+                await check_and_start_turn_timer(room)
+                await broadcast_game_state(room)
+                await check_and_start_disconnect_timer(room)
+    except asyncio.CancelledError:
+        pass
+    finally:
+        if room.turn_timer_player_id == player_id:
+            room.turn_timer_task = None
+            room.turn_timer_deadline = None
+            room.turn_timer_player_id = None
 
 
 # ── WebSocket endpoint ───────────────────────────────────────────────────────
@@ -251,15 +315,14 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
 
     # If reconnecting to a live game, send current state and cancel any disconnect timer
     if reconnected and room.started and room.game:
+        room.game_log.append(f"{player_name} reconnected")
         await room.send_to(player_id, {
             "type": "game_state",
             "state": build_client_state(room, player_id),
         })
-        await room.broadcast({
-            "type": "player_back",
-            "player_name": player_name,
-        })
+        await broadcast_game_state(room)
         await check_and_start_disconnect_timer(room)
+        await check_and_start_turn_timer(room)
 
     # Notify everyone
     await room.broadcast({
@@ -300,7 +363,10 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
         })
         # Start auto-action timer if the disconnected player was the active player
         if room.started and room.game:
+            room.game_log.append(f"{player_name} disconnected")
             await check_and_start_disconnect_timer(room)
+            await check_and_start_turn_timer(room)
+            await broadcast_game_state(room)
         # Room cleanup is handled by the background cleanup_loop —
         # never delete immediately, so players can reconnect.
 
@@ -430,6 +496,9 @@ def build_client_state(room, player_id):
         "reveal_data": reveal_data,
         "all_hands": all_hands if all_hands else None,
         "price_history": raw.get("price_history", []),
+        # Turn timer (null deadline outside player_turn)
+        "turn_timer_deadline": room.turn_timer_deadline,
+        "turn_timer_duration": room.turn_timer_seconds,
     }
 
 
@@ -446,7 +515,11 @@ async def handle_action(room, player_id, data):
 
     # ── Lobby action ─────────────────────────────────────────────────────
     if action_type == "start_game":
-        await handle_start_game(room, player_id, debug_preset=data.get("preset"))
+        await handle_start_game(
+            room, player_id,
+            debug_preset=data.get("preset"),
+            turn_timer_seconds=data.get("turn_timer_seconds"),
+        )
         return
 
     if action_type == "list_presets":
@@ -482,6 +555,7 @@ async def handle_action(room, player_id, data):
             room.game_log.append(f"{actor}: {result['message']}")
 
             await auto_advance(room)
+            await check_and_start_turn_timer(room)
             await broadcast_game_state(room)
             await check_and_start_disconnect_timer(room)
 
@@ -540,7 +614,7 @@ def dispatch_action(game, player_id, data):
 # ── Game start ───────────────────────────────────────────────────────────────
 
 
-async def handle_start_game(room, player_id, debug_preset=None):
+async def handle_start_game(room, player_id, debug_preset=None, turn_timer_seconds=None):
     if player_id != room.host_id:
         await room.send_to(player_id, {"type": "error", "message": "Only the host can start the game."})
         return
@@ -554,6 +628,9 @@ async def handle_start_game(room, player_id, debug_preset=None):
         await room.send_to(player_id, {"type": "error", "message": "Need at least 2 players."})
         return
 
+    if turn_timer_seconds in VALID_TURN_TIMERS:
+        room.turn_timer_seconds = turn_timer_seconds
+
     room.game = ge.GameState(num_players)
     room.started = True
     ge.deal_cards(room.game)
@@ -565,8 +642,11 @@ async def handle_start_game(room, player_id, debug_preset=None):
             return
         room.game_log.append(f"Debug preset '{debug_preset}' applied")
 
-    room.game_log.append("Game started — cards dealt")
+    room.game_log.append(
+        f"Game started — cards dealt (turn timer: {room.turn_timer_seconds}s)"
+    )
     await room.broadcast({"type": "game_started", "num_players": num_players})
+    await check_and_start_turn_timer(room)
     await broadcast_game_state(room)
 
 

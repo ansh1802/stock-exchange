@@ -71,6 +71,9 @@ export interface GameState {
   reveal_data: RevealCompanyData[]
   all_hands: Record<number, Card[]> | null
   price_history: number[][]
+  // Turn timer — null deadline outside player_turn
+  turn_timer_deadline: number | null
+  turn_timer_duration: number
 }
 
 export interface Ranking {

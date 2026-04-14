@@ -1,11 +1,6 @@
 import { create } from 'zustand'
 import type { GameState, Ranking } from '../types/game'
 
-interface AwayPlayer {
-  name: string
-  timeout: number
-}
-
 interface GameStore {
   // Connection
   roomCode: string | null
@@ -19,7 +14,6 @@ interface GameStore {
   gameState: GameState | null
   gameStarted: boolean
   gameOver: Ranking[] | null
-  awayPlayer: AwayPlayer | null
 
   // Actions
   setConnection: (roomCode: string, playerName: string) => void
@@ -30,7 +24,6 @@ interface GameStore {
   setGameStarted: () => void
   setGameState: (state: GameState) => void
   setGameOver: (rankings: Ranking[]) => void
-  setAwayPlayer: (away: AwayPlayer | null) => void
   reset: () => void
 }
 
@@ -44,7 +37,6 @@ const initialState = {
   gameState: null,
   gameStarted: false,
   gameOver: null,
-  awayPlayer: null,
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -73,9 +65,6 @@ export const useGameStore = create<GameStore>((set) => ({
 
   setGameOver: (rankings) =>
     set({ gameOver: rankings }),
-
-  setAwayPlayer: (away) =>
-    set({ awayPlayer: away }),
 
   reset: () => set(initialState),
 }))

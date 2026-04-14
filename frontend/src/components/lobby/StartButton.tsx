@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useGameStore } from '../../store/useGameStore'
+import { cn } from '../../lib/cn'
 import type { ClientMessage } from '../../types/messages'
 
 const DEBUG_PRESETS: Record<string, string> = {
@@ -11,6 +12,8 @@ const DEBUG_PRESETS: Record<string, string> = {
   all_powers: 'Chairman + ShareSuspend + Currency cards. Full end-of-day test.',
 }
 
+const TIMER_OPTIONS = [15, 30, 45, 60, 75, 90] as const
+
 interface Props {
   send: (msg: ClientMessage) => void
 }
@@ -19,15 +22,36 @@ export default function StartButton({ send }: Props) {
   const isHost = useGameStore((s) => s.isHost)
   const players = useGameStore((s) => s.lobbyPlayers)
   const [showPresets, setShowPresets] = useState(false)
+  const [turnTimer, setTurnTimer] = useState<number>(90)
 
   if (!isHost) {
     return <p className="mt-4 text-sm text-gray-500 text-center">Waiting for host to start...</p>
   }
 
   return (
-    <div className="mt-4 space-y-2">
+    <div className="mt-4 space-y-3">
+      <div>
+        <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">Turn timer</p>
+        <div className="grid grid-cols-6 gap-1.5">
+          {TIMER_OPTIONS.map((secs) => (
+            <button
+              key={secs}
+              onClick={() => setTurnTimer(secs)}
+              className={cn(
+                'py-1.5 text-xs font-mono rounded-md border transition-colors',
+                turnTimer === secs
+                  ? 'bg-emerald-600/20 border-emerald-500/60 text-emerald-300'
+                  : 'bg-gray-800/40 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300',
+              )}
+            >
+              {secs}s
+            </button>
+          ))}
+        </div>
+      </div>
+
       <button
-        onClick={() => send({ type: 'start_game' })}
+        onClick={() => send({ type: 'start_game', turn_timer_seconds: turnTimer })}
         disabled={players.length < 2}
         className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium rounded-lg transition-colors"
       >
@@ -47,7 +71,7 @@ export default function StartButton({ send }: Props) {
           {Object.entries(DEBUG_PRESETS).map(([key, desc]) => (
             <button
               key={key}
-              onClick={() => send({ type: 'start_game', preset: key })}
+              onClick={() => send({ type: 'start_game', preset: key, turn_timer_seconds: turnTimer })}
               disabled={players.length < 2}
               className="w-full text-left px-3 py-2 text-xs bg-gray-800/50 hover:bg-gray-700/50 disabled:opacity-30 rounded-lg border border-gray-800 transition-colors group"
             >

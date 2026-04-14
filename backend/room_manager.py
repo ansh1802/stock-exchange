@@ -31,6 +31,10 @@ class Room:
         self.last_activity = time.time()
         self.disconnect_timer = None          # asyncio.Task for auto-action
         self.disconnect_timer_player_id = None  # who the timer is for
+        self.turn_timer_seconds = 90          # configured length of player_turn (lobby setting)
+        self.turn_timer_task = None           # asyncio.Task
+        self.turn_timer_deadline = None       # unix timestamp (float) or None
+        self.turn_timer_player_id = None      # which player_id the timer is ticking for
 
     def touch(self):
         """Update last activity timestamp."""

@@ -5,10 +5,20 @@ import { cn } from '../../lib/cn'
 import { COMPANY_COLOR, COMPANY_TEXT_COLOR } from '../../lib/constants'
 import { formatCash } from '../../lib/format'
 import { Crown, Target, PiggyBank, WifiOff } from 'lucide-react'
+import { useTurnUrgency, type Urgency } from '../../hooks/useTurnUrgency'
+
+const URGENCY_STYLE: Record<Urgency, { ring: string; border: string; dot: string; text: string; pulse: string }> = {
+  calm:     { ring: 'ring-emerald-500/70', border: 'border-emerald-800/50', dot: 'bg-emerald-400', text: 'text-emerald-300', pulse: 'animate-pulse' },
+  warning:  { ring: 'ring-amber-500/70',   border: 'border-amber-800/50',   dot: 'bg-amber-400',   text: 'text-amber-300',   pulse: 'animate-pulse' },
+  critical: { ring: 'ring-red-500/80',     border: 'border-red-800/60',     dot: 'bg-red-500',     text: 'text-red-300',     pulse: 'animate-[pulse_0.6s_ease-in-out_infinite]' },
+  none:     { ring: 'ring-emerald-500/70', border: 'border-emerald-800/50', dot: 'bg-emerald-400', text: 'text-emerald-300', pulse: 'animate-pulse' },
+}
 
 export default function PlayerBoard() {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
+  const { urgency } = useTurnUrgency()
+  const style = URGENCY_STYLE[urgency]
 
   // Track which player just used LoanStock (show piggy bank briefly)
   const [loanStockPlayerId, setLoanStockPlayerId] = useState<number | null>(null)
@@ -85,24 +95,24 @@ export default function PlayerBoard() {
             key={player.id}
             className={cn(
               'rounded-xl border p-4 flex flex-col gap-2.5 transition-all duration-300',
-              isCurrent && !isDisconnected && 'ring-2 ring-emerald-500/70 border-emerald-800/50',
+              isCurrent && !isDisconnected && cn('ring-2', style.ring, style.border),
               isYou && !isCurrent && 'bg-emerald-950/10 border-gray-700',
               !isYou && !isCurrent && !isDisconnected && 'bg-gray-900/50 border-gray-800',
-              isCurrent && isYou && 'bg-emerald-950/20 border-emerald-800/50',
+              isCurrent && isYou && cn('bg-emerald-950/20', style.border),
               isDisconnected && 'opacity-50 bg-gray-900/30 border-gray-800/50',
             )}
           >
             {/* Name + Net Worth row */}
             <div className="flex items-center gap-2">
               {isCurrent && !isDisconnected && (
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className={cn('w-2.5 h-2.5 rounded-full', style.dot, style.pulse)} />
               )}
               {isDisconnected && (
                 <WifiOff size={14} className="text-red-400 flex-shrink-0" />
               )}
               <span className={cn(
                 'text-base font-bold truncate',
-                isDisconnected ? 'text-gray-500' : isCurrent ? 'text-emerald-300' : isYou ? 'text-white' : 'text-gray-300',
+                isDisconnected ? 'text-gray-500' : isCurrent ? style.text : isYou ? 'text-white' : 'text-gray-300',
               )}>
                 {player.name}
                 {isYou && <span className="text-gray-500 font-normal text-sm ml-1">(you)</span>}
