@@ -1,7 +1,8 @@
 import { useGameStore } from '../../store/useGameStore'
-import { COMPANY_COLOR } from '../../lib/constants'
+import { COMPANY_COLOR, COMPANY_TICKER } from '../../lib/constants'
 import { cn } from '../../lib/cn'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 // Inline SVG sparkline from price history
 function Sparkline({ values, color }: { values: number[]; color: string }) {
@@ -48,9 +49,60 @@ const SPARK_COLORS: Record<string, string> = {
 
 export default function StockTicker() {
   const gameState = useGameStore((s) => s.gameState)
+  const isMobile = useIsMobile()
   if (!gameState) return null
 
   const { price_history } = gameState
+
+  if (isMobile) {
+    return (
+      <div className="flex gap-1.5 px-2 py-1.5 bg-gray-900 border-b border-gray-800 overflow-x-auto mobile-scroll">
+        {gameState.companies.map((co, i) => {
+          const diff = co.value - co.prev_value
+          const isUp = diff > 0
+          const ticker = co.ticker || COMPANY_TICKER[co.name] || co.name.toUpperCase()
+          return (
+            <div
+              key={co.name}
+              className={cn(
+                'flex-shrink-0 min-w-[72px] px-2 py-1 rounded-md border',
+                co.is_open
+                  ? 'bg-gray-800/60 border-gray-700'
+                  : 'bg-gray-800/20 border-gray-800 opacity-50',
+              )}
+            >
+              <div className="flex items-center gap-1">
+                <span className={cn('w-1.5 h-1.5 rounded-full', COMPANY_COLOR[co.name])} />
+                <span className="text-[10px] font-mono font-semibold text-gray-300 tracking-wider">
+                  {ticker}
+                </span>
+                {!co.is_open && (
+                  <span className="text-[8px] text-red-400 ml-auto font-semibold">X</span>
+                )}
+              </div>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-sm font-mono font-bold text-white leading-tight">
+                  {co.value}
+                </span>
+                {diff !== 0 ? (
+                  <span
+                    className={cn(
+                      'text-[10px] font-mono leading-tight',
+                      isUp ? 'text-emerald-400' : 'text-red-400',
+                    )}
+                  >
+                    {isUp ? '+' : ''}{diff}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-gray-500 leading-tight">—</span>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
 
   return (
     <div className="flex gap-1 px-2 py-2 bg-gray-900 border-b border-gray-800 overflow-x-auto">
@@ -74,7 +126,9 @@ export default function StockTicker() {
           >
             <div className="flex items-center gap-1.5">
               <span className={cn('w-2 h-2 rounded-full', COMPANY_COLOR[co.name])} />
-              <span className="text-xs text-gray-400 truncate">{co.name}</span>
+              <span className="text-xs font-mono font-semibold tracking-wider text-gray-300 truncate">
+                {co.name.toUpperCase()}
+              </span>
               {!co.is_open && <span className="text-[10px] text-red-400 ml-auto">CLOSED</span>}
             </div>
             <div className="flex items-center gap-2 mt-1">

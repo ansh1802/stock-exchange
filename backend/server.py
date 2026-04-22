@@ -443,6 +443,7 @@ def build_client_state(room, player_id):
     for i, c in enumerate(raw["companies"]):
         companies.append({
             "name": c["name"],
+            "ticker": c.get("ticker", ""),
             "value": c["value"],
             "is_open": c["open"],
             "prev_value": last_day_values[i] if i < len(last_day_values) else c["base_value"],

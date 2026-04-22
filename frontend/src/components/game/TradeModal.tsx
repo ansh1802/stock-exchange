@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useGameStore } from '../../store/useGameStore'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { cn } from '../../lib/cn'
-import { COMPANY_COLOR } from '../../lib/constants'
+import { COMPANY_COLOR, COMPANY_TICKER } from '../../lib/constants'
 import { formatCash } from '../../lib/format'
 import { X } from 'lucide-react'
 import type { ClientMessage } from '../../types/messages'
@@ -15,6 +16,7 @@ interface Props {
 
 export default function TradeModal({ mode, send, onClose }: Props) {
   const gameState = useGameStore((s) => s.gameState)
+  const isMobile = useIsMobile()
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null)
   const [quantity, setQuantity] = useState(1)
 
@@ -82,18 +84,20 @@ export default function TradeModal({ mode, send, onClose }: Props) {
         </div>
 
         {/* Company selector */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className={cn('grid gap-2', isMobile ? 'grid-cols-2' : 'grid-cols-3')}>
           {gameState.companies.map((co, i) => {
             const disabled = isBuy && (!co.is_open || co.value <= 0)
             const holdingQty = me.stocks[co.name] ?? 0
             const noShares = !isBuy && holdingQty === 0
+            const label = isMobile ? (co.ticker || COMPANY_TICKER[co.name] || co.name) : co.name
             return (
               <button
                 key={co.name}
                 onClick={() => { setSelectedCompany(i); setQuantity(1) }}
                 disabled={disabled || noShares}
                 className={cn(
-                  'px-2 py-2 rounded-lg text-xs font-medium transition-all border',
+                  'rounded-lg text-xs font-medium transition-all border',
+                  isMobile ? 'px-2 min-h-[44px]' : 'px-2 py-2',
                   selectedCompany === i
                     ? isBuy
                       ? 'border-emerald-500 bg-emerald-500/10 text-white ring-1 ring-emerald-500/30'
@@ -103,7 +107,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
                 )}
               >
                 <span className={cn('inline-block w-1.5 h-1.5 rounded-full mr-1', COMPANY_COLOR[co.name])} />
-                {co.name}
+                {label}
               </button>
             )
           })}
@@ -112,30 +116,42 @@ export default function TradeModal({ mode, send, onClose }: Props) {
         {/* Quantity + preview */}
         {company && (
           <div className="space-y-3">
-            <div className="flex items-center gap-3">
+            <div className={cn('flex items-center', isMobile ? 'gap-1.5' : 'gap-3')}>
               <label className="text-xs text-gray-400">Qty</label>
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 5))}
-                className="w-7 h-7 bg-gray-800 rounded text-gray-300 hover:bg-gray-700 text-xs"
+                className={cn(
+                  'bg-gray-800 rounded text-gray-300 hover:bg-gray-700 text-xs',
+                  isMobile ? 'w-11 h-11' : 'w-7 h-7',
+                )}
               >
                 -5
               </button>
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-7 h-7 bg-gray-800 rounded text-gray-300 hover:bg-gray-700"
+                className={cn(
+                  'bg-gray-800 rounded text-gray-300 hover:bg-gray-700',
+                  isMobile ? 'w-11 h-11' : 'w-7 h-7',
+                )}
               >
                 -
               </button>
               <span className="font-mono text-white w-10 text-center text-lg">{quantity}</span>
               <button
                 onClick={() => setQuantity(Math.min(maxQty, quantity + 1))}
-                className="w-7 h-7 bg-gray-800 rounded text-gray-300 hover:bg-gray-700"
+                className={cn(
+                  'bg-gray-800 rounded text-gray-300 hover:bg-gray-700',
+                  isMobile ? 'w-11 h-11' : 'w-7 h-7',
+                )}
               >
                 +
               </button>
               <button
                 onClick={() => setQuantity(Math.min(maxQty, quantity + 5))}
-                className="w-7 h-7 bg-gray-800 rounded text-gray-300 hover:bg-gray-700 text-xs"
+                className={cn(
+                  'bg-gray-800 rounded text-gray-300 hover:bg-gray-700 text-xs',
+                  isMobile ? 'w-11 h-11' : 'w-7 h-7',
+                )}
               >
                 +5
               </button>
