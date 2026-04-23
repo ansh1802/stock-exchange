@@ -26,17 +26,17 @@ export default function CardComponent({ card, onClick, selected, compact }: Prop
         isPower
           ? 'bg-amber-900/30 border-amber-600/50 hover:border-amber-400'
           : 'bg-gray-800 border-gray-600 hover:border-gray-400',
-        isPower && compact && 'min-w-[52px]',
+        isPower && compact && 'min-w-[56px] px-0.5',
       )}
     >
       {isPower ? (
         <span
           className={cn(
-            'font-bold text-amber-400 uppercase tracking-wider text-center leading-tight',
-            compact ? 'text-[8px]' : 'text-[10px]',
+            'font-bold text-amber-400 uppercase text-center whitespace-pre-line break-words',
+            compact ? 'text-[8px] leading-[1.1] tracking-normal' : 'text-[10px] tracking-wider leading-tight',
           )}
         >
-          {card.company.replace(' ', '')}
+          {card.company.replace(' ', '\n')}
         </span>
       ) : (
         <>

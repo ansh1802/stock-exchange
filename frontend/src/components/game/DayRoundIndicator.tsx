@@ -19,7 +19,7 @@ export default function DayRoundIndicator({ isConnected }: Props) {
 
   if (isMobile) {
     return (
-      <div className="flex items-center justify-between px-3 py-1.5 bg-gray-900 border-b border-gray-800">
+      <div className="flex items-center justify-between px-3 py-2 bg-gray-900 border-b border-gray-800">
         <div className="flex items-center gap-2 font-mono text-xs">
           <span className="text-gray-300">
             Day <span className="text-white font-bold">{gameState.day}</span>

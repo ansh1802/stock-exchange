@@ -56,7 +56,7 @@ export default function StockTicker() {
 
   if (isMobile) {
     return (
-      <div className="flex gap-1.5 px-2 py-1.5 bg-gray-900 border-b border-gray-800 overflow-x-auto mobile-scroll">
+      <div className="grid grid-cols-3 gap-1.5 px-3 py-1.5 bg-gray-900 border-b border-gray-800">
         {gameState.companies.map((co, i) => {
           const diff = co.value - co.prev_value
           const isUp = diff > 0
@@ -65,7 +65,7 @@ export default function StockTicker() {
             <div
               key={co.name}
               className={cn(
-                'flex-shrink-0 min-w-[72px] px-2 py-1 rounded-md border',
+                'px-2 py-1 rounded-md border',
                 co.is_open
                   ? 'bg-gray-800/60 border-gray-700'
                   : 'bg-gray-800/20 border-gray-800 opacity-50',

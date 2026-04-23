@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { GameState, Ranking } from '../types/game'
 import type { ChatMessage } from '../types/messages'
 
@@ -49,43 +50,58 @@ const initialState = {
   chatUnread: 0,
 }
 
-export const useGameStore = create<GameStore>((set) => ({
-  ...initialState,
+export const useGameStore = create<GameStore>()(
+  persist(
+    (set) => ({
+      ...initialState,
 
-  setConnection: (roomCode, playerName) =>
-    set({ roomCode, playerName }),
+      setConnection: (roomCode, playerName) =>
+        set({ roomCode, playerName }),
 
-  setLobby: (players, isHost) =>
-    set({ lobbyPlayers: players, isHost }),
+      setLobby: (players, isHost) =>
+        set({ lobbyPlayers: players, isHost }),
 
-  setConnected: (connected) =>
-    set({ isConnected: connected }),
+      setConnected: (connected) =>
+        set({ isConnected: connected }),
 
-  setReconnecting: (reconnecting) =>
-    set({ isReconnecting: reconnecting }),
+      setReconnecting: (reconnecting) =>
+        set({ isReconnecting: reconnecting }),
 
-  updateLobbyPlayers: (players) =>
-    set({ lobbyPlayers: players }),
+      updateLobbyPlayers: (players) =>
+        set({ lobbyPlayers: players }),
 
-  setGameStarted: () =>
-    set({ gameStarted: true }),
+      setGameStarted: () =>
+        set({ gameStarted: true }),
 
-  setGameState: (state) =>
-    set({ gameState: state }),
+      setGameState: (state) =>
+        set({ gameState: state }),
 
-  setGameOver: (rankings) =>
-    set({ gameOver: rankings }),
+      setGameOver: (rankings) =>
+        set({ gameOver: rankings }),
 
-  setChatMessages: (messages) =>
-    set({ chatMessages: messages, chatUnread: 0 }),
+      setChatMessages: (messages) =>
+        set({ chatMessages: messages, chatUnread: 0 }),
 
-  appendChatMessage: (message) =>
-    set((s) => ({
-      chatMessages: [...s.chatMessages, message],
-      chatUnread: s.chatUnread + 1,
-    })),
+      appendChatMessage: (message) =>
+        set((s) => ({
+          chatMessages: [...s.chatMessages, message],
+          chatUnread: s.chatUnread + 1,
+        })),
 
-  clearChatUnread: () => set({ chatUnread: 0 }),
+      clearChatUnread: () => set({ chatUnread: 0 }),
 
-  reset: () => set(initialState),
-}))
+      reset: () => set(initialState),
+    }),
+    {
+      name: 'stock-exchange-session',
+      // sessionStorage is per-tab, so two tabs don't overwrite each other's
+      // identity. Reload within a tab still restores the session.
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (s) => ({
+        roomCode: s.roomCode,
+        playerName: s.playerName,
+        isHost: s.isHost,
+      }),
+    },
+  ),
+)

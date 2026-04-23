@@ -39,14 +39,14 @@ function HoldingPill({
 }) {
   const ticker = COMPANY_TICKER[company] ?? company.toUpperCase()
   return (
-    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gray-800/60 border border-gray-700/50 text-[11px] font-mono">
-      <span className={cn('w-1.5 h-1.5 rounded-full', COMPANY_COLOR[company])} />
-      <span className="text-gray-300">{ticker}</span>
-      <span className="text-white font-semibold">{qty}</span>
-      {position === 'chairman' && <Crown size={10} className="text-amber-400" />}
-      {position === 'director' && <Target size={10} className="text-sky-400" />}
+    <span className="inline-flex w-fit justify-self-start items-center gap-1 px-1.5 py-0.5 rounded-md bg-gray-800/60 border border-gray-700/50 text-[10px] font-mono whitespace-nowrap">
+      <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', COMPANY_COLOR[company])} />
+      <span className="text-gray-300 w-[30px]">{ticker}</span>
+      <span className="text-white font-semibold ml-1 tabular-nums">{qty}</span>
+      {position === 'chairman' && <Crown size={10} className="text-amber-400 flex-shrink-0" />}
+      {position === 'director' && <Target size={10} className="text-sky-400 flex-shrink-0" />}
       {position === 'double_director' && (
-        <span className="flex">
+        <span className="flex flex-shrink-0">
           <Target size={10} className="text-sky-400" />
           <Target size={10} className="text-sky-400 -ml-1" />
         </span>
@@ -168,21 +168,21 @@ export default function MobilePlayerBoard() {
               </span>
             </div>
 
-            {/* Holdings pills row */}
-            <div className="mt-1 flex flex-wrap gap-1">
-              {holdings.length === 0 ? (
-                <span className="text-[10px] text-gray-600 italic">No holdings</span>
-              ) : (
-                holdings.map(([company, qty]) => (
+            {/* Holdings pills — fixed 3-column grid (up to 6 companies = 2 rows) */}
+            {holdings.length === 0 ? (
+              <div className="mt-1 text-[10px] text-gray-600 italic">No holdings</div>
+            ) : (
+              <div className="mt-1 grid grid-cols-3 gap-1">
+                {holdings.map(([company, qty]) => (
                   <HoldingPill
                     key={company}
                     company={company}
                     qty={qty}
                     position={getPosition(gameState, player.id, company)}
                   />
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )
       })}

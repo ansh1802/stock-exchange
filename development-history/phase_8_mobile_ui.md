@@ -63,3 +63,23 @@ After Phase 8, the split is:
 - **Shared components like `CardComponent`, `TurnTimerDisplay`, every overlay** — one source, rendered at both scales. `useIsMobile()` is reserved for *branching behaviour*; responsive Tailwind prefixes handle pure sizing.
 
 Practical rule: if you catch yourself writing two near-identical components differing only in CSS, extract a shared one and lean on `md:` prefixes.
+
+## Phase 8.1 — Real-device rebalance + dev reload fixes
+
+After landing Phase 8, a playtest on a real phone exposed several follow-up issues. All fixed in a single follow-up commit; desktop untouched.
+
+### Layout rebalance
+- **`StockTicker`** — mobile is now a fixed `grid grid-cols-3` (2 rows × 3) instead of a horizontal scroll strip. Every company is always visible.
+- **`MobilePlayerBoard`** — holdings pills live in a `grid grid-cols-3` with `w-fit justify-self-start` pills. Fixed-width ticker slot (`w-[30px]`) + `ml-1` before qty so every pill has the same shape regardless of holding. Pills never overflow the card.
+- **`MobileCardStrip`** — the "CARDS (N) / View All ↑" island is gone. Replaced by a centred chevron tab protruding above the strip (`absolute -top-4`, rounded top) — tap opens `ViewAllDrawer`.
+- **`CardComponent`** — power card labels now split on the space and wrap (`"Rights Issue"` → two lines). Compact mobile variant drops `tracking-wider` and uses `leading-[1.1]` so `RIGHTSISSUE` / `SHARESUSPEND` / `LOANSTOCK` fit cleanly.
+- **`CardRevealOverlay`** — switched to `100dvh` (iOS URL bar), added `pb-20` to clear the company-dot indicator, removed the nested `max-h-[40vh]` so DELTA / New Value is always reachable. Dots pinned with `pb-safe`.
+- **`DayRoundIndicator`** — mobile bar `py-1.5` → `py-2` so text isn't squeezed under the `ReconnectingBanner`.
+
+### Dev-mode reload UX
+- **Session persistence** — `useGameStore` wrapped in Zustand `persist` with `createJSONStorage(() => sessionStorage)`, partialized to `{roomCode, playerName, isHost}`. Reload inside a tab restores the session; server sees it as a reconnection via `room_manager.py` same-name branch. Scoped to **sessionStorage** (not localStorage) so two tabs on the same laptop don't clobber each other's identity — opening a second tab regressed us to both tabs being the same player and deadlocking the game.
+- **White-flash kill** — `index.html` now inlines `html, body { background: #030712; color: #e5e7eb }` plus a `Loading…` placeholder inside `#root`. Phone paint #1 is the app's dark theme, not default browser white.
+- **Vite proxy noise** — uvicorn autoreload or a phone dropping its WS mid-stream used to dump multi-page `EPIPE` / `ECONNREFUSED` stacks every few seconds. `vite.config.ts` now installs a `customLogger` that matches `ws proxy (socket )?error` strings and replaces them with a throttled `[ws] backend unreachable — waiting for uvicorn` one-liner. Proxy-level `error` handlers also prevent Node from throwing.
+
+### Known dev-mode limitation
+Mobile reload over LAN still takes ~20s in Vite dev because ESM unbundled serves hundreds of per-module requests. `npm run build && npm run preview -- --host` drops it to 1–3s (a handful of minified bundles). Prod (Railway Dockerfile) is unaffected — it uses `npm run build` already.
