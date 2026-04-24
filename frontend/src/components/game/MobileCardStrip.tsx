@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { ChevronUp } from 'lucide-react'
-import { cn } from '../../lib/cn'
 import type { Card } from '../../types/game'
 import CardComponent from './CardComponent'
 
