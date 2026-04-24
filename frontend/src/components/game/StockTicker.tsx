@@ -57,7 +57,7 @@ export default function StockTicker() {
   if (isMobile) {
     return (
       <div className="grid grid-cols-3 gap-1.5 px-3 py-1.5 bg-gray-900 border-b border-gray-800">
-        {gameState.companies.map((co, i) => {
+        {gameState.companies.map((co) => {
           const diff = co.value - co.prev_value
           const isUp = diff > 0
           const ticker = co.ticker || COMPANY_TICKER[co.name] || co.name.toUpperCase()
