@@ -7,6 +7,7 @@ export interface Card {
 
 export interface Company {
   name: string
+  ticker: string
   value: number
   is_open: boolean
   prev_value: number

@@ -6,6 +6,7 @@ import { COMPANY_COLOR, COMPANY_TEXT_COLOR } from '../../lib/constants'
 import { formatCash } from '../../lib/format'
 import { Crown, Target, PiggyBank, WifiOff } from 'lucide-react'
 import { useTurnUrgency, type Urgency } from '../../hooks/useTurnUrgency'
+import { portfolioValue, getPosition } from '../../lib/playerHelpers'
 
 const URGENCY_STYLE: Record<Urgency, { ring: string; border: string; dot: string; text: string; pulse: string }> = {
   calm:     { ring: 'ring-emerald-500/70', border: 'border-emerald-800/50', dot: 'bg-emerald-400', text: 'text-emerald-300', pulse: 'animate-pulse' },
@@ -44,30 +45,7 @@ export default function PlayerBoard() {
 
   if (!gameState) return null
 
-  const { players, companies, chairman, directors, current_player_name } = gameState
-
-  // Compute portfolio value for a player
-  const portfolioValue = (player: typeof players[0]) => {
-    let total = player.cash
-    for (const co of companies) {
-      const held = player.stocks[co.name] ?? 0
-      if (held > 0 && co.is_open) {
-        total += held * co.value
-      }
-    }
-    return total
-  }
-
-  // Get position for a player+company
-  const getPosition = (playerId: number, companyName: string) => {
-    if (chairman[companyName] === playerId) return 'chairman'
-    if (directors[companyName]?.includes(playerId)) {
-      const p = gameState.players.find((p) => p.id === playerId)
-      if (p && (p.stocks[companyName] ?? 0) >= 100) return 'double_director'
-      return 'director'
-    }
-    return null
-  }
+  const { players, companies, current_player_name } = gameState
 
   // Fixed 6-slot grid (2 rows x 3 cols), empty slots for < 6 players
   const slots = Array.from({ length: 6 }, (_, i) => players[i] ?? null)
@@ -88,7 +66,7 @@ export default function PlayerBoard() {
         const isYou = player.name === playerName
         const isDisconnected = player.connected === false && !isYou
         const holdings = Object.entries(player.stocks).filter(([, qty]) => qty > 0)
-        const netWorth = portfolioValue(player)
+        const netWorth = portfolioValue(player, companies)
 
         return (
           <div
@@ -140,7 +118,7 @@ export default function PlayerBoard() {
                 <p className="text-xs text-gray-600 italic">No holdings</p>
               )}
               {holdings.map(([company, qty]) => {
-                const position = getPosition(player.id, company)
+                const position = getPosition(gameState, player.id, company)
                 return (
                   <div key={company} className="flex items-center gap-2 text-sm">
                     <span className={cn('w-2 h-2 rounded-full flex-shrink-0', COMPANY_COLOR[company])} />

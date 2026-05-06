@@ -1,5 +1,6 @@
 from .constants import (
     COMPANY_NAMES,
+    COMPANY_TICKERS,
     COMPANY_BASE_VALUES,
     STARTING_CASH,
     STARTING_SHARES,
@@ -24,8 +25,9 @@ class Card:
 
 
 class Company:
-    def __init__(self, name, value):
+    def __init__(self, name, value, ticker=""):
         self.name = name
+        self.ticker = ticker
         self.value = value
         self.base_value = value
         self.open = True
@@ -33,6 +35,7 @@ class Company:
     def to_dict(self):
         return {
             "name": self.name,
+            "ticker": self.ticker,
             "value": self.value,
             "base_value": self.base_value,
             "open": self.open,
@@ -79,8 +82,8 @@ class GameState:
         self.num_players = num_players
         self.players = [Player(i + 1) for i in range(num_players)]
         self.companies = [
-            Company(name, val)
-            for name, val in zip(COMPANY_NAMES, COMPANY_BASE_VALUES)
+            Company(name, val, ticker)
+            for name, ticker, val in zip(COMPANY_NAMES, COMPANY_TICKERS, COMPANY_BASE_VALUES)
         ]
         self.available_shares = [STARTING_SHARES] * len(COMPANY_NAMES)
         self.previous_values = []

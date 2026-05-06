@@ -20,3 +20,4 @@ dist-ssr/
 # Test artifacts
 *.png
 .playwright-mcp/
+backend/venv/

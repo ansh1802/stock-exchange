@@ -200,7 +200,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
       </div>
 
       {/* Main content */}
-      <div className="relative w-full max-w-2xl mx-auto px-8 mt-20 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+      <div className="relative w-full max-w-2xl mx-auto px-4 sm:px-8 mt-16 sm:mt-20 pb-20 max-h-[calc(100dvh-5rem)] overflow-y-auto mobile-scroll scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
         <AnimatePresence mode="wait">
           {currentCompany && stage.type !== 'complete' && (
             <motion.div
@@ -228,7 +228,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
               </div>
 
               {/* Revealed cards */}
-              <div className="max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+              <div>
                 <div className="grid gap-2">
                   <AnimatePresence>
                     {revealedForCompany.map((card, i) => (
@@ -357,7 +357,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
       </div>
 
       {/* Company dots at bottom */}
-      <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2">
+      <div className="absolute bottom-4 sm:bottom-8 left-0 right-0 flex justify-center gap-2 pb-safe">
         {revealData.map((rd, i) => (
           <div
             key={rd.company_name}

@@ -34,3 +34,17 @@ export const COMPANY_NUM: Record<string, number> = {
   Reliance: 5,
   Infosys: 6,
 }
+
+/**
+ * 4-char uppercase ticker, mirrored from backend `Company.ticker`. Use this
+ * fallback when only a company name string is available (card reveal overlays,
+ * ghost animations) and we don't have the full Company object from gameState.
+ */
+export const COMPANY_TICKER: Record<string, string> = {
+  Vodafone: 'VODA',
+  YesBank: 'YESB',
+  Cred: 'CRED',
+  TCS: 'TCS',
+  Reliance: 'RELI',
+  Infosys: 'INFO',
+}

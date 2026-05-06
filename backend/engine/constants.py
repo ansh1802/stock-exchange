@@ -1,4 +1,5 @@
 COMPANY_NAMES = ["Vodafone", "YesBank", "Cred", "TCS", "Reliance", "Infosys"]
+COMPANY_TICKERS = ["VODA", "YESB", "CRED", "TCS", "RELI", "INFO"]
 COMPANY_BASE_VALUES = [20, 25, 40, 55, 75, 80]
 POWER_CARD_NAMES = [
     "RightsIssue",

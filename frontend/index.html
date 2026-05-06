@@ -3,11 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>frontend</title>
+    <style>
+      html, body { background: #030712; color: #e5e7eb; margin: 0; font-family: ui-monospace, monospace; }
+      #root { min-height: 100svh; }
+      .__boot {
+        min-height: 100svh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        font-size: 0.875rem;
+        letter-spacing: 0.1em;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="__boot">Loading…</div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

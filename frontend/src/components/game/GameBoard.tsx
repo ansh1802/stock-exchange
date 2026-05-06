@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useGameStore } from '../../store/useGameStore'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import type { ClientMessage } from '../../types/messages'
 import type { RevealCompanyData } from '../../types/game'
 import StockTicker from './StockTicker'
@@ -9,6 +10,9 @@ import PlayerBoard from './PlayerBoard'
 import PlayerHand from './PlayerHand'
 import ActionBar from './ActionBar'
 import GameLog from './GameLog'
+import MobilePlayerBoard from './MobilePlayerBoard'
+import MobileTabBar, { type MobileTab } from './MobileTabBar'
+import MobileLogChat from './MobileLogChat'
 import RightsIssueModal from './RightsIssueModal'
 import CardRevealOverlay from './CardRevealOverlay'
 import ShareSuspendOverlay from './ShareSuspendOverlay'
@@ -27,6 +31,9 @@ type AnimationPhase = 'none' | 'card_reveal' | 'share_suspend' | 'currency_settl
 export default function GameBoard({ send }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const isConnected = useGameStore((s) => s.isConnected)
+  const chatUnread = useGameStore((s) => s.chatUnread)
+  const isMobile = useIsMobile()
+  const [mobileTab, setMobileTab] = useState<MobileTab>('players')
 
   // Animation state — decoupled from backend phase
   const [animPhase, setAnimPhase] = useState<AnimationPhase>('none')
@@ -135,36 +142,8 @@ export default function GameBoard({ send }: Props) {
     gameState.chairman_director_queue.length > 0 &&
     animPhase !== 'card_reveal'
 
-  return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      {/* Connection banner */}
-      <ReconnectingBanner />
-
-      {/* Top bar */}
-      <DayRoundIndicator isConnected={isConnected} />
-
-      {/* Stock ticker */}
-      <StockTicker />
-
-      {/* Main content area */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Center: Player Board */}
-        <div className="flex-1 p-4 overflow-y-auto">
-          <PlayerBoard />
-        </div>
-
-        {/* Right: Game Log */}
-        <div className="w-72 border-l border-gray-800 flex flex-col">
-          <GameLog send={send} />
-        </div>
-      </div>
-
-      {/* Action bar (Buy/Sell/Pass) */}
-      <ActionBar send={send} />
-
-      {/* Bottom: Player hand */}
-      <PlayerHand send={send} />
-
+  const sharedOverlays = (
+    <>
       {/* Modals for sub-phases */}
       {phase === 'rights_issue' && !showRightsIssueOverlay && <RightsIssueModal send={send} />}
 
@@ -211,6 +190,66 @@ export default function GameBoard({ send }: Props) {
           <CurrencySettlementOverlay key="currency-settlement" onComplete={handleCurrencyComplete} send={send} />
         )}
       </AnimatePresence>
+    </>
+  )
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-screen overflow-hidden bg-gray-950">
+        <ReconnectingBanner />
+        <DayRoundIndicator isConnected={isConnected} />
+        <StockTicker />
+
+        {/* Tab content area: flex-1, scrolls internally */}
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          {mobileTab === 'players' ? <MobilePlayerBoard /> : <MobileLogChat send={send} />}
+        </div>
+
+        {/* Pinned above chrome: card strip */}
+        <PlayerHand send={send} />
+
+        {/* Action bar */}
+        <ActionBar send={send} />
+
+        {/* Bottom tab bar */}
+        <MobileTabBar active={mobileTab} onChange={setMobileTab} chatUnread={chatUnread} />
+
+        {sharedOverlays}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Connection banner */}
+      <ReconnectingBanner />
+
+      {/* Top bar */}
+      <DayRoundIndicator isConnected={isConnected} />
+
+      {/* Stock ticker */}
+      <StockTicker />
+
+      {/* Main content area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Center: Player Board */}
+        <div className="flex-1 p-4 overflow-y-auto">
+          <PlayerBoard />
+        </div>
+
+        {/* Right: Game Log */}
+        <div className="w-72 border-l border-gray-800 flex flex-col">
+          <GameLog send={send} />
+        </div>
+      </div>
+
+      {/* Action bar (Buy/Sell/Pass) */}
+      <ActionBar send={send} />
+
+      {/* Bottom: Player hand */}
+      <PlayerHand send={send} />
+
+      {sharedOverlays}
     </div>
   )
 }

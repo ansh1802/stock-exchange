@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useGameStore } from '../../store/useGameStore'
+import { useIsMobile } from '../../hooks/useIsMobile'
+import { cn } from '../../lib/cn'
 import type { ClientMessage } from '../../types/messages'
 import TradeModal from './TradeModal'
 
@@ -11,6 +13,7 @@ interface Props {
 export default function ActionBar({ send }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
+  const isMobile = useIsMobile()
   const [tradeMode, setTradeMode] = useState<'buy' | 'sell' | null>(null)
 
   if (!gameState) return null
@@ -21,6 +24,11 @@ export default function ActionBar({ send }: Props) {
     send({ type: 'pass' })
   }
 
+  const buttonClass = cn(
+    'flex-1 rounded-lg font-medium text-sm transition-colors',
+    isMobile ? 'min-h-[44px] py-2.5' : 'py-2.5',
+  )
+
   return (
     <>
       <div className="px-4 py-2 bg-gray-900 border-t border-gray-800">
@@ -30,7 +38,7 @@ export default function ActionBar({ send }: Props) {
               onClick={() => setTradeMode('buy')}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
-              className="flex-1 py-2.5 rounded-lg font-medium text-sm bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+              className={cn(buttonClass, 'bg-emerald-600 hover:bg-emerald-500 text-white')}
             >
               Buy
             </motion.button>
@@ -38,7 +46,7 @@ export default function ActionBar({ send }: Props) {
               onClick={() => setTradeMode('sell')}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
-              className="flex-1 py-2.5 rounded-lg font-medium text-sm bg-red-600 hover:bg-red-500 text-white transition-colors"
+              className={cn(buttonClass, 'bg-red-600 hover:bg-red-500 text-white')}
             >
               Sell
             </motion.button>
@@ -46,7 +54,7 @@ export default function ActionBar({ send }: Props) {
               onClick={handlePass}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
-              className="flex-1 py-2.5 rounded-lg font-medium text-sm bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
+              className={cn(buttonClass, 'bg-gray-700 hover:bg-gray-600 text-gray-300')}
             >
               Pass
             </motion.button>

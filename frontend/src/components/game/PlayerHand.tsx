@@ -4,15 +4,21 @@ import type { ClientMessage } from '../../types/messages'
 import type { Card } from '../../types/game'
 import CardComponent from './CardComponent'
 import PowerCardPanel from './PowerCardPanel'
+import MobileCardStrip from './MobileCardStrip'
+import ViewAllDrawer from './ViewAllDrawer'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 interface Props {
   send: (msg: ClientMessage) => void
 }
 
 export default function PlayerHand({ send }: Props) {
+  // All hooks above every conditional return — Phase-4 rule.
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
+  const isMobile = useIsMobile()
   const [selectedCard, setSelectedCard] = useState<number | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   if (!gameState) return null
 
@@ -21,7 +27,13 @@ export default function PlayerHand({ send }: Props) {
 
   const handleCardClick = (index: number) => {
     if (!isMyTurn) return
-    setSelectedCard(selectedCard === index ? null : index)
+    setSelectedCard((prev) => (prev === index ? null : index))
+  }
+
+  const handleSelectFromDrawer = (index: number) => {
+    if (!isMyTurn) return
+    setSelectedCard((prev) => (prev === index ? null : index))
+    setDrawerOpen(false)
   }
 
   const selectedCardData = selectedCard !== null ? hand[selectedCard] : null
@@ -35,6 +47,36 @@ export default function PlayerHand({ send }: Props) {
       send({ type: 'rights_issue', company_num: companyNum })
     }
     setSelectedCard(null)
+  }
+
+  if (isMobile) {
+    return (
+      <>
+        {selectedCardData?.is_power && isMyTurn && (
+          <PowerCardPanel
+            card={selectedCardData}
+            companies={gameState.companies}
+            onUse={usePowerCard}
+            onCancel={() => setSelectedCard(null)}
+          />
+        )}
+        <MobileCardStrip
+          hand={hand}
+          selectedIdx={selectedCard}
+          isMyTurn={isMyTurn}
+          onSelect={handleCardClick}
+          onOpenDrawer={() => setDrawerOpen(true)}
+        />
+        <ViewAllDrawer
+          open={drawerOpen}
+          hand={hand}
+          selectedIdx={selectedCard}
+          isMyTurn={isMyTurn}
+          onSelect={handleSelectFromDrawer}
+          onClose={() => setDrawerOpen(false)}
+        />
+      </>
+    )
   }
 
   return (
