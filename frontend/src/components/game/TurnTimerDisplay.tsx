@@ -56,7 +56,7 @@ export default function TurnTimerDisplay({ alwaysShow = false }: Props) {
   return (
     <div
       className={cn(
-        'flex items-center gap-1.5 font-mono text-xs tabular-nums',
+        'flex items-center gap-1.5 font-mono text-xs tabular-nums tracking-[0.05em]',
         COLOR_CLASSES[urgency],
         PULSE_CLASSES[urgency],
       )}

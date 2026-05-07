@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useGameStore } from '../../store/useGameStore'
 import type { ClientMessage } from '../../types/messages'
 import type { Card } from '../../types/game'
@@ -7,6 +7,7 @@ import PowerCardPanel from './PowerCardPanel'
 import MobileCardStrip from './MobileCardStrip'
 import ViewAllDrawer from './ViewAllDrawer'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { sortHand } from '../../lib/sortHand'
 
 interface Props {
   send: (msg: ClientMessage) => void
@@ -23,7 +24,9 @@ export default function PlayerHand({ send }: Props) {
   if (!gameState) return null
 
   const isMyTurn = gameState.phase === 'player_turn' && gameState.current_player_name === playerName
-  const hand = gameState.your_hand
+  // Display the hand sorted (company → positives→negatives → magnitude · power last).
+  // selectedCard indexes into this sorted view.
+  const hand = useMemo(() => sortHand(gameState.your_hand), [gameState.your_hand])
 
   const handleCardClick = (index: number) => {
     if (!isMyTurn) return
