@@ -1,7 +1,7 @@
 """Phase transition functions: card reveal, share suspend, currency settlement, day end.
 
 Phase order after trading:
-    card_reveal (with chairman/director discards) → share_suspend → currency_settlement → day_end
+    card_reveal (with chairman/director discards + currency settlement) → share_suspend → day_end
 """
 
 import random
@@ -41,7 +41,9 @@ def begin_card_reveal(game_state):
 
     This replaces the old 'fluctuation' phase. Values are NOT applied yet —
     they're applied in _finalize_card_reveal after all chairman/director
-    discards are resolved.
+    discards are resolved. Currency effects are also snapshotted here so the
+    frontend can animate currency settlement immediately after the final
+    company reveal (Infosys), with both applied together at finalize.
     """
     if game_state.game_phase != "card_reveal":
         return result(False, "Not in card reveal phase.", game_state)
@@ -76,6 +78,23 @@ def begin_card_reveal(game_state):
         })
 
     game_state.reveal_data = reveal_data
+
+    # Snapshot currency settlement effects (applied alongside card values in finalize).
+    # CD discards never touch power cards, so this snapshot is stable.
+    currency_effects = []
+    for player in game_state.players:
+        for card in player.hand:
+            if not card.is_power:
+                continue
+            if card.company_name == "Currency + ":
+                before = player.cash
+                after = before + CURRENCY_RATE * before
+                currency_effects.append({"player_id": player.id, "before": before, "after": after, "type": "+"})
+            elif card.company_name == "Currency - ":
+                before = player.cash
+                after = before - CURRENCY_RATE * before
+                currency_effects.append({"player_id": player.id, "before": before, "after": after, "type": "-"})
+    game_state.currency_effects = currency_effects
 
     # Build chairman/director queue
     _build_chairman_director_queue(game_state)
@@ -286,7 +305,7 @@ def _recompute_reveal_for_company(game_state, company_name):
 
 
 def _finalize_card_reveal(game_state):
-    """Apply fluctuations from remaining cards, build suspend queue, advance."""
+    """Apply fluctuations + currency effects, build suspend queue, advance."""
     # Apply card effects to company values
     for player in game_state.players:
         for card in player.hand:
@@ -304,6 +323,14 @@ def _finalize_card_reveal(game_state):
         if company.value <= 0:
             company.value = 0
             company.open = False
+
+    # Apply currency settlement effects (snapshotted in begin_card_reveal)
+    by_id = {p.id: p for p in game_state.players}
+    for eff in game_state.currency_effects:
+        player = by_id.get(eff["player_id"])
+        if player is not None:
+            player.cash = eff["after"]
+    game_state.currency_effects = []
 
     # Build suspend queue from ShareSuspend power cards
     game_state.suspend_queue = [
@@ -359,48 +386,12 @@ def share_suspend_action(game_state, player_id, company_num):
 
 
 def _finalize_suspend(game_state):
-    """Re-open companies with positive value, advance to currency_settlement."""
+    """Re-open companies with positive value, advance to day_end."""
     for company in game_state.companies:
         if company.value > 0:
             company.open = True
-    game_state.game_phase = "currency_settlement"
-
-
-# ── Currency Settlement Phase ────────────────────────────────────────────────
-
-
-def currency_settlement(game_state):
-    """Apply Currency +/- card effects, then advance to day_end."""
-    if game_state.game_phase != "currency_settlement":
-        return result(False, "Not in currency settlement phase.", game_state)
-
-    effects = []
-    for player in game_state.players:
-        for card in player.hand:
-            if not card.is_power:
-                continue
-            if card.company_name == "Currency + ":
-                before = player.cash
-                player.cash += CURRENCY_RATE * player.cash
-                effects.append({"player_id": player.id, "before": before, "after": player.cash, "type": "+"})
-            elif card.company_name == "Currency - ":
-                before = player.cash
-                player.cash -= CURRENCY_RATE * player.cash
-                effects.append({"player_id": player.id, "before": before, "after": player.cash, "type": "-"})
-
     game_state.previous_values.clear()
     game_state.game_phase = "day_end"
-
-    messages = [f"Player {e['player_id']}: {e['before']:.0f} -> {e['after']:.0f}" for e in effects]
-    return result(True, "; ".join(messages) or "No currency effects.", game_state)
-
-
-def complete_currency_settlement(game_state):
-    """Called by frontend after currency settlement animation finishes."""
-    if game_state.game_phase != "currency_settlement":
-        # Already advanced (another player sent this first) — silently succeed
-        return result(True, "Currency settlement already complete.", game_state)
-    return currency_settlement(game_state)
 
 
 # ── Day End Phase ────────────────────────────────────────────────────────────

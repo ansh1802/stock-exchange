@@ -34,6 +34,5 @@ export type ClientMessage =
   | { type: 'share_suspend'; company_num: number }
   | { type: 'chairman_director'; discard_own_idx: number | number[]; discard_other_player_id?: number | null; discard_other_idx?: number | null }
   | { type: 'reveal_complete' }
-  | { type: 'complete_currency_settlement' }
   | { type: 'pong' }
   | { type: 'chat'; text: string }

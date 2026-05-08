@@ -48,3 +48,30 @@ export const COMPANY_TICKER: Record<string, string> = {
   Reliance: 'RELI',
   Infosys: 'INFO',
 }
+
+/**
+ * Game constants — mirrored from backend/engine/constants.py.
+ * Used for rulebook content and tutorial tooltips so numbers in the UI
+ * stay in sync with backend rules from a single source.
+ */
+export const GAME_CONSTANTS = {
+  STARTING_CASH: 600,
+  STARTING_SHARES: 200,
+  CARDS_PER_HAND: 10,
+  MAX_DAYS: 10,
+  ROUNDS_PER_DAY: 3,
+  RIGHTS_ISSUE_VALUE: 10,
+  LOAN_STOCK_AMOUNT: 100,
+  CURRENCY_RATE: 0.1,
+  CHAIRMAN_THRESHOLD: 100,
+  DIRECTOR_THRESHOLD: 50,
+} as const
+
+export const COMPANY_BASE_VALUES: Record<string, number> = {
+  Vodafone: 20,
+  YesBank: 25,
+  Cred: 40,
+  TCS: 55,
+  Reliance: 75,
+  Infosys: 80,
+}

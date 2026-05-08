@@ -139,11 +139,9 @@ for name in ge.COMPANY_NAMES:
     print(f"  {name:<12} {before[name]:>8} {after[name]:>8} {delta:>+8}  {status}")
 
 
-# ── Currency settlement ───────────────────────────────────────────────────────
-
-section("Currency Settlement")
-assert gs.game_phase == "currency_settlement", f"Expected currency_settlement, got {gs.game_phase}"
-act("Applying Currency +/- card effects", ge.complete_currency_settlement(gs))
+# ── Currency settlement now happens inside card_reveal finalize ──────────────
+# After share_suspend, phase advances directly to day_end. Currency effects
+# were already applied alongside card values when reveal_complete finalized.
 
 
 # ── 7. End-of-day portfolios ──────────────────────────────────────────────────

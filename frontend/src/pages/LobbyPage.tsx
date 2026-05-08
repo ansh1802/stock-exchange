@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useGameStore } from '../store/useGameStore'
 import { useTheme } from '../hooks/useTheme'
+import { tutorialStorage } from '../lib/tutorialStorage'
 
 export default function LobbyPage() {
   const [name, setName] = useState('')
@@ -9,6 +10,7 @@ export default function LobbyPage() {
   const navigate = useNavigate()
   const setConnection = useGameStore((s) => s.setConnection)
   const theme = useTheme()
+  const tutorialCompleted = tutorialStorage.isCompleted()
 
   const join = (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,6 +91,61 @@ export default function LobbyPage() {
               Bombay · 1992 · 2–6 players
             </p>
           </div>
+
+          {/* Tutorial CTA — gold prominence for first-timers, ghost link after */}
+          {!tutorialCompleted ? (
+            <Link
+              to="/tutorial"
+              className="block px-5 py-4 mb-4 text-center"
+              style={{
+                background: 'rgba(201,161,74,0.12)',
+                border: '1px solid var(--color-gold)',
+                borderRadius: 4,
+                color: 'var(--color-paper)',
+                textDecoration: 'none',
+                boxShadow: '0 4px 16px rgba(201,161,74,0.18)',
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: 'DM Serif Display, serif',
+                  fontSize: 22,
+                  color: 'var(--color-gold-soft)',
+                  lineHeight: 1.1,
+                }}
+              >
+                Learn to Play
+              </div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 10,
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(244,236,219,0.65)',
+                  marginTop: 4,
+                }}
+              >
+                First time? Read the rulebook → 6 min
+              </div>
+            </Link>
+          ) : (
+            <div className="text-center mb-3">
+              <Link
+                to="/rulebook"
+                className="font-mono"
+                style={{
+                  fontSize: 10,
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(244,236,219,0.55)',
+                  textDecoration: 'none',
+                }}
+              >
+                ⓘ Open rulebook
+              </Link>
+            </div>
+          )}
 
           <form
             onSubmit={join}

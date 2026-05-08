@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useGameStore } from '../../store/useGameStore'
 import type { ClientMessage } from '../../types/messages'
 import type { Card } from '../../types/game'
@@ -8,6 +9,8 @@ import MobileCardStrip from './MobileCardStrip'
 import ViewAllDrawer from './ViewAllDrawer'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { sortHand } from '../../lib/sortHand'
+import { useFirstEncounterTip } from '../../hooks/useFirstEncounterTip'
+import Coachmark from '../tutorial/Coachmark'
 
 interface Props {
   send: (msg: ClientMessage) => void
@@ -18,15 +21,21 @@ export default function PlayerHand({ send }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
   const isMobile = useIsMobile()
+  const navigate = useNavigate()
   const [selectedCard, setSelectedCard] = useState<number | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Sorted display of the hand. selectedCard indexes into this sorted view.
+  const hand = useMemo(
+    () => sortHand(gameState?.your_hand ?? []),
+    [gameState?.your_hand],
+  )
+  const hasPower = useMemo(() => hand.some((c) => c.is_power), [hand])
+  const powerTip = useFirstEncounterTip('power_card_first', hasPower)
 
   if (!gameState) return null
 
   const isMyTurn = gameState.phase === 'player_turn' && gameState.current_player_name === playerName
-  // Display the hand sorted (company → positives→negatives → magnitude · power last).
-  // selectedCard indexes into this sorted view.
-  const hand = useMemo(() => sortHand(gameState.your_hand), [gameState.your_hand])
 
   const handleCardClick = (index: number) => {
     if (!isMyTurn) return
@@ -51,6 +60,22 @@ export default function PlayerHand({ send }: Props) {
     }
     setSelectedCard(null)
   }
+
+  // First-encounter tooltip rendered for both mobile + desktop branches
+  const powerTipNode = powerTip.show ? (
+    <Coachmark
+      title="That's a power card."
+      onDismiss={powerTip.dismiss}
+      secondary={{
+        label: 'Read more',
+        onClick: () => { powerTip.dismiss(); navigate('/rulebook/power-cards') },
+      }}
+    >
+      Six of these exist (Rights Issue, Share Suspend, Loan Stock, Debenture,
+      Currency +/−). Tap one on your turn to play it for an immediate
+      effect — no buy/sell that turn.
+    </Coachmark>
+  ) : null
 
   if (isMobile) {
     return (
@@ -78,6 +103,7 @@ export default function PlayerHand({ send }: Props) {
           onSelect={handleSelectFromDrawer}
           onClose={() => setDrawerOpen(false)}
         />
+        {powerTipNode}
       </>
     )
   }
@@ -108,6 +134,7 @@ export default function PlayerHand({ send }: Props) {
           <p className="text-gray-500 text-sm py-2">No cards in hand</p>
         )}
       </div>
+      {powerTipNode}
     </div>
   )
 }

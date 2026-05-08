@@ -16,7 +16,6 @@ import MobileLogChat from './MobileLogChat'
 import RightsIssueModal from './RightsIssueModal'
 import CardRevealOverlay from './CardRevealOverlay'
 import ShareSuspendOverlay from './ShareSuspendOverlay'
-import CurrencySettlementOverlay from './CurrencySettlementOverlay'
 import ChairmanDirectorModal from './ChairmanDirectorModal'
 import RightsIssueOverlay from './RightsIssueOverlay'
 import DebentureOverlay from './DebentureOverlay'
@@ -26,7 +25,7 @@ interface Props {
   send: (msg: ClientMessage) => void
 }
 
-type AnimationPhase = 'none' | 'card_reveal' | 'share_suspend' | 'currency_settlement'
+type AnimationPhase = 'none' | 'card_reveal' | 'share_suspend'
 
 export default function GameBoard({ send }: Props) {
   const gameState = useGameStore((s) => s.gameState)
@@ -100,10 +99,10 @@ export default function GameBoard({ send }: Props) {
     setAnimPhase('none')
     setCachedRevealData(null)
 
-    // Always show share_suspend overlay after card reveal.
+    // Always show share_suspend overlay after card reveal (which now also
+    // played the currency settlement animation at its tail).
     // The overlay handles both cases: active suspend queue (player picks) and
-    // empty queue (shows timer then transitions to currency settlement).
-    // Backend may already be in share_suspend or currency_settlement by now.
+    // empty queue (shows timer then closes).
     setAnimPhase('share_suspend')
   }, [])
 
@@ -117,17 +116,11 @@ export default function GameBoard({ send }: Props) {
     if (gameState.phase === 'share_suspend' && gameState.suspend_queue.length > 0) {
       setAnimPhase('share_suspend')
     }
-    // Don't auto-set currency_settlement here — it's reached via handleSuspendComplete
   }, [gameState?.phase, gameState?.suspend_queue, animPhase])
 
-  // When share_suspend overlay completes (timer expired), transition to currency
+  // When share_suspend overlay completes (timer expired), close out the
+  // overlay sequence. Currency settlement is now part of CardRevealOverlay.
   const handleSuspendComplete = useCallback(() => {
-    // Backend is likely already in currency_settlement (auto-advanced when suspend queue emptied).
-    // Always show the currency settlement overlay — it will send the completion message.
-    setAnimPhase('currency_settlement')
-  }, [])
-
-  const handleCurrencyComplete = useCallback(() => {
     setAnimPhase('none')
   }, [])
 
@@ -184,10 +177,6 @@ export default function GameBoard({ send }: Props) {
 
         {animPhase === 'share_suspend' && (
           <ShareSuspendOverlay key="share-suspend" send={send} onComplete={handleSuspendComplete} />
-        )}
-
-        {animPhase === 'currency_settlement' && (
-          <CurrencySettlementOverlay key="currency-settlement" onComplete={handleCurrencyComplete} send={send} />
         )}
       </AnimatePresence>
     </>

@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { useGameStore } from '../../store/useGameStore'
 import { cn } from '../../lib/cn'
 import { COMPANY_COLOR, COMPANY_TEXT_COLOR } from '../../lib/constants'
@@ -7,6 +8,8 @@ import { formatCash } from '../../lib/format'
 import { Crown, Target, PiggyBank, WifiOff } from 'lucide-react'
 import { useTurnUrgency, type Urgency } from '../../hooks/useTurnUrgency'
 import { portfolioValue, getPosition } from '../../lib/playerHelpers'
+import { useFirstEncounterTip } from '../../hooks/useFirstEncounterTip'
+import Coachmark from '../tutorial/Coachmark'
 
 const URGENCY_STYLE: Record<Urgency, { ring: string; border: string; dot: string; text: string; pulse: string }> = {
   calm:     { ring: 'ring-emerald-500/70', border: 'border-emerald-800/50', dot: 'bg-emerald-400', text: 'text-emerald-300', pulse: 'animate-pulse' },
@@ -20,6 +23,22 @@ export default function PlayerBoard() {
   const playerName = useGameStore((s) => s.playerName)
   const { urgency } = useTurnUrgency()
   const style = URGENCY_STYLE[urgency]
+  const navigate = useNavigate()
+  const chairmanRef = useRef<HTMLSpanElement | null>(null)
+  const directorRef = useRef<HTMLSpanElement | null>(null)
+
+  // Detect whether any chairman/director currently exists on the board
+  const { hasChairman, hasDirector } = useMemo(() => {
+    if (!gameState) return { hasChairman: false, hasDirector: false }
+    const hasC = Object.values(gameState.chairman ?? {}).some((v) => v !== null && v !== undefined)
+    const hasD = Object.values(gameState.directors ?? {}).some(
+      (arr) => Array.isArray(arr) && arr.length > 0,
+    )
+    return { hasChairman: hasC, hasDirector: hasD }
+  }, [gameState?.chairman, gameState?.directors])
+
+  const chairmanTip = useFirstEncounterTip('chairman_badge', hasChairman)
+  const directorTip = useFirstEncounterTip('director_badge', hasDirector)
 
   // Track which player just used LoanStock (show piggy bank briefly)
   const [loanStockPlayerId, setLoanStockPlayerId] = useState<number | null>(null)
@@ -125,10 +144,14 @@ export default function PlayerBoard() {
                     <span className={cn('truncate', COMPANY_TEXT_COLOR[company])}>{company}</span>
                     <span className="text-gray-400 font-mono ml-auto">{qty}</span>
                     {position === 'chairman' && (
-                      <Crown size={14} className="text-amber-400 flex-shrink-0" />
+                      <span ref={chairmanRef} className="flex-shrink-0">
+                        <Crown size={14} className="text-amber-400" />
+                      </span>
                     )}
                     {position === 'director' && (
-                      <Target size={14} className="text-sky-400 flex-shrink-0" />
+                      <span ref={directorRef} className="flex-shrink-0">
+                        <Target size={14} className="text-sky-400" />
+                      </span>
                     )}
                     {position === 'double_director' && (
                       <span className="flex flex-shrink-0">
@@ -158,6 +181,33 @@ export default function PlayerBoard() {
           </div>
         )
       })}
+
+      {/* First-encounter tooltips. Anchored to whichever chairman/director
+          icon mounted first; safe to omit anchorRef when ref is null. */}
+      {chairmanTip.show && (
+        <Coachmark
+          anchorRef={chairmanRef.current ? chairmanRef : undefined}
+          title={<>Chairman badge <em style={{ color: 'var(--color-gold-deep)' }}>♕</em></>}
+          onDismiss={chairmanTip.dismiss}
+          secondary={{ label: 'Read more', onClick: () => { chairmanTip.dismiss(); navigate('/rulebook/positions') } }}
+        >
+          A chairman holds ≥100 shares of one company. At the closing bell
+          they can discard one of their own cards <em>and</em> remove a card
+          from another player. Either part is optional.
+        </Coachmark>
+      )}
+      {!chairmanTip.show && directorTip.show && (
+        <Coachmark
+          anchorRef={directorRef.current ? directorRef : undefined}
+          title="Director badge"
+          onDismiss={directorTip.dismiss}
+          secondary={{ label: 'Read more', onClick: () => { directorTip.dismiss(); navigate('/rulebook/positions') } }}
+        >
+          A director holds ≥50 shares of one company and may discard one of
+          their own cards at the closing bell. Up to two directors per
+          company.
+        </Coachmark>
+      )}
     </div>
   )
 }

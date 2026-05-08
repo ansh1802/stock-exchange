@@ -439,6 +439,7 @@ def build_client_state(room, player_id):
 
     # Build companies with prev_value (last day's closing price, not base value)
     last_day_values = game.price_history[-1] if game.price_history else [c.base_value for c in game.companies]
+    pre_fluct = raw.get("previous_values") or []
     companies = []
     for i, c in enumerate(raw["companies"]):
         companies.append({
@@ -447,6 +448,9 @@ def build_client_state(room, player_id):
             "value": c["value"],
             "is_open": c["open"],
             "prev_value": last_day_values[i] if i < len(last_day_values) else c["base_value"],
+            # pre_fluct_value: today's pre-card-reveal value, used by ShareSuspendOverlay
+            # to show the swap target. Falls back to current value when the snapshot is empty.
+            "pre_fluct_value": pre_fluct[i] if i < len(pre_fluct) else c["value"],
         })
 
     # Resolve current player name — during sub-phases, the active player
@@ -502,6 +506,9 @@ def build_client_state(room, player_id):
         # Card reveal animation data
         "reveal_data": reveal_data,
         "all_hands": all_hands if all_hands else None,
+        # Currency settlement snapshot (populated by begin_card_reveal,
+        # animated after the final company reveal within card_reveal phase)
+        "currency_effects": raw.get("currency_effects", []),
         "price_history": raw.get("price_history", []),
         # Turn timer (null deadline outside player_turn)
         "turn_timer_deadline": room.turn_timer_deadline,
@@ -571,7 +578,8 @@ async def handle_action(room, player_id, data):
     if result["success"]:
         room.touch()
         # Skip logging and broadcasting for idempotent no-ops (e.g. duplicate reveal_complete)
-        if "already" not in result["message"]:
+        # and for "Waiting for N more..." acks during multi-player completion phases.
+        if "already" not in result["message"] and not result["message"].startswith("Waiting for"):
             conn = room.players.get(player_id)
             actor = conn.name if conn else f"Player {player_id}"
             room.game_log.append(f"{actor}: {result['message']}")
@@ -621,9 +629,6 @@ def dispatch_action(game, player_id, data):
 
         if action == "reveal_complete":
             return ge.complete_card_reveal(game, player_id)
-
-        if action == "complete_currency_settlement":
-            return ge.complete_currency_settlement(game)
 
     except Exception as exc:
         import traceback
@@ -697,11 +702,11 @@ async def auto_advance(room):
     """Push the game through phases that don't need player input.
 
     Phase machine (stops when frontend animation / player input is needed):
-        card_reveal¹ → share_suspend² → currency_settlement³ → day_end → dealing → player_turn
-                                                                                      ↑ STOP
-    ¹ always stops — frontend animates card reveal, sends reveal_complete
+        card_reveal¹ → share_suspend² → day_end → dealing → player_turn
+                                                              ↑ STOP
+    ¹ always stops — frontend animates card reveal + currency settlement,
+      sends reveal_complete (single ack covers both)
     ² stops if suspend_queue has entries (player chooses)
-    ³ always stops — frontend animates, sends complete_currency_settlement
     """
     game = room.game
     advanced = True
@@ -718,9 +723,8 @@ async def auto_advance(room):
             # reveal_data is now populated — loop will stop (condition won't match)
             advanced = True
 
-        # card_reveal (with reveal_data) → STOP — frontend animates
+        # card_reveal (with reveal_data) → STOP — frontend animates cards + currency
         # share_suspend (with queue) → STOP — player acts
-        # currency_settlement → STOP — frontend animates
 
         elif phase == "day_end":
             r = ge.end_day(game)

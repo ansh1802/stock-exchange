@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '../../store/useGameStore'
 import { cn } from '../../lib/cn'
 import { COMPANY_COLOR, COMPANY_TEXT_COLOR } from '../../lib/constants'
-import type { RevealCompanyData, RevealCard } from '../../types/game'
+import { formatCash } from '../../lib/format'
+import type { RevealCompanyData, RevealCard, CurrencyEffect } from '../../types/game'
 import type { ClientMessage } from '../../types/messages'
 import ChairmanDirectorModal from './ChairmanDirectorModal'
 
@@ -15,13 +16,24 @@ interface Props {
 
 const CARD_DELAY = 400     // ms between each card reveal
 const COMPANY_PAUSE = 1800 // ms pause after each company before next
+const CURRENCY_STAGGER = 600  // ms between each currency effect reveal
+const CURRENCY_INTRO = 800    // ms before first currency effect appears
+const CURRENCY_TAIL = 1500    // ms after last currency effect before completing
 
 type Stage =
   | { type: 'company_intro'; companyIdx: number }
   | { type: 'revealing_cards'; companyIdx: number; cardIdx: number }
   | { type: 'final_value'; companyIdx: number }
   | { type: 'chairman_director'; companyIdx: number }
+  | { type: 'currency_settlement'; visibleIdx: number }
   | { type: 'complete' }
+
+interface DisplayCurrencyEffect {
+  playerName: string
+  before: number
+  after: number
+  type: '+' | '-'
+}
 
 export default function CardRevealOverlay({ revealData, onComplete, send }: Props) {
   const gameState = useGameStore((s) => s.gameState)
@@ -29,7 +41,30 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const sentRevealComplete = useRef(false)
 
-  const currentCompany = stage.type !== 'complete' ? revealData[stage.companyIdx] : null
+  // Snapshot currency effects on first non-empty reading and freeze them.
+  // Backend clears them in finalize once all players ack — by then the animation
+  // is already running off this frozen list, so race-free.
+  const currencyRef = useRef<DisplayCurrencyEffect[] | null>(null)
+  const currencyEffects = useMemo<DisplayCurrencyEffect[]>(() => {
+    if (currencyRef.current) return currencyRef.current
+    if (!gameState) return []
+    const raw: CurrencyEffect[] = gameState.currency_effects ?? []
+    if (raw.length === 0) return []
+    const mapped = raw
+      .map((e) => {
+        const player = gameState.players.find((p) => p.id === e.player_id)
+        return player
+          ? { playerName: player.name, before: e.before, after: e.after, type: e.type }
+          : null
+      })
+      .filter((x): x is DisplayCurrencyEffect => x !== null)
+    currencyRef.current = mapped
+    return mapped
+  }, [gameState])
+
+  const inCompanyStage = stage.type === 'company_intro' || stage.type === 'revealing_cards' ||
+    stage.type === 'final_value' || stage.type === 'chairman_director'
+  const currentCompany = inCompanyStage ? revealData[stage.companyIdx] : null
   const cdQueue = gameState?.chairman_director_queue ?? []
 
   // Check if current company needs chairman/director action
@@ -38,10 +73,25 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
     return cdQueue.some(([, cn]) => cn === companyName)
   }, [cdQueue, revealData])
 
+  // After the last company finishes, transition to currency_settlement
+  // (or directly to complete if there are no currency effects to animate).
+  const afterLastCompany = useCallback((): Stage => {
+    return currencyEffects.length > 0
+      ? { type: 'currency_settlement', visibleIdx: -1 }
+      : { type: 'complete' }
+  }, [currencyEffects.length])
+
   // Advance to next stage (pure — no side effects)
   const advance = useCallback(() => {
     setStage((prev) => {
       if (prev.type === 'complete') return prev
+
+      if (prev.type === 'currency_settlement') {
+        if (prev.visibleIdx + 1 < currencyEffects.length) {
+          return { type: 'currency_settlement', visibleIdx: prev.visibleIdx + 1 }
+        }
+        return { type: 'complete' }
+      }
 
       const company = revealData[prev.companyIdx]
       if (!company) return { type: 'complete' }
@@ -67,7 +117,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
         if (prev.companyIdx + 1 < revealData.length) {
           return { type: 'company_intro', companyIdx: prev.companyIdx + 1 }
         }
-        return { type: 'complete' }
+        return afterLastCompany()
       }
 
       if (prev.type === 'chairman_director') {
@@ -77,12 +127,12 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
         if (prev.companyIdx + 1 < revealData.length) {
           return { type: 'company_intro', companyIdx: prev.companyIdx + 1 }
         }
-        return { type: 'complete' }
+        return afterLastCompany()
       }
 
       return { type: 'complete' }
     })
-  }, [revealData, companyNeedsCd])
+  }, [revealData, companyNeedsCd, currencyEffects.length, afterLastCompany])
 
   // Auto-advance through timed stages
   useEffect(() => {
@@ -96,6 +146,18 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
     }
     if (stage.type === 'chairman_director') return // controlled by cdQueue watcher below
 
+    if (stage.type === 'currency_settlement') {
+      // First entry (visibleIdx = -1): brief intro, then reveal first effect.
+      // Between effects: stagger. After last: tail before completing.
+      const delay = stage.visibleIdx === -1
+        ? CURRENCY_INTRO
+        : stage.visibleIdx + 1 < currencyEffects.length
+          ? CURRENCY_STAGGER
+          : CURRENCY_TAIL
+      timerRef.current = setTimeout(advance, delay)
+      return () => clearTimeout(timerRef.current)
+    }
+
     const delays: Record<string, number> = {
       company_intro: 1000,
       revealing_cards: CARD_DELAY,
@@ -104,7 +166,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
 
     timerRef.current = setTimeout(advance, delays[stage.type] ?? 1000)
     return () => clearTimeout(timerRef.current)
-  }, [stage, advance, onComplete, send])
+  }, [stage, advance, onComplete, send, currencyEffects.length])
 
   // Watch CD queue: when all actions for current company are done, advance.
   // Uses a separate ref timer so game state re-renders don't cancel it.
@@ -124,13 +186,13 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
           if (prev.companyIdx + 1 < revealData.length) {
             return { type: 'company_intro', companyIdx: prev.companyIdx + 1 }
           }
-          return { type: 'complete' }
+          return afterLastCompany()
         })
       }, 600)
     }
 
     return () => clearTimeout(cdTimerRef.current)
-  }, [cdQueue, stage, revealData])
+  }, [cdQueue, stage, revealData, afterLastCompany])
 
   // Derive revealed cards from stage — no separate state needed.
   // At revealing_cards cardIdx N: cards 0..N are visible (current card just appeared).
@@ -150,7 +212,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
     (sum, c) => sum + (c.positive ? c.value : -c.value), 0,
   )
 
-  const companyIdx = stage.type !== 'complete' ? stage.companyIdx : revealData.length - 1
+  const companyIdx = inCompanyStage ? stage.companyIdx : revealData.length - 1
   const progressPct = ((companyIdx + 1) / revealData.length) * 100
 
   return (
@@ -202,7 +264,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
       {/* Main content */}
       <div className="relative w-full max-w-2xl mx-auto px-4 sm:px-8 mt-16 sm:mt-20 pb-20 max-h-[calc(100dvh-5rem)] overflow-y-auto mobile-scroll scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
         <AnimatePresence mode="wait">
-          {currentCompany && stage.type !== 'complete' && (
+          {currentCompany && inCompanyStage && (
             <motion.div
               key={`company-${currentCompany.company_name}`}
               initial={{ opacity: 0, y: 30 }}
@@ -311,8 +373,8 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
                         transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                         className={cn(
                           'font-mono text-3xl font-bold',
-                          currentCompany.new_value > currentCompany.old_value ? 'text-emerald-300' :
-                          currentCompany.new_value < currentCompany.old_value ? 'text-red-300' : 'text-gray-300',
+                          currentCompany.new_value > currentCompany.old_value ? 'text-emerald-400' :
+                          currentCompany.new_value < currentCompany.old_value ? 'text-red-400' : 'text-gray-400',
                         )}
                       >
                         ${currentCompany.new_value}
@@ -340,6 +402,65 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
                   <ChairmanDirectorModal send={send} inline />
                 </motion.div>
               )}
+            </motion.div>
+          )}
+
+          {stage.type === 'currency_settlement' && (
+            <motion.div
+              key="currency-settlement"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-5"
+            >
+              <div className="text-center space-y-1">
+                <p className="text-gray-600 text-xs tracking-[0.3em] uppercase font-mono">Phase</p>
+                <h2
+                  className="text-3xl text-gray-300 tracking-tight"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  Currency Settlement
+                </h2>
+              </div>
+
+              <div className="space-y-3">
+                {currencyEffects.map((effect, i) => (
+                  i <= stage.visibleIdx && (
+                    <motion.div
+                      key={`fx-${i}`}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                      className="flex items-center justify-between px-4 py-3 rounded-xl border bg-gray-900/60 border-gray-800"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={cn(
+                          'text-xs font-bold px-2 py-0.5 rounded',
+                          effect.type === '+' ? 'bg-emerald-900/40 text-emerald-400' : 'bg-red-900/40 text-red-400',
+                        )}>
+                          {effect.type === '+' ? 'Currency +' : 'Currency -'}
+                        </span>
+                        <span className="text-sm text-gray-300">{effect.playerName}</span>
+                      </div>
+                      <div className="flex items-center gap-2 font-mono text-sm">
+                        <span className="text-gray-500">{formatCash(effect.before)}</span>
+                        <span className="text-gray-700">&rarr;</span>
+                        <motion.span
+                          initial={{ scale: 1.3 }}
+                          animate={{ scale: 1 }}
+                          className={cn(
+                            'font-bold',
+                            effect.type === '+' ? 'text-emerald-400' : 'text-red-400',
+                          )}
+                        >
+                          {formatCash(effect.after)}
+                        </motion.span>
+                      </div>
+                    </motion.div>
+                  )
+                ))}
+              </div>
             </motion.div>
           )}
 
