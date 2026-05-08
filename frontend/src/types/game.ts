@@ -81,6 +81,9 @@ export interface GameState {
   all_hands: Record<number, Card[]> | null
   currency_effects: CurrencyEffect[]
   price_history: number[][]
+  // Per-day per-player networth snapshots. networth_history[day][player_id] = networth.
+  // Day 0 = starting state. Rewritten post-settlement and after each share_suspend swap.
+  networth_history: Record<string, number>[]
   // Turn timer — null deadline outside player_turn
   turn_timer_deadline: number | null
   turn_timer_duration: number

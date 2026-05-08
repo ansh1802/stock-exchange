@@ -109,24 +109,28 @@ export default function StockTicker() {
                 </div>
                 <div className="flex items-baseline gap-1 pl-1.5 mt-0.5">
                   <span
+                    className="font-mono"
+                    style={{ fontSize: 11, color: 'var(--color-ink-muted)' }}
+                  >
+                    {co.prev_value}
+                  </span>
+                  <span
+                    className="font-mono"
+                    style={{ fontSize: 10, color: 'var(--color-ink-muted)' }}
+                  >
+                    →
+                  </span>
+                  <span
                     className="font-serif leading-none"
-                    style={{ fontSize: 18, color: 'var(--color-ink)' }}
+                    style={{
+                      fontSize: 18,
+                      color: diff === 0
+                        ? 'var(--color-ink)'
+                        : isUp ? 'var(--color-buy)' : 'var(--color-sell)',
+                    }}
                   >
                     {co.value}
                   </span>
-                  {diff !== 0 ? (
-                    <span
-                      className="font-mono"
-                      style={{
-                        fontSize: 10,
-                        color: isUp ? 'var(--color-buy)' : 'var(--color-sell)',
-                      }}
-                    >
-                      {isUp ? '+' : ''}{diff}
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: 10, color: 'var(--color-ink-muted)' }}>—</span>
-                  )}
                 </div>
               </div>
             )
@@ -187,24 +191,39 @@ export default function StockTicker() {
               <div className="flex items-end gap-2 mt-0.5 pl-2">
                 <div className="flex items-baseline gap-1.5">
                   <span
+                    className="font-mono"
+                    style={{ fontSize: 13, color: 'var(--color-ink-muted)' }}
+                  >
+                    {co.prev_value}
+                  </span>
+                  <span
+                    className="font-mono"
+                    style={{ fontSize: 12, color: 'var(--color-ink-muted)' }}
+                  >
+                    →
+                  </span>
+                  <span
                     className="font-serif leading-none"
-                    style={{ fontSize: 26, color: 'var(--color-ink)' }}
+                    style={{
+                      fontSize: 26,
+                      color: diff === 0
+                        ? 'var(--color-ink)'
+                        : isUp ? 'var(--color-buy)' : 'var(--color-sell)',
+                    }}
                   >
                     {co.value}
                   </span>
-                  {diff !== 0 && (
+                  {diff !== 0 ? (
                     <span
-                      className="flex items-center gap-0.5 font-mono"
+                      className="flex items-center font-mono"
                       style={{
                         fontSize: 11,
                         color: isUp ? 'var(--color-buy)' : 'var(--color-sell)',
                       }}
                     >
                       {isUp ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                      {isUp ? '+' : ''}{diff}
                     </span>
-                  )}
-                  {diff === 0 && (
+                  ) : (
                     <span className="flex items-center" style={{ color: 'var(--color-ink-muted)' }}>
                       <Minus size={11} />
                     </span>
@@ -257,21 +276,18 @@ export default function StockTicker() {
                 )}
               </div>
               <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-sm font-mono font-bold text-white leading-tight">
+                <span className="text-[11px] font-mono text-gray-500 leading-tight">
+                  {co.prev_value}
+                </span>
+                <span className="text-[10px] text-gray-500 leading-tight">→</span>
+                <span
+                  className={cn(
+                    'text-sm font-mono font-bold leading-tight',
+                    diff === 0 ? 'text-white' : isUp ? 'text-emerald-400' : 'text-red-400',
+                  )}
+                >
                   {co.value}
                 </span>
-                {diff !== 0 ? (
-                  <span
-                    className={cn(
-                      'text-[10px] font-mono leading-tight',
-                      isUp ? 'text-emerald-400' : 'text-red-400',
-                    )}
-                  >
-                    {isUp ? '+' : ''}{diff}
-                  </span>
-                ) : (
-                  <span className="text-[10px] text-gray-500 leading-tight">—</span>
-                )}
               </div>
             </div>
           )
@@ -307,20 +323,27 @@ export default function StockTicker() {
               {!co.is_open && <span className="text-[10px] text-red-400 ml-auto">CLOSED</span>}
             </div>
             <div className="flex items-center gap-2 mt-1">
-              <div className="flex items-baseline gap-1">
-                <span className="text-lg font-mono font-bold text-white">{co.value}</span>
-                {diff !== 0 && (
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xs font-mono text-gray-500">{co.prev_value}</span>
+                <span className="text-xs font-mono text-gray-600">→</span>
+                <span
+                  className={cn(
+                    'text-lg font-mono font-bold',
+                    diff === 0 ? 'text-white' : isUp ? 'text-emerald-400' : 'text-red-400',
+                  )}
+                >
+                  {co.value}
+                </span>
+                {diff !== 0 ? (
                   <span
                     className={cn(
-                      'flex items-center gap-0.5 text-xs font-mono',
+                      'flex items-center text-xs font-mono',
                       isUp ? 'text-emerald-400' : 'text-red-400',
                     )}
                   >
                     {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                    {isUp ? '+' : ''}{diff}
                   </span>
-                )}
-                {diff === 0 && (
+                ) : (
                   <span className="flex items-center text-xs text-gray-500">
                     <Minus size={12} />
                   </span>

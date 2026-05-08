@@ -178,7 +178,8 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
     const stillNeeded = cdQueue.some(([, cn]) => cn === companyName)
 
     if (!stillNeeded) {
-      // No more CD actions for this company — advance after brief pause
+      // No more CD actions for this company — hold long enough for the player
+      // to register the recomputed delta / new value before moving on.
       clearTimeout(cdTimerRef.current)
       cdTimerRef.current = setTimeout(() => {
         setStage((prev) => {
@@ -188,7 +189,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
           }
           return afterLastCompany()
         })
-      }, 600)
+      }, 2200)
     }
 
     return () => clearTimeout(cdTimerRef.current)
@@ -366,8 +367,14 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
                   {/* New value */}
                   {(stage.type === 'final_value' || stage.type === 'chairman_director') && (
                     <div className="text-center">
-                      <p className="text-[10px] text-gray-600 uppercase tracking-widest mb-1">New Value</p>
+                      <p className="text-[10px] text-gray-600 uppercase tracking-widest mb-1">
+                        {currentCompany.old_value} → New Value
+                      </p>
                       <motion.p
+                        // Re-keying on new_value pulses the value whenever a chairman/director
+                        // discard recomputes the company total — gives the player an unmissable
+                        // "this just changed" beat.
+                        key={`nv-${currentCompany.company_name}-${currentCompany.new_value}`}
                         initial={{ scale: 1.5, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ type: 'spring', stiffness: 200, damping: 15 }}
@@ -377,7 +384,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
                           currentCompany.new_value < currentCompany.old_value ? 'text-red-400' : 'text-gray-400',
                         )}
                       >
-                        ${currentCompany.new_value}
+                        ${currentCompany.old_value} → ${currentCompany.new_value}
                       </motion.p>
                       {currentCompany.new_value <= 0 && (
                         <motion.span
