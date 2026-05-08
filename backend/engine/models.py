@@ -126,6 +126,12 @@ class GameState:
         # Price history — list of [value_per_company] snapshots at end of each day
         self.price_history = []
 
+        # Networth history — indexed by day. networth_history[day][player_id] = networth.
+        # Day 0 = starting state (cash = STARTING_CASH, no shares). Snapshotted in
+        # _finalize_card_reveal (Trigger A) and overwritten on each share_suspend swap
+        # (Trigger B). The frontend animates the segment from day-1 → day on each update.
+        self.networth_history = [{p.id: p.cash for p in self.players}]
+
     def to_dict(self):
         return {
             "num_players": self.num_players,
@@ -148,6 +154,7 @@ class GameState:
             "reveal_data": list(self.reveal_data),
             "currency_effects": list(self.currency_effects),
             "price_history": [list(day) for day in self.price_history],
+            "networth_history": [dict(snap) for snap in self.networth_history],
         }
 
     def to_player_dict(self, player_id):
@@ -184,4 +191,5 @@ class GameState:
             "reveal_data": list(self.reveal_data),
             "currency_effects": list(self.currency_effects),
             "price_history": [list(day) for day in self.price_history],
+            "networth_history": [dict(snap) for snap in self.networth_history],
         }

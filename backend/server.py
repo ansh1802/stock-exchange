@@ -510,6 +510,10 @@ def build_client_state(room, player_id):
         # animated after the final company reveal within card_reveal phase)
         "currency_effects": raw.get("currency_effects", []),
         "price_history": raw.get("price_history", []),
+        # Networth history (per-day per-player) — drives the standings graph
+        # shown during share_suspend. Snapshotted post-settlement (Trigger A) and
+        # rewritten in-place on each share_suspend swap (Trigger B).
+        "networth_history": raw.get("networth_history", []),
         # Turn timer (null deadline outside player_turn)
         "turn_timer_deadline": room.turn_timer_deadline,
         "turn_timer_duration": room.turn_timer_seconds,
@@ -583,6 +587,17 @@ async def handle_action(room, player_id, data):
             conn = room.players.get(player_id)
             actor = conn.name if conn else f"Player {player_id}"
             room.game_log.append(f"{actor}: {result['message']}")
+
+            # Surface the post-action state BEFORE auto_advance for cases where
+            # the engine mutates reveal_data and then auto_advance immediately
+            # walks past phases that would clear it. Specifically: the LAST
+            # chairman/director discard for the LAST company (e.g. Infosys)
+            # triggers _finalize_card_reveal → share_suspend → ... → dealing,
+            # and deal_cards() empties reveal_data. Without this early push,
+            # clients never see the recomputed delta / new_value that the
+            # CardRevealOverlay's pulse animation keys off of.
+            if action_type == "chairman_director":
+                await broadcast_game_state(room)
 
             await auto_advance(room)
             await check_and_start_turn_timer(room)

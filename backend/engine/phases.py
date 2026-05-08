@@ -304,6 +304,29 @@ def _recompute_reveal_for_company(game_state, company_name):
             break
 
 
+def _snapshot_networth(game_state):
+    """Compute and store per-player networth at game_state.current_day.
+
+    Networth = cash + Σ(held_shares × current_value) for OPEN companies.
+    Closed companies contribute 0 (matches frontend portfolioValue + game_over ranking).
+    Overwrites the day's slot — Trigger A (post-settlement) and Trigger B
+    (post-share-suspend) both write into the same index, replayed by the client.
+    """
+    snap = {}
+    for p in game_state.players:
+        nw = p.cash
+        for c in game_state.companies:
+            held = p.stocks.get(c.name, 0)
+            if held > 0 and c.open:
+                nw += held * c.value
+        snap[p.id] = int(nw)
+
+    day = game_state.current_day
+    while len(game_state.networth_history) <= day:
+        game_state.networth_history.append({})
+    game_state.networth_history[day] = snap
+
+
 def _finalize_card_reveal(game_state):
     """Apply fluctuations + currency effects, build suspend queue, advance."""
     # Apply card effects to company values
@@ -340,6 +363,10 @@ def _finalize_card_reveal(game_state):
         if card.is_power and card.company_name == "ShareSuspend"
     ]
 
+    # Trigger A: snapshot post-settlement networths so the client can animate
+    # the standings reveal that bridges the closing bell into share suspend.
+    _snapshot_networth(game_state)
+
     game_state.game_phase = "share_suspend"
     if not game_state.suspend_queue:
         _finalize_suspend(game_state)
@@ -373,6 +400,10 @@ def share_suspend_action(game_state, player_id, company_num):
     current = game_state.companies[idx].value
     game_state.companies[idx].value = game_state.previous_values[idx]
     game_state.previous_values[idx] = current
+
+    # Trigger B: company value changed, so day-N networths are now stale.
+    # Re-snapshot in place so the graph re-animates with the new standings.
+    _snapshot_networth(game_state)
 
     game_state.suspend_queue.pop(0)
     if not game_state.suspend_queue:
