@@ -2,21 +2,57 @@
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/700.css";
 @import "@fontsource-variable/playfair-display";
+@import "@fontsource-variable/inter";
+@import "@fontsource/dm-serif-display/400.css";
+@import "@fontsource/dm-serif-display/400-italic.css";
 
 @theme {
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --font-display: "Playfair Display Variable", "Georgia", serif;
+  --font-serif: "DM Serif Display", "Georgia", serif;
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+
+  /* v1 company colors (current) */
   --color-company-vodafone: #dc2626;
   --color-company-yesbank: #2563eb;
   --color-company-cred: #9333ea;
   --color-company-tcs: #0891b2;
   --color-company-reliance: #ea580c;
   --color-company-infosys: #16a34a;
+
+  /* v2 — editorial-casino palette */
+  --color-paper: #f4ecdb;
+  --color-paper-2: #e9dfc8;
+  --color-paper-line: #d6c9ab;
+  --color-ink: #1a1611;
+  --color-ink-2: #3a3225;
+  --color-ink-muted: #7a6f5b;
+  --color-felt: #0e1a14;
+  --color-gold: #c9a14a;
+  --color-gold-deep: #8a6a1f;
+  --color-gold-soft: #e6c474;
+  --color-buy: #2f7d4a;
+  --color-sell: #b83a2e;
+  --color-power: #5d2a4a;
+
+  /* v2 company hues — earthier */
+  --color-co-vodafone: #c44a3f;
+  --color-co-yesbank: #2c5d8a;
+  --color-co-cred: #6b3d8e;
+  --color-co-tcs: #1f6d7a;
+  --color-co-reliance: #c66a2f;
+  --color-co-infosys: #3d7a4a;
 }
 
 body {
   @apply bg-gray-950 text-gray-200 antialiased;
   margin: 0;
+}
+
+/* v2 base body when theme attribute is on */
+html[data-theme="v2"] body {
+  background: var(--color-felt);
+  color: var(--color-ink);
 }
 
 #root {

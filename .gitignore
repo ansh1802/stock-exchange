@@ -21,3 +21,4 @@ dist-ssr/
 *.png
 .playwright-mcp/
 backend/venv/
+backend/.venv/

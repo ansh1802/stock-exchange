@@ -3,6 +3,7 @@ import { COMPANY_COLOR, COMPANY_TICKER } from '../../lib/constants'
 import { cn } from '../../lib/cn'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { useTheme } from '../../hooks/useTheme'
 
 // Inline SVG sparkline from price history
 function Sparkline({ values, color }: { values: number[]; color: string }) {
@@ -28,10 +29,10 @@ function Sparkline({ values, color }: { values: number[]; color: string }) {
         points={points}
         fill="none"
         stroke={color}
-        strokeWidth={1.5}
+        strokeWidth={1}
         strokeLinecap="round"
         strokeLinejoin="round"
-        opacity={0.7}
+        opacity={0.85}
       />
     </svg>
   )
@@ -47,13 +48,188 @@ const SPARK_COLORS: Record<string, string> = {
   Infosys: '#4ade80',
 }
 
+const V2_COMPANY_HEX: Record<string, string> = {
+  Vodafone: '#c44a3f',
+  YesBank: '#2c5d8a',
+  Cred: '#6b3d8e',
+  TCS: '#1f6d7a',
+  Reliance: '#c66a2f',
+  Infosys: '#3d7a4a',
+}
+
 export default function StockTicker() {
   const gameState = useGameStore((s) => s.gameState)
   const isMobile = useIsMobile()
+  const theme = useTheme()
   if (!gameState) return null
 
   const { price_history } = gameState
 
+  if (theme === 'v2') {
+    if (isMobile) {
+      return (
+        <div
+          className="grid grid-cols-3 gap-px px-1 py-1.5"
+          style={{
+            background: 'var(--color-paper-line)',
+            borderBottom: '1px solid var(--color-ink)',
+          }}
+        >
+          {gameState.companies.map((co) => {
+            const diff = co.value - co.prev_value
+            const isUp = diff > 0
+            const ticker = co.ticker || COMPANY_TICKER[co.name] || co.name.toUpperCase()
+            const hex = V2_COMPANY_HEX[co.name] ?? '#7a6f5b'
+            return (
+              <div
+                key={co.name}
+                className={cn('relative px-2 py-1.5', !co.is_open && 'opacity-50')}
+                style={{ background: 'var(--color-paper)' }}
+              >
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1 bottom-1 w-[3px]"
+                  style={{ background: hex }}
+                />
+                <div className="flex items-center justify-between pl-1.5">
+                  <span
+                    className="font-mono font-semibold tracking-[0.1em]"
+                    style={{ fontSize: 10, color: 'var(--color-ink-2)' }}
+                  >
+                    {ticker}
+                  </span>
+                  {!co.is_open && (
+                    <span
+                      className="font-mono font-bold"
+                      style={{ fontSize: 8, color: 'var(--color-sell)' }}
+                    >
+                      ✕
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-baseline gap-1 pl-1.5 mt-0.5">
+                  <span
+                    className="font-serif leading-none"
+                    style={{ fontSize: 18, color: 'var(--color-ink)' }}
+                  >
+                    {co.value}
+                  </span>
+                  {diff !== 0 ? (
+                    <span
+                      className="font-mono"
+                      style={{
+                        fontSize: 10,
+                        color: isUp ? 'var(--color-buy)' : 'var(--color-sell)',
+                      }}
+                    >
+                      {isUp ? '+' : ''}{diff}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 10, color: 'var(--color-ink-muted)' }}>—</span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )
+    }
+
+    return (
+      <div
+        className="flex gap-0 px-2 py-2 overflow-x-auto"
+        style={{
+          background: 'var(--color-paper)',
+          borderBottom: '1px solid var(--color-ink)',
+        }}
+      >
+        {gameState.companies.map((co, i) => {
+          const diff = co.value - co.prev_value
+          const isUp = diff > 0
+          const hex = V2_COMPANY_HEX[co.name] ?? '#7a6f5b'
+
+          const historyForCompany = price_history.map((day) => day[i])
+          const sparkData = [...historyForCompany.slice(-5), co.value]
+
+          return (
+            <div
+              key={co.name}
+              className={cn(
+                'relative flex-1 min-w-[150px] px-3 py-2 transition-opacity',
+                i > 0 && 'border-l',
+                !co.is_open && 'opacity-50',
+              )}
+              style={{
+                borderColor: 'var(--color-paper-line)',
+              }}
+            >
+              <span
+                aria-hidden
+                className="absolute left-0 top-1.5 bottom-1.5 w-[3px]"
+                style={{ background: hex }}
+              />
+              <div className="flex items-center gap-2 pl-2">
+                <span
+                  className="font-mono font-semibold tracking-[0.15em] truncate"
+                  style={{ fontSize: 10, color: 'var(--color-ink-2)' }}
+                >
+                  {(co.ticker || co.name).toUpperCase()}
+                </span>
+                {!co.is_open && (
+                  <span
+                    className="font-mono ml-auto"
+                    style={{ fontSize: 9, color: 'var(--color-sell)', letterSpacing: '0.15em' }}
+                  >
+                    SUSPENDED
+                  </span>
+                )}
+              </div>
+              <div className="flex items-end gap-2 mt-0.5 pl-2">
+                <div className="flex items-baseline gap-1.5">
+                  <span
+                    className="font-serif leading-none"
+                    style={{ fontSize: 26, color: 'var(--color-ink)' }}
+                  >
+                    {co.value}
+                  </span>
+                  {diff !== 0 && (
+                    <span
+                      className="flex items-center gap-0.5 font-mono"
+                      style={{
+                        fontSize: 11,
+                        color: isUp ? 'var(--color-buy)' : 'var(--color-sell)',
+                      }}
+                    >
+                      {isUp ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                      {isUp ? '+' : ''}{diff}
+                    </span>
+                  )}
+                  {diff === 0 && (
+                    <span className="flex items-center" style={{ color: 'var(--color-ink-muted)' }}>
+                      <Minus size={11} />
+                    </span>
+                  )}
+                </div>
+                {sparkData.length >= 2 && (
+                  <div className="ml-auto">
+                    <Sparkline values={sparkData} color="var(--color-gold-deep)" />
+                  </div>
+                )}
+              </div>
+              <div
+                className="font-mono mt-0.5 pl-2"
+                style={{ fontSize: 9, color: 'var(--color-ink-muted)', letterSpacing: '0.1em' }}
+              >
+                {gameState.available_shares[i]} avail
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // v1 — unchanged
   if (isMobile) {
     return (
       <div className="grid grid-cols-3 gap-1.5 px-3 py-1.5 bg-gray-900 border-b border-gray-800">
@@ -110,7 +286,6 @@ export default function StockTicker() {
         const diff = co.value - co.prev_value
         const isUp = diff > 0
 
-        // Build sparkline data: last 5 days from history + current value
         const historyForCompany = price_history.map((day) => day[i])
         const sparkData = [...historyForCompany.slice(-5), co.value]
 

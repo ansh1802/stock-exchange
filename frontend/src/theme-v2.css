@@ -1,0 +1,150 @@
+/* ─────────────────────────────────────────────────────────────────────
+   Visual Refactor v2 — global reskin layer.
+   Active when <html data-theme="v2">. Maps dark utility classes used
+   throughout the app onto the paper/ink/gold palette without rewriting
+   each component. Surgical components (CardComponent, StockTicker,
+   CardRevealOverlay, LobbyPage, GameOverScreen, etc.) ship their own
+   v2 markup branch — those will mostly avoid these utility classes.
+   This file catches everything that didn't get an explicit v2 branch.
+   ───────────────────────────────────────────────────────────────────── */
+
+html[data-theme="v2"] {
+  /* Set page background to felt and default text to paper */
+  background: var(--color-felt);
+  color: var(--color-paper);
+}
+html[data-theme="v2"] body {
+  background: var(--color-felt);
+  color: var(--color-paper);
+  font-family: "Inter Variable", system-ui, sans-serif;
+}
+
+/* ── Surface backgrounds ─────────────────────────────────────────── */
+html[data-theme="v2"] .bg-gray-950 { background-color: var(--color-felt) !important; }
+html[data-theme="v2"] .bg-gray-900,
+html[data-theme="v2"] .bg-gray-900\/50,
+html[data-theme="v2"] .bg-gray-900\/60,
+html[data-theme="v2"] .bg-gray-900\/30,
+html[data-theme="v2"] .bg-gray-900\/20 {
+  background-color: color-mix(in srgb, var(--color-felt) 88%, var(--color-paper) 12%) !important;
+}
+html[data-theme="v2"] .bg-gray-800,
+html[data-theme="v2"] .bg-gray-800\/50,
+html[data-theme="v2"] .bg-gray-800\/60,
+html[data-theme="v2"] .bg-gray-800\/40,
+html[data-theme="v2"] .bg-gray-800\/30,
+html[data-theme="v2"] .bg-gray-800\/20 {
+  background-color: color-mix(in srgb, var(--color-felt) 80%, var(--color-paper) 20%) !important;
+}
+html[data-theme="v2"] .bg-gray-700 { background-color: color-mix(in srgb, var(--color-felt) 70%, var(--color-paper) 30%) !important; }
+
+/* ── Borders ─────────────────────────────────────────────────────── */
+html[data-theme="v2"] .border-gray-700,
+html[data-theme="v2"] .border-gray-700\/50,
+html[data-theme="v2"] .border-gray-800,
+html[data-theme="v2"] .border-gray-800\/50,
+html[data-theme="v2"] .border-gray-800\/40,
+html[data-theme="v2"] .border-gray-800\/60 {
+  border-color: rgba(201,161,74,0.18) !important;
+}
+
+/* ── Text colors on felt ─────────────────────────────────────────── */
+html[data-theme="v2"] .text-gray-200,
+html[data-theme="v2"] .text-gray-100,
+html[data-theme="v2"] .text-white { color: var(--color-paper) !important; }
+html[data-theme="v2"] .text-gray-300 { color: color-mix(in srgb, var(--color-paper) 92%, var(--color-ink) 8%) !important; }
+html[data-theme="v2"] .text-gray-400 { color: color-mix(in srgb, var(--color-paper) 70%, var(--color-felt) 30%) !important; }
+html[data-theme="v2"] .text-gray-500 { color: color-mix(in srgb, var(--color-paper) 55%, var(--color-felt) 45%) !important; }
+html[data-theme="v2"] .text-gray-600 { color: color-mix(in srgb, var(--color-paper) 45%, var(--color-felt) 55%) !important; }
+
+/* ── Semantic green/red → buy/sell ───────────────────────────────── */
+html[data-theme="v2"] .text-emerald-400,
+html[data-theme="v2"] .text-emerald-300,
+html[data-theme="v2"] .text-emerald-200,
+html[data-theme="v2"] .text-green-400,
+html[data-theme="v2"] .text-green-300 { color: var(--color-buy) !important; }
+html[data-theme="v2"] .text-emerald-400 { color: #5fb27a !important; } /* a touch lighter on dark felt */
+
+html[data-theme="v2"] .text-red-400,
+html[data-theme="v2"] .text-red-300,
+html[data-theme="v2"] .text-red-500 { color: #d96658 !important; }
+
+html[data-theme="v2"] .bg-emerald-500,
+html[data-theme="v2"] .bg-emerald-600,
+html[data-theme="v2"] .bg-emerald-700 { background-color: var(--color-buy) !important; }
+html[data-theme="v2"] .bg-red-500,
+html[data-theme="v2"] .bg-red-600,
+html[data-theme="v2"] .bg-red-700 { background-color: var(--color-sell) !important; }
+
+html[data-theme="v2"] .bg-emerald-950\/10,
+html[data-theme="v2"] .bg-emerald-950\/20,
+html[data-theme="v2"] .bg-emerald-900\/30 {
+  background-color: color-mix(in srgb, var(--color-felt) 82%, var(--color-gold) 18%) !important;
+}
+html[data-theme="v2"] .border-emerald-800\/40,
+html[data-theme="v2"] .border-emerald-800\/50,
+html[data-theme="v2"] .border-emerald-700 { border-color: rgba(201,161,74,0.4) !important; }
+html[data-theme="v2"] .ring-emerald-400,
+html[data-theme="v2"] .ring-emerald-500,
+html[data-theme="v2"] .ring-emerald-500\/70 { --tw-ring-color: var(--color-gold) !important; }
+
+/* Amber → gold-soft (already amber-ish, just nudge) */
+html[data-theme="v2"] .text-amber-300,
+html[data-theme="v2"] .text-amber-400 { color: var(--color-gold-soft) !important; }
+html[data-theme="v2"] .text-amber-500,
+html[data-theme="v2"] .text-amber-600 { color: var(--color-gold) !important; }
+html[data-theme="v2"] .bg-amber-900\/30,
+html[data-theme="v2"] .bg-amber-950\/30 { background-color: color-mix(in srgb, var(--color-felt) 70%, var(--color-power) 30%) !important; }
+html[data-theme="v2"] .border-amber-600\/50,
+html[data-theme="v2"] .border-amber-400 { border-color: var(--color-gold) !important; }
+
+/* Pink → power */
+html[data-theme="v2"] .text-pink-400 { color: color-mix(in srgb, var(--color-power) 50%, var(--color-paper) 50%) !important; }
+html[data-theme="v2"] .text-sky-400  { color: color-mix(in srgb, var(--color-gold) 50%, var(--color-paper) 30%) !important; }
+
+/* ── Display font → DM Serif ─────────────────────────────────────── */
+html[data-theme="v2"] .font-display { font-family: "DM Serif Display", Georgia, serif !important; font-weight: 400 !important; }
+
+/* ── Buttons / pills heavy hits ──────────────────────────────────── */
+html[data-theme="v2"] button.bg-emerald-600,
+html[data-theme="v2"] button.bg-emerald-700,
+html[data-theme="v2"] button.bg-emerald-800 {
+  background: var(--color-ink) !important;
+  color: var(--color-gold-soft) !important;
+  border: 1px solid var(--color-gold) !important;
+}
+html[data-theme="v2"] button.bg-emerald-600:hover { background: var(--color-ink-2) !important; }
+
+html[data-theme="v2"] button.bg-red-600,
+html[data-theme="v2"] button.bg-red-700 {
+  background: var(--color-sell) !important;
+  color: var(--color-paper) !important;
+}
+
+/* ── Modal / scrim ───────────────────────────────────────────────── */
+html[data-theme="v2"] .bg-black\/50,
+html[data-theme="v2"] .bg-black\/60,
+html[data-theme="v2"] .bg-black\/70,
+html[data-theme="v2"] .bg-black\/80 {
+  background-color: rgba(14,26,20,0.78) !important;
+  backdrop-filter: blur(2px);
+}
+
+/* ── Headings: when font-display is used, wrap in serif italic accents */
+html[data-theme="v2"] h1.font-display em,
+html[data-theme="v2"] h2.font-display em { color: var(--color-gold-deep); }
+
+/* ── Focus rings ─────────────────────────────────────────────────── */
+html[data-theme="v2"] *:focus-visible { outline-color: var(--color-gold) !important; }
+
+/* ── Inputs ──────────────────────────────────────────────────────── */
+html[data-theme="v2"] input,
+html[data-theme="v2"] textarea {
+  background: color-mix(in srgb, var(--color-felt) 80%, var(--color-paper) 20%);
+  color: var(--color-paper);
+  border-color: rgba(201,161,74,0.3);
+}
+html[data-theme="v2"] input::placeholder { color: rgba(244,236,219,0.4); }
+
+/* ── Mobile scroll surface stays felt ────────────────────────────── */
+html[data-theme="v2"] .mobile-scroll { background: transparent; }
