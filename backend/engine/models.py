@@ -70,9 +70,10 @@ class GameState:
     """Single source of truth for all mutable game state.
 
     Phases: dealing -> player_turn -> card_reveal -> share_suspend ->
-            currency_settlement -> day_end -> (loop | game_over)
+            day_end -> (loop | game_over)
     Sub-phases: player_turn -> rights_issue -> player_turn
-    card_reveal includes chairman/director discard actions.
+    card_reveal includes chairman/director discards AND currency settlement
+    (snapshot in begin_card_reveal, applied alongside card values in finalize).
     """
 
     def __init__(self, num_players):
@@ -117,6 +118,11 @@ class GameState:
         # Track which players have finished the card reveal animation
         self.reveal_complete_players = set()
 
+        # Currency settlement snapshot — populated by begin_card_reveal, consumed
+        # by _finalize_card_reveal. The frontend animates it after the last
+        # company reveal (Infosys), within the same card_reveal phase.
+        self.currency_effects = []
+
         # Price history — list of [value_per_company] snapshots at end of each day
         self.price_history = []
 
@@ -140,6 +146,7 @@ class GameState:
             "directors": {k: list(v) for k, v in self.directors.items()},
             "chairman_director_queue": list(self.chairman_director_queue),
             "reveal_data": list(self.reveal_data),
+            "currency_effects": list(self.currency_effects),
             "price_history": [list(day) for day in self.price_history],
         }
 
@@ -163,6 +170,7 @@ class GameState:
             "players": players_view,
             "companies": [c.to_dict() for c in self.companies],
             "available_shares": list(self.available_shares),
+            "previous_values": list(self.previous_values),
             "current_day": self.current_day,
             "current_turn": self.current_turn,
             "current_round": self.current_round,
@@ -174,5 +182,6 @@ class GameState:
             "directors": {k: list(v) for k, v in self.directors.items()},
             "chairman_director_queue": list(self.chairman_director_queue),
             "reveal_data": list(self.reveal_data),
+            "currency_effects": list(self.currency_effects),
             "price_history": [list(day) for day in self.price_history],
         }

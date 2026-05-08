@@ -50,7 +50,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
     if (!gameState || initialized.current) return
     // Only snapshot once backend has finalized card reveal
     const phase = gameState.phase
-    if (phase !== 'share_suspend' && phase !== 'currency_settlement' && phase !== 'day_end') return
+    if (phase !== 'share_suspend' && phase !== 'day_end') return
     const curr: Record<string, number> = {}
     for (const co of gameState.companies) curr[co.name] = co.value
     prevValues.current = curr
@@ -246,7 +246,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
             className="space-y-3"
           >
             {gameState.companies.map((co, i) => {
-              const diff = co.value - co.prev_value
+              const diff = co.value - co.pre_fluct_value
               return (
                 <motion.button
                   key={co.name}
@@ -263,7 +263,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
                     <span className={cn('text-sm font-medium', COMPANY_TEXT_COLOR[co.name])}>{co.name}</span>
                   </span>
                   <span className="flex items-center gap-3 font-mono text-sm">
-                    <span className="text-gray-500">${co.prev_value}</span>
+                    <span className="text-gray-500">${co.pre_fluct_value}</span>
                     <motion.span
                       className="text-gray-700"
                       animate={{ opacity: [0.3, 1, 0.3] }}
@@ -330,7 +330,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
           </p>
           <div className="grid grid-cols-2 gap-2">
             {gameState.companies.map((co) => {
-              const diff = co.value - co.prev_value
+              const diff = co.value - co.pre_fluct_value
               return (
                 <div
                   key={co.name}

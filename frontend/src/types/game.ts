@@ -11,6 +11,8 @@ export interface Company {
   value: number
   is_open: boolean
   prev_value: number
+  // Today's pre-card-reveal value. ShareSuspend swaps current value with this.
+  pre_fluct_value: number
 }
 
 export interface Player {
@@ -28,7 +30,6 @@ export type GamePhase =
   | 'rights_issue'
   | 'card_reveal'
   | 'share_suspend'
-  | 'currency_settlement'
   | 'day_end'
   | 'game_over'
 
@@ -45,6 +46,13 @@ export interface RevealCompanyData {
   delta: number
   old_value: number
   new_value: number
+}
+
+export interface CurrencyEffect {
+  player_id: number
+  before: number
+  after: number
+  type: '+' | '-'
 }
 
 export interface GameState {
@@ -71,6 +79,7 @@ export interface GameState {
   // Card reveal animation data
   reveal_data: RevealCompanyData[]
   all_hands: Record<number, Card[]> | null
+  currency_effects: CurrencyEffect[]
   price_history: number[][]
   // Turn timer — null deadline outside player_turn
   turn_timer_deadline: number | null

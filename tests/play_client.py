@@ -125,9 +125,6 @@ def choose_action(state, my_name, phase):
                 return {"type": "chairman_director", "discard_own_idx": 0}
         return None
 
-    if phase == "currency_settlement":
-        return {"type": "complete_currency_settlement"}
-
     return None
 
 
