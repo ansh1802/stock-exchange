@@ -731,6 +731,12 @@ async def auto_advance(room):
         phase = game.game_phase
 
         if phase == "card_reveal" and not game.reveal_data:
+            # Pause briefly so players can register the final turn's outcome
+            # (the buy/sell/pass that ended the day) before the closing bell
+            # animation kicks in. Phase is already card_reveal but reveal_data
+            # is empty, so the frontend stays on the regular board view.
+            await broadcast_game_state(room)
+            await asyncio.sleep(2.5)
             # Just entered card_reveal — compute reveal data and CD queue
             r = ge.begin_card_reveal(game)
             room.game_log.append(r["message"])

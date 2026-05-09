@@ -33,34 +33,67 @@ def validate_company(game_state, company_num):
 
 
 def update_positions(game_state, player, company_name):
-    """Recheck chairman/director status for a player after a buy or sell."""
-    holdings = player.stocks[company_name]
-    chairman = game_state.chairman
-    directors = game_state.directors
+    """Re-evaluate chairman/director assignments for a company after a trade.
 
-    # --- Chairman check ---
-    if holdings >= CHAIRMAN_THRESHOLD and chairman[company_name] is None:
-        # First to reach 100 → chairman
-        chairman[company_name] = player.id
-        # Remove from directors if they were one
-        if player.id in directors[company_name]:
-            directors[company_name].remove(player.id)
-    elif holdings >= CHAIRMAN_THRESHOLD and chairman[company_name] != player.id:
-        # Someone else is already chairman → this player becomes double-director
-        if player.id not in directors[company_name]:
-            directors[company_name].append(player.id)
+    Triggers a global recheck — not just for the acting player — so that
+    when a chairman sells below 100, an existing director with 100+ is
+    promoted to chairman, and when a director sells below 50, a waiting
+    shareholder with 50+ fills the vacated slot.
+    """
+    holdings = {p.id: p.stocks[company_name] for p in game_state.players}
+    player_order = [p.id for p in game_state.players]
 
-    # --- Director check ---
-    if holdings >= DIRECTOR_THRESHOLD and holdings < CHAIRMAN_THRESHOLD:
-        if chairman[company_name] != player.id and player.id not in directors[company_name]:
-            if len(directors[company_name]) < 2:
-                directors[company_name].append(player.id)
+    old_chairman = game_state.chairman[company_name]
+    old_directors = list(game_state.directors[company_name])
 
-    # --- Revocation on sell ---
-    if holdings < CHAIRMAN_THRESHOLD and chairman[company_name] == player.id:
-        chairman[company_name] = None
-    if holdings < DIRECTOR_THRESHOLD and player.id in directors[company_name]:
-        directors[company_name].remove(player.id)
+    # 1. Keep current chairman if still ≥ CHAIRMAN_THRESHOLD; else vacate.
+    chairman = old_chairman if (
+        old_chairman is not None and holdings[old_chairman] >= CHAIRMAN_THRESHOLD
+    ) else None
+
+    # 2. If no chairman, promote the senior eligible holder. Existing
+    #    directors with 100+ have priority (they were the natural successor).
+    if chairman is None:
+        for pid in old_directors:
+            if holdings[pid] >= CHAIRMAN_THRESHOLD:
+                chairman = pid
+                break
+        if chairman is None:
+            for pid in player_order:
+                if pid == old_chairman:
+                    continue
+                if holdings[pid] >= CHAIRMAN_THRESHOLD:
+                    chairman = pid
+                    break
+
+    # 3. Build directors: keep existing directors still ≥ DIRECTOR_THRESHOLD
+    #    (excluding the new chairman).
+    directors = []
+    for pid in old_directors:
+        if pid == chairman:
+            continue
+        if holdings[pid] >= DIRECTOR_THRESHOLD and pid not in directors:
+            directors.append(pid)
+
+    # 4. A demoted ex-chairman with ≥50 takes a director slot first
+    #    (they were the most senior holder before the sell).
+    if (old_chairman is not None and old_chairman != chairman
+            and holdings[old_chairman] >= DIRECTOR_THRESHOLD
+            and old_chairman not in directors and len(directors) < 2):
+        directors.append(old_chairman)
+
+    # 5. Fill remaining slots from the rest of the players (turn order),
+    #    promoting waiting 50+ shareholders.
+    for pid in player_order:
+        if len(directors) >= 2:
+            break
+        if pid == chairman or pid in directors:
+            continue
+        if holdings[pid] >= DIRECTOR_THRESHOLD:
+            directors.append(pid)
+
+    game_state.chairman[company_name] = chairman
+    game_state.directors[company_name] = directors
 
 
 def advance_turn(game_state):
