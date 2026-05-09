@@ -96,10 +96,11 @@ export default function MobilePlayerBoard() {
 
   const { players, companies, current_player_name } = gameState
 
-  // Sort: YOU first, then remaining in original seat order
-  const you = players.find((p) => p.name === playerName)
-  const others = players.filter((p) => p.name !== playerName)
-  const ordered = you ? [you, ...others] : players
+  // Order strictly by turn sequence — server rotates `players` so players[0]
+  // is the day's first to act. Showing them in this order (rather than
+  // YOU-first) makes turn order legible at a glance, which matters for
+  // buy/sell strategy.
+  const ordered = players
 
   return (
     <div
