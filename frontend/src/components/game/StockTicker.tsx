@@ -1,7 +1,6 @@
 import { useGameStore } from '../../store/useGameStore'
 import { COMPANY_COLOR, COMPANY_TICKER } from '../../lib/constants'
 import { cn } from '../../lib/cn'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { useTheme } from '../../hooks/useTheme'
 
@@ -76,8 +75,6 @@ export default function StockTicker() {
           }}
         >
           {gameState.companies.map((co) => {
-            const diff = co.value - co.prev_value
-            const isUp = diff > 0
             const ticker = co.ticker || COMPANY_TICKER[co.name] || co.name.toUpperCase()
             const hex = V2_COMPANY_HEX[co.name] ?? '#7a6f5b'
             return (
@@ -107,27 +104,10 @@ export default function StockTicker() {
                     </span>
                   )}
                 </div>
-                <div className="flex items-baseline gap-1 pl-1.5 mt-0.5">
-                  <span
-                    className="font-mono"
-                    style={{ fontSize: 11, color: 'var(--color-ink-muted)' }}
-                  >
-                    {co.prev_value}
-                  </span>
-                  <span
-                    className="font-mono"
-                    style={{ fontSize: 10, color: 'var(--color-ink-muted)' }}
-                  >
-                    →
-                  </span>
+                <div className="flex items-baseline pl-1.5 mt-0.5">
                   <span
                     className="font-serif leading-none"
-                    style={{
-                      fontSize: 18,
-                      color: diff === 0
-                        ? 'var(--color-ink)'
-                        : isUp ? 'var(--color-buy)' : 'var(--color-sell)',
-                    }}
+                    style={{ fontSize: 18, color: 'var(--color-ink)' }}
                   >
                     {co.value}
                   </span>
@@ -148,8 +128,6 @@ export default function StockTicker() {
         }}
       >
         {gameState.companies.map((co, i) => {
-          const diff = co.value - co.prev_value
-          const isUp = diff > 0
           const hex = V2_COMPANY_HEX[co.name] ?? '#7a6f5b'
 
           const historyForCompany = price_history.map((day) => day[i])
@@ -189,46 +167,12 @@ export default function StockTicker() {
                 )}
               </div>
               <div className="flex items-end gap-2 mt-0.5 pl-2">
-                <div className="flex items-baseline gap-1.5">
-                  <span
-                    className="font-mono"
-                    style={{ fontSize: 13, color: 'var(--color-ink-muted)' }}
-                  >
-                    {co.prev_value}
-                  </span>
-                  <span
-                    className="font-mono"
-                    style={{ fontSize: 12, color: 'var(--color-ink-muted)' }}
-                  >
-                    →
-                  </span>
-                  <span
-                    className="font-serif leading-none"
-                    style={{
-                      fontSize: 26,
-                      color: diff === 0
-                        ? 'var(--color-ink)'
-                        : isUp ? 'var(--color-buy)' : 'var(--color-sell)',
-                    }}
-                  >
-                    {co.value}
-                  </span>
-                  {diff !== 0 ? (
-                    <span
-                      className="flex items-center font-mono"
-                      style={{
-                        fontSize: 11,
-                        color: isUp ? 'var(--color-buy)' : 'var(--color-sell)',
-                      }}
-                    >
-                      {isUp ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                    </span>
-                  ) : (
-                    <span className="flex items-center" style={{ color: 'var(--color-ink-muted)' }}>
-                      <Minus size={11} />
-                    </span>
-                  )}
-                </div>
+                <span
+                  className="font-serif leading-none"
+                  style={{ fontSize: 26, color: 'var(--color-ink)' }}
+                >
+                  {co.value}
+                </span>
                 {sparkData.length >= 2 && (
                   <div className="ml-auto">
                     <Sparkline values={sparkData} color="var(--color-gold-deep)" />
@@ -253,8 +197,6 @@ export default function StockTicker() {
     return (
       <div className="grid grid-cols-3 gap-1.5 px-3 py-1.5 bg-gray-900 border-b border-gray-800">
         {gameState.companies.map((co) => {
-          const diff = co.value - co.prev_value
-          const isUp = diff > 0
           const ticker = co.ticker || COMPANY_TICKER[co.name] || co.name.toUpperCase()
           return (
             <div
@@ -275,17 +217,8 @@ export default function StockTicker() {
                   <span className="text-[8px] text-red-400 ml-auto font-semibold">X</span>
                 )}
               </div>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-[11px] font-mono text-gray-500 leading-tight">
-                  {co.prev_value}
-                </span>
-                <span className="text-[10px] text-gray-500 leading-tight">→</span>
-                <span
-                  className={cn(
-                    'text-sm font-mono font-bold leading-tight',
-                    diff === 0 ? 'text-white' : isUp ? 'text-emerald-400' : 'text-red-400',
-                  )}
-                >
+              <div className="flex items-baseline mt-0.5">
+                <span className="text-sm font-mono font-bold leading-tight text-white">
                   {co.value}
                 </span>
               </div>
@@ -299,9 +232,6 @@ export default function StockTicker() {
   return (
     <div className="flex gap-1 px-2 py-2 bg-gray-900 border-b border-gray-800 overflow-x-auto">
       {gameState.companies.map((co, i) => {
-        const diff = co.value - co.prev_value
-        const isUp = diff > 0
-
         const historyForCompany = price_history.map((day) => day[i])
         const sparkData = [...historyForCompany.slice(-5), co.value]
 
@@ -323,32 +253,7 @@ export default function StockTicker() {
               {!co.is_open && <span className="text-[10px] text-red-400 ml-auto">CLOSED</span>}
             </div>
             <div className="flex items-center gap-2 mt-1">
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-xs font-mono text-gray-500">{co.prev_value}</span>
-                <span className="text-xs font-mono text-gray-600">→</span>
-                <span
-                  className={cn(
-                    'text-lg font-mono font-bold',
-                    diff === 0 ? 'text-white' : isUp ? 'text-emerald-400' : 'text-red-400',
-                  )}
-                >
-                  {co.value}
-                </span>
-                {diff !== 0 ? (
-                  <span
-                    className={cn(
-                      'flex items-center text-xs font-mono',
-                      isUp ? 'text-emerald-400' : 'text-red-400',
-                    )}
-                  >
-                    {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                  </span>
-                ) : (
-                  <span className="flex items-center text-xs text-gray-500">
-                    <Minus size={12} />
-                  </span>
-                )}
-              </div>
+              <span className="text-lg font-mono font-bold text-white">{co.value}</span>
               {sparkData.length >= 2 && (
                 <Sparkline values={sparkData} color={SPARK_COLORS[co.name] ?? '#9ca3af'} />
               )}
