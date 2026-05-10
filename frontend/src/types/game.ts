@@ -87,6 +87,8 @@ export interface GameState {
   // Turn timer — null deadline outside player_turn
   turn_timer_deadline: number | null
   turn_timer_duration: number
+  // Non-null only during the 3s "ending day" pause before the closing bell
+  day_end_countdown_deadline: number | null
 }
 
 export interface Ranking {

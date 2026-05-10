@@ -36,6 +36,7 @@ class Room:
         self.turn_timer_task = None           # asyncio.Task
         self.turn_timer_deadline = None       # unix timestamp (float) or None
         self.turn_timer_player_id = None      # which player_id the timer is ticking for
+        self.day_end_countdown_deadline = None  # unix timestamp; non-null during the pre-reveal "ending day in Ns" pause
 
     def touch(self):
         """Update last activity timestamp."""

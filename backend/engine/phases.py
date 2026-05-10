@@ -81,18 +81,24 @@ def begin_card_reveal(game_state):
 
     # Snapshot currency settlement effects (applied alongside card values in finalize).
     # CD discards never touch power cards, so this snapshot is stable.
+    # Multiple currency cards on the same player must compound — each subsequent
+    # effect's `before` is the prior effect's `after`, otherwise both rows show
+    # the same X→Y delta and only the last one's `after` ends up applied.
     currency_effects = []
+    running_cash = {p.id: p.cash for p in game_state.players}
     for player in game_state.players:
         for card in player.hand:
             if not card.is_power:
                 continue
             if card.company_name == "Currency + ":
-                before = player.cash
+                before = running_cash[player.id]
                 after = before + CURRENCY_RATE * before
+                running_cash[player.id] = after
                 currency_effects.append({"player_id": player.id, "before": before, "after": after, "type": "+"})
             elif card.company_name == "Currency - ":
-                before = player.cash
+                before = running_cash[player.id]
                 after = before - CURRENCY_RATE * before
+                running_cash[player.id] = after
                 currency_effects.append({"player_id": player.id, "before": before, "after": after, "type": "-"})
     game_state.currency_effects = currency_effects
 
@@ -417,11 +423,17 @@ def share_suspend_action(game_state, player_id, company_num):
 
 
 def _finalize_suspend(game_state):
-    """Re-open companies with positive value, advance to day_end."""
+    """Re-open companies with positive value, advance to day_end.
+
+    `previous_values` is intentionally NOT cleared here: the ShareSuspendOverlay
+    keeps rendering for ~5s after the queue empties (countdown to next phase),
+    and clearing it would make `pre_fluct_value` fall back to the current value,
+    causing the "Prices After Fluctuation" table to show Y → Y. It gets
+    overwritten the next time `begin_card_reveal` runs.
+    """
     for company in game_state.companies:
         if company.value > 0:
             company.open = True
-    game_state.previous_values.clear()
     game_state.game_phase = "day_end"
 
 

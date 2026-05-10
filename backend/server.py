@@ -517,6 +517,9 @@ def build_client_state(room, player_id):
         # Turn timer (null deadline outside player_turn)
         "turn_timer_deadline": room.turn_timer_deadline,
         "turn_timer_duration": room.turn_timer_seconds,
+        # Pre-reveal "ending day in Ns" countdown — non-null only during the
+        # 3s pause between final turn and closing bell.
+        "day_end_countdown_deadline": room.day_end_countdown_deadline,
     }
 
 
@@ -731,12 +734,16 @@ async def auto_advance(room):
         phase = game.game_phase
 
         if phase == "card_reveal" and not game.reveal_data:
-            # Pause briefly so players can register the final turn's outcome
-            # (the buy/sell/pass that ended the day) before the closing bell
-            # animation kicks in. Phase is already card_reveal but reveal_data
-            # is empty, so the frontend stays on the regular board view.
+            # Pause for 3s so players can register the final turn's outcome
+            # before the closing bell animation. The deadline is broadcast as
+            # `day_end_countdown_deadline` so the top indicator can render
+            # "Ending day in 3,2,1" — driven by the same absolute-timestamp
+            # pattern as the turn timer.
+            import time as _time
+            room.day_end_countdown_deadline = _time.time() + 3.0
             await broadcast_game_state(room)
-            await asyncio.sleep(2.5)
+            await asyncio.sleep(3.0)
+            room.day_end_countdown_deadline = None
             # Just entered card_reveal — compute reveal data and CD queue
             r = ge.begin_card_reveal(game)
             room.game_log.append(r["message"])
