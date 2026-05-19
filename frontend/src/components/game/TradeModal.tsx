@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useGameStore } from '../../store/useGameStore'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -20,6 +20,42 @@ export default function TradeModal({ mode, send, onClose }: Props) {
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null)
   const [quantity, setQuantity] = useState(1)
 
+  // RI smart-fill — must be before early returns (hook rules)
+  // Returns the optimal qty to trade to best position for Rights Issue next turn.
+  // Buy: max shares you can buy while still affording full RI afterwards.
+  // Sell: min shares to sell so your cash covers full RI on remaining holdings.
+  // Returns null when the button should be disabled.
+  const riQty = useMemo(() => {
+    if (!gameState || selectedCompany === null) return null
+    const me = gameState.players.find((p) => p.is_you)
+    if (!me) return null
+    const company = gameState.companies[selectedCompany]
+    if (!company || company.value <= 0) return null
+
+    const h = me.stocks[company.name] ?? 0
+    const p = company.value
+    const riPrice = Math.max(5, Math.floor(p / 10) * 5)
+    const c = me.cash
+    const avail = gameState.available_shares[selectedCompany]
+    const maxBuyLocal = Math.min(Math.floor(c / p), avail)
+
+    if (mode === 'buy') {
+      // Scan from maxBuy down: find largest q where cash after buying covers full RI
+      for (let q = maxBuyLocal; q >= 1; q--) {
+        if (c - q * p >= Math.floor((h + q) / 2) * riPrice) return q
+      }
+      return null
+    } else {
+      // Scan from 0 up: find minimum shares to sell so cash covers RI on remaining holdings
+      for (let s = 0; s <= h; s++) {
+        const eligible = Math.floor((h - s) / 2)
+        if (eligible === 0) break // selling this much destroys all RI eligibility
+        if (c + s * p >= eligible * riPrice) return s
+      }
+      return null
+    }
+  }, [gameState, selectedCompany, mode])
+
   if (!gameState) return null
 
   const me = gameState.players.find((p) => p.is_you)
@@ -38,6 +74,19 @@ export default function TradeModal({ mode, send, onClose }: Props) {
   const maxSell = myHolding
   const maxQty = mode === 'buy' ? maxBuy : maxSell
 
+  // RI scenario after current quantity selection
+  const riPreview = company && company.value > 0
+    ? (() => {
+        const h = myHolding
+        const p = company.value
+        const riPrice = Math.max(5, Math.floor(p / 10) * 5)
+        const newHoldings = mode === 'buy' ? h + quantity : h - quantity
+        const eligible = Math.floor(Math.max(0, newHoldings) / 2)
+        const riCost = eligible * riPrice
+        return { eligible, riPrice, riCost }
+      })()
+    : null
+
   const canExecute = company && quantity > 0 && quantity <= maxQty &&
     (mode === 'buy' ? company.is_open && company.value > 0 : true)
 
@@ -53,6 +102,12 @@ export default function TradeModal({ mode, send, onClose }: Props) {
   }
 
   const isBuy = mode === 'buy'
+
+  const riButtonLabel = isBuy
+    ? `RI buy ${riQty ?? '—'}`
+    : riQty === 0
+    ? 'RI: funded'
+    : `RI sell ${riQty ?? '—'}`
 
   return (
     <motion.div
@@ -116,7 +171,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
         {/* Quantity + preview */}
         {company && (
           <div className="space-y-3">
-            <div className={cn('flex items-center', isMobile ? 'gap-1.5' : 'gap-3')}>
+            <div className={cn('flex items-center flex-wrap', isMobile ? 'gap-1.5' : 'gap-2')}>
               <label className="text-xs text-gray-400">Qty</label>
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 5))}
@@ -155,18 +210,49 @@ export default function TradeModal({ mode, send, onClose }: Props) {
               >
                 +5
               </button>
-              <span className="text-[10px] text-gray-500 ml-auto">
+              {/* Max button */}
+              <button
+                onClick={() => setQuantity(maxQty)}
+                disabled={maxQty === 0}
+                className={cn(
+                  'text-xs font-medium px-2 py-1 rounded border disabled:opacity-30 disabled:cursor-not-allowed',
+                  isBuy
+                    ? 'border-emerald-600 bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600/20'
+                    : 'border-red-600 bg-red-600/10 text-red-400 hover:bg-red-600/20',
+                )}
+              >
                 max {maxQty}
-              </span>
+              </button>
+              {/* RI smart-fill button */}
+              <button
+                onClick={() => riQty !== null && setQuantity(riQty)}
+                disabled={riQty === null || riQty === 0}
+                title={
+                  isBuy
+                    ? 'Buy this many to maximise shares while keeping cash for full Rights Issue'
+                    : 'Sell minimum shares to fund a full Rights Issue on your current holdings'
+                }
+                className={cn(
+                  'text-xs font-medium px-2 py-1 rounded border disabled:opacity-30 disabled:cursor-not-allowed',
+                  'border-amber-600 bg-amber-600/10 text-amber-400 hover:bg-amber-600/20',
+                )}
+              >
+                {riButtonLabel}
+              </button>
             </div>
 
             <div className="text-sm font-mono bg-gray-800/50 px-3 py-2 rounded-lg space-y-1">
               <div className="text-gray-300">
-                {quantity} x {company.name} @ ${company.value} = {formatCash(cost)}
+                {quantity} × {company.name} @ ${company.value} = {formatCash(cost)}
               </div>
               <div className="text-gray-500 text-xs">
                 Balance after: {formatCash(isBuy ? me.cash - cost : me.cash + cost)}
               </div>
+              {riPreview && (
+                <div className="text-amber-600/80 text-xs">
+                  RI eligible after: {riPreview.eligible} × ${riPreview.riPrice} = {formatCash(riPreview.riCost)}
+                </div>
+              )}
             </div>
           </div>
         )}

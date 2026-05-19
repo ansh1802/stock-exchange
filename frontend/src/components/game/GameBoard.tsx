@@ -20,6 +20,7 @@ import ChairmanDirectorModal from './ChairmanDirectorModal'
 import RightsIssueOverlay from './RightsIssueOverlay'
 import DebentureOverlay from './DebentureOverlay'
 import ReconnectingBanner from './ReconnectingBanner'
+import RollingUpdatesModal from './RollingUpdatesModal'
 
 interface Props {
   send: (msg: ClientMessage) => void
@@ -33,6 +34,8 @@ export default function GameBoard({ send }: Props) {
   const chatUnread = useGameStore((s) => s.chatUnread)
   const isMobile = useIsMobile()
   const [mobileTab, setMobileTab] = useState<MobileTab>('players')
+
+  const [showRollingUpdates, setShowRollingUpdates] = useState(true)
 
   // Animation state — decoupled from backend phase
   const [animPhase, setAnimPhase] = useState<AnimationPhase>('none')
@@ -137,6 +140,9 @@ export default function GameBoard({ send }: Props) {
 
   const sharedOverlays = (
     <>
+      {/* Rolling updates — shown once per game on mount */}
+      {showRollingUpdates && <RollingUpdatesModal onClose={() => setShowRollingUpdates(false)} />}
+
       {/* Modals for sub-phases */}
       {phase === 'rights_issue' && !showRightsIssueOverlay && <RightsIssueModal send={send} />}
 

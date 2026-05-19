@@ -5,17 +5,21 @@ import type { Card, Company } from '../../types/game'
 interface Props {
   card: Card
   companies: Company[]
+  loanAmount: number
   onUse: (card: Card, companyNum?: number) => void
   onCancel: () => void
 }
 
-export default function PowerCardPanel({ card, companies, onUse, onCancel }: Props) {
+export default function PowerCardPanel({ card, companies, loanAmount, onUse, onCancel }: Props) {
   const name = card.company.replace(' ', '')
 
   if (name === 'LoanStock') {
     return (
       <div className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 flex items-center gap-3">
-        <span className="text-amber-400 text-sm font-medium">Loan Stock: +$100 cash</span>
+        <span className="text-amber-400 text-sm font-medium">
+          Loan Stock: +<span className="font-mono">${loanAmount}</span>
+          <span className="text-amber-600 text-xs ml-1">(10% of your net worth)</span>
+        </span>
         <button
           onClick={() => onUse(card)}
           className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-sm rounded-lg"
