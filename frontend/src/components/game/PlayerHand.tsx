@@ -50,6 +50,16 @@ export default function PlayerHand({ send }: Props) {
 
   const selectedCardData = selectedCard !== null ? hand[selectedCard] : null
 
+  const me = gameState.players.find((p) => p.is_you)
+  const loanAmount = useMemo(() => {
+    if (!me) return 0
+    const netWorth = me.cash + gameState.companies.reduce((sum, c) => {
+      const held = me.stocks[c.name] ?? 0
+      return sum + (c.is_open && held > 0 ? held * c.value : 0)
+    }, 0)
+    return Math.max(5, Math.floor(netWorth * 0.1 / 5) * 5)
+  }, [me, gameState.companies])
+
   const usePowerCard = (card: Card, companyNum?: number) => {
     if (card.company === 'LoanStock') {
       send({ type: 'loan_stock' })
@@ -84,6 +94,7 @@ export default function PlayerHand({ send }: Props) {
           <PowerCardPanel
             card={selectedCardData}
             companies={gameState.companies}
+            loanAmount={loanAmount}
             onUse={usePowerCard}
             onCancel={() => setSelectedCard(null)}
           />
@@ -115,6 +126,7 @@ export default function PlayerHand({ send }: Props) {
         <PowerCardPanel
           card={selectedCardData}
           companies={gameState.companies}
+          loanAmount={loanAmount}
           onUse={usePowerCard}
           onCancel={() => setSelectedCard(null)}
         />

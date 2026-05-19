@@ -1,6 +1,6 @@
 """Player turn actions: buy, sell, pass, and power card usage."""
 
-from .constants import LOAN_STOCK_AMOUNT, RIGHTS_ISSUE_VALUE
+from .constants import LOAN_STOCK_AMOUNT
 from .helpers import result, player_by_id, validate_turn, validate_company, advance_turn, update_positions
 
 
@@ -79,10 +79,17 @@ def use_loan_stock(game_state, player_id):
     if not card:
         return result(False, "You don't have a Loan Stock card.", game_state)
 
+    net_worth = player.cash + sum(
+        player.stocks.get(c.name, 0) * c.value
+        for c in game_state.companies
+        if c.open and player.stocks.get(c.name, 0) > 0
+    )
+    loan_amount = max(5, (int(net_worth * 0.1) // 5) * 5)
+
     player.hand.remove(card)
-    player.cash += LOAN_STOCK_AMOUNT
+    player.cash += loan_amount
     advance_turn(game_state)
-    return result(True, f"Loan Stock used. Cash: {player.cash}.", game_state)
+    return result(True, f"Loan Stock used. Received ${loan_amount} (10% of net worth).", game_state)
 
 
 def use_debenture(game_state, player_id, company_num):
@@ -112,7 +119,7 @@ def use_debenture(game_state, player_id, company_num):
 def use_rights_issue(game_state, player_id, company_num):
     """Initiate a rights issue — enters the rights_issue sub-phase.
 
-    Company value is temporarily set to RIGHTS_ISSUE_VALUE (10).
+    Company value is temporarily set to 50% of its current market price.
     Each player holding shares (starting from current, wrapping around)
     can buy up to holdings/2 shares at the discounted price.
     """
@@ -131,7 +138,7 @@ def use_rights_issue(game_state, player_id, company_num):
     company = game_state.companies[idx]
     game_state.rights_issue_original_value = company.value
     game_state.rights_issue_company = company_num
-    company.value = RIGHTS_ISSUE_VALUE
+    company.value = max(5, (company.value // 10) * 5)
 
     # Build eligible queue: start from current player, wrap around
     cur = game_state.current_turn
@@ -150,7 +157,7 @@ def use_rights_issue(game_state, player_id, company_num):
         return result(True, "Rights issue: no eligible shareholders.", game_state)
 
     game_state.game_phase = "rights_issue"
-    return result(True, f"Rights issue on {company.name} at {RIGHTS_ISSUE_VALUE}.", game_state)
+    return result(True, f"Rights issue on {company.name} at {company.value} (50% of market price).", game_state)
 
 
 def rights_issue_buy(game_state, player_id, num_shares):
