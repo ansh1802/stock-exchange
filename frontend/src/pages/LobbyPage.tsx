@@ -69,8 +69,7 @@ export default function LobbyPage() {
                   display: 'block',
                 }}
               >
-                {/* Exchange */}
-                Happy 51 Dad
+                Exchange
               </span>
               <div
                 style={{
@@ -261,8 +260,7 @@ export default function LobbyPage() {
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          {/* <h1 className="text-4xl font-bold text-white tracking-tight">Stock Exchange</h1> */}
-          <h1 className="text-4xl font-bold text-white tracking-tight">Happy 51 Dad</h1>
+          <h1 className="text-4xl font-bold text-white tracking-tight">Stock Exchange</h1>
           <p className="mt-2 text-gray-400">Multiplayer trading game</p>
         </div>
 
