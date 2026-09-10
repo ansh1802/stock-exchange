@@ -281,7 +281,7 @@ export default function LobbyPage() {
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                   placeholder="ABCD"
                   maxLength={4}
-                  className="flex-1 px-3 py-2 font-mono tracking-[0.3em] text-center uppercase focus:outline-none"
+                  className="flex-1 min-w-0 px-3 py-2 font-mono tracking-[0.3em] text-center uppercase focus:outline-none"
                   style={{
                     background: 'var(--color-paper-2)',
                     border: '1px solid var(--color-paper-line)',
@@ -294,7 +294,7 @@ export default function LobbyPage() {
                   type="button"
                   onClick={createRoom}
                   disabled={creatingRoom}
-                  className="px-3 py-2 font-mono uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 font-mono uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex-shrink-0"
                   style={{
                     background: 'var(--color-paper-2)',
                     border: '1px solid var(--color-paper-line)',
@@ -384,13 +384,13 @@ export default function LobbyPage() {
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="ABCD"
                 maxLength={4}
-                className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white font-mono tracking-widest text-center uppercase placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                className="flex-1 min-w-0 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white font-mono tracking-widest text-center uppercase placeholder-gray-500 focus:outline-none focus:border-emerald-500"
               />
               <button
                 type="button"
                 onClick={createRoom}
                 disabled={creatingRoom}
-                className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex-shrink-0"
               >
                 {creatingRoom ? 'Creating…' : 'Create Room'}
               </button>
