@@ -4,6 +4,12 @@ import string
 import random
 import time
 
+MAX_PLAYERS = 6
+MIN_PLAYERS = 2
+KICK_COOLDOWN_SECONDS = 120
+HOST_MIGRATION_GRACE_SECONDS = 45
+READY_AUTOREADY_COUNTDOWN_SECONDS = 25
+
 
 class PlayerConn:
     """A player's connection state within a room."""
@@ -13,6 +19,7 @@ class PlayerConn:
         self.name = name
         self.ws = websocket
         self.connected = True
+        self.ready = False
         self.last_pong = time.time()
 
 
@@ -25,8 +32,10 @@ class Room:
         self.game = None        # GameState, set on start
         self.host_id = None
         self.started = False
+        self.is_public = False
         self._next_id = 1
         self._name_to_id = {}   # for reconnection lookup
+        self.kicked_until = {}  # name -> unix timestamp cooldown expiry
         self.game_log = []      # accumulated log entries for frontend
         self.chat_messages = [] # list of {"name": str, "text": str, "ts": float}
         self.last_activity = time.time()
@@ -37,6 +46,11 @@ class Room:
         self.turn_timer_deadline = None       # unix timestamp (float) or None
         self.turn_timer_player_id = None      # which player_id the timer is ticking for
         self.day_end_countdown_deadline = None  # unix timestamp; non-null during the pre-reveal "ending day in Ns" pause
+        self.autoready_task = None            # asyncio.Task — lobby-only auto-ready countdown
+        self.autoready_deadline = None        # unix timestamp or None
+        self.autoready_player_id = None       # which straggler the countdown is for
+        self.host_migration_task = None       # asyncio.Task — lobby-only host failover
+        self.host_migration_deadline = None   # unix timestamp or None
 
     def touch(self):
         """Update last activity timestamp."""
@@ -72,20 +86,32 @@ class Room:
     # ── Player management ────────────────────────────────────────────────
 
     def add_player(self, name, websocket):
-        """Add or reconnect a player. Returns (player_id, reconnected)."""
-        # Reconnection: same name rejoins
+        """Add or reconnect a player. Returns (player_id, reconnected, error).
+
+        error is None on success, otherwise one of "name_taken" (name belongs
+        to a still-connected player), "started" (game running, unknown name),
+        or "full" (room at capacity).
+        """
         if name in self._name_to_id:
             pid = self._name_to_id[name]
-            self.players[pid].ws = websocket
-            self.players[pid].connected = True
-            self.players[pid].last_pong = time.time()
-            self.touch()
-            return pid, True
+            existing = self.players.get(pid)
+            if existing is None:
+                # Name was reserved (e.g. kicked) but the slot is gone — treat
+                # as a fresh join below.
+                del self._name_to_id[name]
+            elif existing.connected:
+                return None, False, "name_taken"
+            else:
+                existing.ws = websocket
+                existing.connected = True
+                existing.last_pong = time.time()
+                self.touch()
+                return pid, True, None
 
         if self.started:
-            return None, False  # can't join mid-game
-        if len(self.players) >= 6:
-            return None, False  # room full
+            return None, False, "started"  # can't join mid-game
+        if len(self.players) >= MAX_PLAYERS:
+            return None, False, "full"
 
         pid = self._next_id
         self._next_id += 1
@@ -96,7 +122,14 @@ class Room:
         if self.host_id is None:
             self.host_id = pid
 
-        return pid, False
+        return pid, False, None
+
+    def remove_player(self, player_id):
+        """Fully remove a player (lobby-only leave/kick) — frees their name."""
+        player = self.players.pop(player_id, None)
+        if player:
+            self._name_to_id.pop(player.name, None)
+        return player
 
     def disconnect_player(self, player_id):
         if player_id in self.players:
@@ -107,6 +140,37 @@ class Room:
 
     def connected_count(self):
         return sum(1 for p in self.players.values() if p.connected)
+
+    def to_lobby_players(self, requesting_id=None):
+        """Build the personalised player list for a `lobby_state` message."""
+        return [
+            {
+                "id": p.id,
+                "name": p.name,
+                "ready": p.ready,
+                "connected": p.connected,
+                "is_host": p.id == self.host_id,
+                "is_you": p.id == requesting_id,
+            }
+            for p in self.players.values()
+        ]
+
+    def cancel_all_timers(self):
+        """Cancel every background asyncio.Task owned by this room."""
+        for task in (self.disconnect_timer, self.turn_timer_task,
+                     self.autoready_task, self.host_migration_task):
+            if task:
+                task.cancel()
+        self.disconnect_timer = None
+        self.disconnect_timer_player_id = None
+        self.turn_timer_task = None
+        self.turn_timer_deadline = None
+        self.turn_timer_player_id = None
+        self.autoready_task = None
+        self.autoready_deadline = None
+        self.autoready_player_id = None
+        self.host_migration_task = None
+        self.host_migration_deadline = None
 
     # ── Messaging ────────────────────────────────────────────────────────
 
@@ -154,7 +218,9 @@ class RoomManager:
         return self.rooms.get(code)
 
     def remove_room(self, code):
-        self.rooms.pop(code, None)
+        room = self.rooms.pop(code, None)
+        if room:
+            room.cancel_all_timers()
 
     def cleanup_stale_rooms(self):
         """Remove rooms where all players disconnected and TTL expired."""
@@ -171,7 +237,7 @@ class RoomManager:
                 if age > 300:   # 5 minutes for lobbies / finished games
                     to_remove.append(code)
         for code in to_remove:
-            self.rooms.pop(code, None)
+            self.remove_room(code)
 
     def create_room(self):
         code = self._generate_code()

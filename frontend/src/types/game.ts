@@ -24,6 +24,23 @@ export interface Player {
   connected?: boolean
 }
 
+// Pre-game lobby roster entry — distinct from the in-game Player above,
+// which only exists once the engine's fixed player roster is dealt in.
+export interface LobbyPlayer {
+  id: number
+  name: string
+  ready: boolean
+  connected: boolean
+  is_host: boolean
+  is_you: boolean
+}
+
+export interface AutoreadyState {
+  active: boolean
+  deadline: number | null
+  waiting_on: number[]
+}
+
 export type GamePhase =
   | 'dealing'
   | 'player_turn'

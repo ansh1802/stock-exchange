@@ -11,9 +11,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 import game_engine as ge
-from room_manager import RoomManager
+from room_manager import (
+    RoomManager,
+    MAX_PLAYERS,
+    MIN_PLAYERS,
+    KICK_COOLDOWN_SECONDS,
+    HOST_MIGRATION_GRACE_SECONDS,
+    READY_AUTOREADY_COUNTDOWN_SECONDS,
+)
 from engine.debug_presets import apply_preset, PRESETS
 
 rooms = RoomManager()
@@ -42,6 +50,42 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── Room discovery (public rooms only — private rooms stay code-only) ──────
+
+
+class CreateRoomRequest(BaseModel):
+    is_public: bool = False
+
+
+@app.post("/api/rooms")
+async def create_room_endpoint(payload: CreateRoomRequest):
+    """Generate a fresh, collision-free room code. Used by the 'Create Room'
+    flow so a host can opt a room into the public browser before anyone
+    connects — joining still happens over the WS endpoint as before."""
+    room = rooms.create_room()
+    room.is_public = payload.is_public
+    return {"code": room.code}
+
+
+@app.get("/api/rooms")
+async def list_rooms_endpoint():
+    """List open, opted-in rooms for the landing-page browser. Private rooms
+    (the default) never appear here — they're only joinable by code."""
+    out = []
+    for room in rooms.rooms.values():
+        if not room.is_public or room.connected_count() == 0:
+            continue
+        host = room.players.get(room.host_id)
+        out.append({
+            "code": room.code,
+            "host_name": host.name if host else "?",
+            "player_count": room.connected_count(),
+            "max_players": MAX_PLAYERS,
+            "status": "in_progress" if room.started else "waiting",
+        })
+    return {"rooms": out}
 
 
 # ── Heartbeat & disconnect timer ────────────────────────────────────────────
@@ -284,6 +328,119 @@ async def _run_turn_timer(room, player_id, duration):
             room.turn_timer_player_id = None
 
 
+# ── Lobby: ready / auto-ready ───────────────────────────────────────────────
+#
+# Ready blocks Start until everyone's ready, but if every connected player
+# except one straggler is ready, a visible countdown starts and the
+# straggler is auto-readied when it expires — so a lobby can never get
+# permanently stuck on someone who wandered off.
+
+
+def cancel_autoready(room):
+    if room.autoready_task:
+        room.autoready_task.cancel()
+    room.autoready_task = None
+    room.autoready_deadline = None
+    room.autoready_player_id = None
+
+
+async def check_and_start_autoready(room):
+    """Safe to call repeatedly — only (re)starts a timer when the single
+    remaining straggler changes."""
+    if room.started:
+        cancel_autoready(room)
+        return
+
+    connected = [p for p in room.players.values() if p.connected]
+    stragglers = [p for p in connected if not p.ready]
+
+    if len(connected) < MIN_PLAYERS or len(stragglers) != 1:
+        cancel_autoready(room)
+        return
+
+    straggler = stragglers[0]
+    if room.autoready_task and room.autoready_player_id == straggler.id:
+        return  # already counting down for this exact straggler
+
+    cancel_autoready(room)
+    room.autoready_player_id = straggler.id
+    room.autoready_deadline = _time.time() + READY_AUTOREADY_COUNTDOWN_SECONDS
+    room.autoready_task = asyncio.create_task(_run_autoready(room, straggler.id))
+
+
+async def _run_autoready(room, player_id):
+    try:
+        await asyncio.sleep(READY_AUTOREADY_COUNTDOWN_SECONDS)
+        p = room.players.get(player_id)
+        if p and p.connected and not p.ready and not room.started:
+            p.ready = True
+            room.game_log.append(f"{p.name} was auto-readied after inactivity")
+            await broadcast_lobby_state(room)
+    except asyncio.CancelledError:
+        pass
+    finally:
+        if room.autoready_player_id == player_id:
+            room.autoready_task = None
+            room.autoready_deadline = None
+            room.autoready_player_id = None
+
+
+def autoready_payload(room):
+    if not room.autoready_task:
+        return None
+    return {
+        "active": True,
+        "deadline": room.autoready_deadline,
+        "waiting_on": [room.autoready_player_id] if room.autoready_player_id is not None else [],
+    }
+
+
+# ── Lobby: host migration ───────────────────────────────────────────────────
+#
+# Explicit "leave room" reassigns host immediately (see handle_leave_room).
+# A host who merely disconnects (network drop) while still in the lobby gets
+# replaced after a grace period if they haven't reconnected. Mid-game host
+# disconnect never migrates — the host role has no mid-game powers today, and
+# the existing disconnect-timer machinery already handles reconnection.
+
+
+def reassign_host(room):
+    if not room.players:
+        room.host_id = None
+        return
+    for pid, p in room.players.items():
+        if p.connected:
+            room.host_id = pid
+            return
+    room.host_id = next(iter(room.players))  # nobody connected: first in join order
+
+
+def cancel_host_migration(room):
+    if room.host_migration_task:
+        room.host_migration_task.cancel()
+    room.host_migration_task = None
+    room.host_migration_deadline = None
+
+
+async def _run_host_migration(room, disconnected_host_id):
+    try:
+        await asyncio.sleep(HOST_MIGRATION_GRACE_SECONDS)
+        p = room.players.get(disconnected_host_id)
+        if (p and not p.connected and room.host_id == disconnected_host_id
+                and not room.started):
+            old_name = p.name
+            reassign_host(room)
+            new_host = room.players.get(room.host_id)
+            if new_host:
+                room.game_log.append(f"{old_name} was away — {new_host.name} is now host")
+            await broadcast_lobby_state(room)
+    except asyncio.CancelledError:
+        pass
+    finally:
+        room.host_migration_task = None
+        room.host_migration_deadline = None
+
+
 # ── WebSocket endpoint ───────────────────────────────────────────────────────
 
 
@@ -292,32 +449,48 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
     await websocket.accept()
 
     room = rooms.get_or_create(room_code)
-    player_id, reconnected = room.add_player(player_name, websocket)
 
-    if player_id is None:
+    # Kicked players are blocked from rejoining this specific room until
+    # their cooldown expires (checked by name, before a slot is touched).
+    kicked_until = room.kicked_until.get(player_name)
+    now = _time.time()
+    if kicked_until and now < kicked_until:
+        remaining = int(kicked_until - now) + 1
         await websocket.send_json({
             "type": "error",
-            "message": "Cannot join: game already started or room is full.",
+            "error_code": "kicked_cooldown",
+            "message": f"You were kicked from this room. Try again in {remaining}s.",
+            "retry_after": remaining,
+        })
+        await websocket.close()
+        return
+
+    player_id, reconnected, error = room.add_player(player_name, websocket)
+
+    if error is not None:
+        error_messages = {
+            "name_taken": "That name is already in use in this room.",
+            "started": "Cannot join: the game has already started.",
+            "full": "Cannot join: this room is full.",
+        }
+        await websocket.send_json({
+            "type": "error",
+            "error_code": error,
+            "message": error_messages.get(error, "Cannot join this room."),
         })
         await websocket.close()
         return
 
     player_conn = room.players[player_id]
 
-    # Send lobby state to the joining player
-    await websocket.send_json({
-        "type": "lobby",
-        "room_code": room.code,
-        "players": room.get_player_names(),
-        "is_host": player_id == room.host_id,
-        "reconnected": reconnected,
-    })
-
     # Seed chat history for joining / reconnecting player
     await websocket.send_json({
         "type": "chat_history",
         "messages": list(room.chat_messages),
     })
+
+    if reconnected and player_id == room.host_id:
+        cancel_host_migration(room)
 
     # If reconnecting to a live game, send current state and cancel any disconnect timer
     if reconnected and room.started and room.game:
@@ -330,12 +503,12 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
         await check_and_start_disconnect_timer(room)
         await check_and_start_turn_timer(room)
 
-    # Notify everyone
-    await room.broadcast({
-        "type": "player_joined",
-        "player_name": player_name,
-        "players": room.get_player_names(),
-    })
+    # Still in the lobby — send everyone (joiner included) the current
+    # personalised lobby view, and check whether an auto-ready countdown
+    # needs to (re)start.
+    if not room.started:
+        await check_and_start_autoready(room)
+        await broadcast_lobby_state(room)
 
     # Start heartbeat ping loop
     ping_task = asyncio.create_task(ping_loop(websocket, player_conn))
@@ -362,17 +535,23 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
         ping_task.cancel()
         room.disconnect_player(player_id)
         room.touch()
-        await room.broadcast({
-            "type": "player_left",
-            "player_name": player_name,
-            "players": room.get_player_names(),
-        })
-        # Start auto-action timer if the disconnected player was the active player
         if room.started and room.game:
+            # Start auto-action timer if the disconnected player was the active player
             room.game_log.append(f"{player_name} disconnected")
             await check_and_start_disconnect_timer(room)
             await check_and_start_turn_timer(room)
             await broadcast_game_state(room)
+        else:
+            # Still in the lobby — a disconnected host starts a grace-period
+            # failover instead of leaving the room stuck without a host.
+            if player_id == room.host_id:
+                cancel_host_migration(room)
+                room.host_migration_deadline = _time.time() + HOST_MIGRATION_GRACE_SECONDS
+                room.host_migration_task = asyncio.create_task(
+                    _run_host_migration(room, player_id)
+                )
+            await check_and_start_autoready(room)
+            await broadcast_lobby_state(room)
         # Room cleanup is handled by the background cleanup_loop —
         # never delete immediately, so players can reconnect.
 
@@ -549,6 +728,23 @@ async def handle_action(room, player_id, data):
         await room.broadcast({"type": "chat_message", **msg})
         return
 
+    # ── Lobby / room management (work in lobby and, where noted, in-game) ─
+    if action_type == "ready":
+        await handle_ready(room, player_id, data.get("ready", True))
+        return
+
+    if action_type == "leave_room":
+        await handle_leave_room(room, player_id)
+        return
+
+    if action_type == "kick":
+        await handle_kick(room, player_id, data.get("player_id"))
+        return
+
+    if action_type == "close_room":
+        await handle_close_room(room, player_id)
+        return
+
     # ── Lobby action ─────────────────────────────────────────────────────
     if action_type == "start_game":
         await handle_start_game(
@@ -656,6 +852,109 @@ def dispatch_action(game, player_id, data):
     return None
 
 
+# ── Room management: ready, leave, kick, close ───────────────────────────────
+
+
+async def handle_ready(room, player_id, ready):
+    if room.started:
+        return
+    p = room.players.get(player_id)
+    if not p:
+        return
+    p.ready = bool(ready)
+    room.touch()
+    await check_and_start_autoready(room)
+    await broadcast_lobby_state(room)
+
+
+async def handle_leave_room(room, player_id):
+    p = room.players.get(player_id)
+    if not p:
+        return
+    name = p.name
+    was_host = player_id == room.host_id
+
+    if room.started:
+        # Engine roster is fixed once the game starts — leaving mid-game
+        # reuses the same "mark disconnected" path as a network drop, so
+        # the existing disconnect-timer/turn-timer auto-pass machinery
+        # handles the rest with zero engine changes.
+        room.disconnect_player(player_id)
+        room.game_log.append(f"{name} left the game")
+    else:
+        room.remove_player(player_id)
+
+    room.touch()
+
+    if was_host:
+        cancel_host_migration(room)
+        reassign_host(room)
+
+    if not room.players:
+        rooms.remove_room(room.code)
+        return
+
+    if room.started:
+        await check_and_start_disconnect_timer(room)
+        await check_and_start_turn_timer(room)
+        await broadcast_game_state(room)
+    else:
+        await check_and_start_autoready(room)
+        await broadcast_lobby_state(room)
+
+
+async def handle_kick(room, requester_id, target_id):
+    if requester_id != room.host_id:
+        await room.send_to(requester_id, {"type": "error", "message": "Only the host can kick."})
+        return
+    if target_id == requester_id:
+        return
+    target = room.players.get(target_id)
+    if not target:
+        return
+
+    name = target.name
+    ws = target.ws
+    await room.send_to(target_id, {"type": "kicked", "message": "You were removed from this room."})
+
+    room.kicked_until[name] = _time.time() + KICK_COOLDOWN_SECONDS
+
+    if room.started:
+        room.disconnect_player(target_id)
+        room.game_log.append(f"{name} was kicked")
+    else:
+        room.remove_player(target_id)
+
+    room.touch()
+
+    try:
+        await ws.close()
+    except Exception:
+        pass
+
+    if room.started:
+        await check_and_start_disconnect_timer(room)
+        await check_and_start_turn_timer(room)
+        await broadcast_game_state(room)
+    else:
+        await check_and_start_autoready(room)
+        await broadcast_lobby_state(room)
+
+
+async def handle_close_room(room, requester_id):
+    if requester_id != room.host_id:
+        await room.send_to(requester_id, {"type": "error", "message": "Only the host can close the room."})
+        return
+
+    await room.broadcast({"type": "room_closed", "message": "The host closed this room."})
+    for p in list(room.players.values()):
+        try:
+            await p.ws.close()
+        except Exception:
+            pass
+    rooms.remove_room(room.code)
+
+
 # ── Game start ───────────────────────────────────────────────────────────────
 
 
@@ -669,12 +968,20 @@ async def handle_start_game(room, player_id, debug_preset=None, turn_timer_secon
         return
 
     num_players = len(room.players)
-    if num_players < 2:
-        await room.send_to(player_id, {"type": "error", "message": "Need at least 2 players."})
+    if num_players < MIN_PLAYERS:
+        await room.send_to(player_id, {"type": "error", "message": f"Need at least {MIN_PLAYERS} players."})
+        return
+
+    connected_players = [p for p in room.players.values() if p.connected]
+    if any(not p.ready for p in connected_players):
+        await room.send_to(player_id, {"type": "error", "message": "All players must be ready to start."})
         return
 
     if turn_timer_seconds in VALID_TURN_TIMERS:
         room.turn_timer_seconds = turn_timer_seconds
+
+    cancel_autoready(room)
+    cancel_host_migration(room)
 
     room.game = ge.GameState(num_players)
     room.started = True
@@ -711,6 +1018,23 @@ async def broadcast_game_state(room):
                 import traceback
                 traceback.print_exc()
                 player.connected = False
+
+
+async def broadcast_lobby_state(room):
+    """Send each connected player their personalised pre-game lobby view."""
+    for player in room.players.values():
+        if not player.connected:
+            continue
+        try:
+            await player.ws.send_json({
+                "type": "lobby_state",
+                "room_code": room.code,
+                "is_public": room.is_public,
+                "players": room.to_lobby_players(player.id),
+                "autoready": autoready_payload(room),
+            })
+        except Exception:
+            player.connected = False
 
 
 # ── Auto-advance through automated phases ────────────────────────────────────

@@ -36,6 +36,9 @@ export default defineConfig({
           proxy.on('econnreset', () => {})
         },
       },
+      '/api': {
+        target: 'http://localhost:8000',
+      },
     },
   },
 })
