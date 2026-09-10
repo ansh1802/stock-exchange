@@ -1,31 +1,115 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useGameStore } from '../store/useGameStore'
 import { useTheme } from '../hooks/useTheme'
 import { tutorialStorage } from '../lib/tutorialStorage'
 
+interface PublicRoom {
+  code: string
+  host_name: string
+  player_count: number
+  max_players: number
+  status: 'waiting' | 'in_progress'
+}
+
 export default function LobbyPage() {
-  const [name, setName] = useState('')
+  // Prefilled from the last name used to join/create anything, so getting
+  // kicked, leaving, or a room closing doesn't force retyping it — this
+  // only seeds the field's initial value, it's still freely editable.
+  const lastPlayerName = useGameStore((s) => s.lastPlayerName)
+  const [name, setName] = useState(lastPlayerName ?? '')
   const [code, setCode] = useState('')
+  const [isPublicRoom, setIsPublicRoom] = useState(false)
+  const [publicRooms, setPublicRooms] = useState<PublicRoom[]>([])
+  const [creatingRoom, setCreatingRoom] = useState(false)
   const navigate = useNavigate()
   const setConnection = useGameStore((s) => s.setConnection)
+  const joinError = useGameStore((s) => s.joinError)
+  const setJoinError = useGameStore((s) => s.setJoinError)
   const theme = useTheme()
   const tutorialCompleted = tutorialStorage.isCompleted()
+
+  // Private rooms (the default) never show up here — this only lists rooms
+  // whose host opted into "Public" when creating them.
+  const fetchPublicRooms = useCallback(() => {
+    fetch('/api/rooms')
+      .then((res) => (res.ok ? res.json() : { rooms: [] }))
+      .then((data) => setPublicRooms(data.rooms ?? []))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetchPublicRooms()
+    const interval = setInterval(fetchPublicRooms, 4000)
+    return () => clearInterval(interval)
+  }, [fetchPublicRooms])
 
   const join = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim() || !code.trim()) return
+    setJoinError(null)
     const roomCode = code.trim().toUpperCase()
     setConnection(roomCode, name.trim())
     navigate(`/game/${roomCode}`)
   }
 
-  const createRoom = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let generated = ''
-    for (let i = 0; i < 4; i++) generated += chars[Math.floor(Math.random() * chars.length)]
-    setCode(generated)
+  const joinRoomCode = (roomCode: string) => {
+    if (!name.trim()) return
+    setJoinError(null)
+    setConnection(roomCode, name.trim())
+    navigate(`/game/${roomCode}`)
   }
+
+  const createRoom = async () => {
+    if (creatingRoom) return
+    setCreatingRoom(true)
+    try {
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_public: isPublicRoom }),
+      })
+      if (!res.ok) throw new Error('request failed')
+      const data = await res.json()
+      if (data.code) setCode(data.code)
+    } catch {
+      toast.error("Couldn't reach the server — try again in a moment.")
+    } finally {
+      setCreatingRoom(false)
+    }
+  }
+
+  const joinErrorBanner = joinError && (
+    <div className="w-full max-w-md mb-4 px-4 py-3 bg-red-950/60 border border-red-800/60 rounded-lg text-sm text-red-300">
+      {joinError}
+    </div>
+  )
+
+  const publicRoomsSection = (
+    <div className="w-full max-w-md mt-6 space-y-1.5">
+      <h3 className="text-xs text-gray-500 uppercase tracking-widest">Public Rooms</h3>
+      {publicRooms.length === 0 && (
+        <p className="text-sm text-gray-600">No public rooms open right now.</p>
+      )}
+      {publicRooms.map((room) => (
+        <button
+          key={room.code}
+          type="button"
+          disabled={!name.trim() || room.status === 'in_progress'}
+          onClick={() => joinRoomCode(room.code)}
+          className="w-full flex items-center gap-3 px-3 py-2 bg-gray-900 border border-gray-800 rounded-lg text-left disabled:opacity-40 disabled:cursor-not-allowed hover:border-gray-700 transition-colors"
+        >
+          <span className="font-mono tracking-widest text-emerald-400">{room.code}</span>
+          <span className="text-sm text-gray-400 truncate">{room.host_name}'s room</span>
+          <span className="ml-auto text-xs text-gray-500 font-mono">{room.player_count}/{room.max_players}</span>
+          <span className={`text-xs ${room.status === 'in_progress' ? 'text-amber-400' : 'text-gray-500'}`}>
+            {room.status === 'in_progress' ? 'In progress' : 'Waiting'}
+          </span>
+        </button>
+      ))}
+    </div>
+  )
 
   if (theme === 'v2') {
     return (
@@ -147,6 +231,8 @@ export default function LobbyPage() {
             </div>
           )}
 
+          {joinErrorBanner}
+
           <form
             onSubmit={join}
             className="space-y-4 p-6"
@@ -199,7 +285,7 @@ export default function LobbyPage() {
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                   placeholder="ABCD"
                   maxLength={4}
-                  className="flex-1 px-3 py-2 font-mono tracking-[0.3em] text-center uppercase focus:outline-none"
+                  className="flex-1 min-w-0 px-3 py-2 font-mono tracking-[0.3em] text-center uppercase focus:outline-none"
                   style={{
                     background: 'var(--color-paper-2)',
                     border: '1px solid var(--color-paper-line)',
@@ -211,7 +297,8 @@ export default function LobbyPage() {
                 <button
                   type="button"
                   onClick={createRoom}
-                  className="px-3 py-2 font-mono uppercase transition-colors"
+                  disabled={creatingRoom}
+                  className="px-3 py-2 font-mono uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex-shrink-0"
                   style={{
                     background: 'var(--color-paper-2)',
                     border: '1px solid var(--color-paper-line)',
@@ -221,9 +308,20 @@ export default function LobbyPage() {
                     letterSpacing: '0.12em',
                   }}
                 >
-                  Generate
+                  {creatingRoom ? 'Creating…' : 'Create Room'}
                 </button>
               </div>
+              <label
+                className="flex items-center gap-1.5 mt-1.5 font-mono"
+                style={{ fontSize: 10, letterSpacing: '0.1em', color: 'var(--color-ink-muted)' }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isPublicRoom}
+                  onChange={(e) => setIsPublicRoom(e.target.checked)}
+                />
+                Make new room discoverable in Public Rooms below
+              </label>
             </div>
 
             <button
@@ -250,12 +348,14 @@ export default function LobbyPage() {
           >
             10 DAYS · 3 ROUNDS · ONE BELL
           </p>
+
+          {publicRoomsSection}
         </div>
       </div>
     )
   }
 
-  // v1 — unchanged
+  // v1
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-md space-y-8">
@@ -263,6 +363,8 @@ export default function LobbyPage() {
           <h1 className="text-4xl font-bold text-white tracking-tight">Stock Exchange</h1>
           <p className="mt-2 text-gray-400">Multiplayer trading game</p>
         </div>
+
+        {joinErrorBanner}
 
         <form onSubmit={join} className="space-y-4 bg-gray-900 p-6 rounded-xl border border-gray-800">
           <div>
@@ -286,16 +388,25 @@ export default function LobbyPage() {
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="ABCD"
                 maxLength={4}
-                className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white font-mono tracking-widest text-center uppercase placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                className="flex-1 min-w-0 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white font-mono tracking-widest text-center uppercase placeholder-gray-500 focus:outline-none focus:border-emerald-500"
               />
               <button
                 type="button"
                 onClick={createRoom}
-                className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm transition-colors"
+                disabled={creatingRoom}
+                className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex-shrink-0"
               >
-                Generate
+                {creatingRoom ? 'Creating…' : 'Create Room'}
               </button>
             </div>
+            <label className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-500">
+              <input
+                type="checkbox"
+                checked={isPublicRoom}
+                onChange={(e) => setIsPublicRoom(e.target.checked)}
+              />
+              Make new room discoverable in Public Rooms below
+            </label>
           </div>
 
           <button
@@ -306,6 +417,8 @@ export default function LobbyPage() {
             Join Room
           </button>
         </form>
+
+        {publicRoomsSection}
       </div>
     </div>
   )

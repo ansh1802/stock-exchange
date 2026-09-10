@@ -28,6 +28,10 @@ export default function StartButton({ send }: Props) {
     return <p className="mt-4 text-sm text-gray-500 text-center">Waiting for host to start...</p>
   }
 
+  const connectedPlayers = players.filter((p) => p.connected)
+  const allReady = connectedPlayers.length > 0 && connectedPlayers.every((p) => p.ready)
+  const canStart = players.length >= 2 && allReady
+
   return (
     <div className="mt-4 space-y-3">
       <div>
@@ -52,11 +56,14 @@ export default function StartButton({ send }: Props) {
 
       <button
         onClick={() => send({ type: 'start_game', turn_timer_seconds: turnTimer })}
-        disabled={players.length < 2}
+        disabled={!canStart}
         className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium rounded-2xl transition-colors"
       >
         Start Game ({players.length} players)
       </button>
+      {players.length >= 2 && !allReady && (
+        <p className="text-center text-xs text-gray-500">Waiting for everyone to be ready...</p>
+      )}
 
       <button
         onClick={() => setShowPresets(!showPresets)}
@@ -72,7 +79,7 @@ export default function StartButton({ send }: Props) {
             <button
               key={key}
               onClick={() => send({ type: 'start_game', preset: key, turn_timer_seconds: turnTimer })}
-              disabled={players.length < 2}
+              disabled={!canStart}
               className="w-full text-left px-3 py-2 text-xs bg-gray-800/50 hover:bg-gray-700/50 disabled:opacity-30 rounded-lg border border-gray-800 transition-colors group"
             >
               <span className="text-amber-400 font-mono">{key}</span>

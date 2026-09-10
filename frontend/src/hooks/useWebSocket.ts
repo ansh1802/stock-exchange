@@ -6,25 +6,48 @@ import type { ServerMessage, ClientMessage } from '../types/messages'
 const WS_BASE = import.meta.env.VITE_WS_URL ||
   `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
 
+// Error codes sent on the initial connection when the server refuses to add
+// this player to the room at all (as opposed to an in-game action failing).
+// These are terminal — retrying immediately can't succeed, so treat them
+// like a kick/close instead of letting onclose schedule another attempt.
+const TERMINAL_JOIN_ERROR_CODES = new Set(['kicked_cooldown', 'name_taken', 'started', 'full'])
+
 export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<number>(0)
   const backoff = useRef(1000)
   const pendingRef = useRef<ClientMessage[]>([])
+  // Set right before a close we caused ourselves (explicit disconnect, or a
+  // server-driven kick/room-close) so onclose doesn't re-arm a reconnect.
+  const suppressReconnectRef = useRef(false)
 
   const {
     roomCode,
     playerName,
     setConnected,
     setReconnecting,
-    setLobby,
-    updateLobbyPlayers,
+    setLobbyState,
     setGameStarted,
     setGameState,
     setGameOver,
     setChatMessages,
     appendChatMessage,
+    setJoinError,
   } = useGameStore()
+
+  // Shared by the 'kicked'/'room_closed' messages and by a terminal join
+  // error: stop reconnecting, show the reason once on the landing page
+  // (not a toast — a kicked_cooldown rejection would otherwise re-fire and
+  // re-toast on every auto-reconnect attempt), and bounce back to '/'.
+  const bailOut = useCallback((ws: WebSocket, message: string) => {
+    suppressReconnectRef.current = true
+    // reset() first — it would otherwise wipe out the joinError set right
+    // after it, since reset() restores the store's initialState wholesale.
+    useGameStore.getState().reset()
+    setJoinError(message)
+    ws.close()
+    wsRef.current = null
+  }, [setJoinError])
 
   const connect = useCallback(() => {
     if (!roomCode || !playerName) return
@@ -33,7 +56,16 @@ export function useWebSocket() {
     const url = `${WS_BASE}/ws/${roomCode}/${playerName}`
     const ws = new WebSocket(url)
 
+    // React StrictMode double-invokes mount effects in dev, which fires
+    // connect() then disconnect() then connect() again — the first socket
+    // is abandoned but its close event still arrives later, asynchronously.
+    // Every handler below checks it's still the socket wsRef points at
+    // before touching shared state, so a stale/superseded socket's events
+    // can't null out or otherwise clobber the real, live connection.
+    const isCurrent = () => wsRef.current === ws
+
     ws.onopen = () => {
+      if (!isCurrent()) return
       const wasReconnecting = useGameStore.getState().isReconnecting
       setConnected(true)
       setReconnecting(false)
@@ -52,6 +84,7 @@ export function useWebSocket() {
     }
 
     ws.onmessage = (event) => {
+      if (!isCurrent()) return
       const msg: ServerMessage = JSON.parse(event.data)
 
       switch (msg.type) {
@@ -61,14 +94,12 @@ export function useWebSocket() {
             wsRef.current.send(JSON.stringify({ type: 'pong' }))
           }
           break
-        case 'lobby':
-          setLobby(msg.players, msg.is_host)
+        case 'lobby_state':
+          setLobbyState(msg)
           break
-        case 'player_joined':
-          updateLobbyPlayers(msg.players)
-          break
-        case 'player_left':
-          updateLobbyPlayers(msg.players)
+        case 'kicked':
+        case 'room_closed':
+          bailOut(ws, msg.message)
           break
         case 'game_started':
           setGameStarted()
@@ -90,7 +121,14 @@ export function useWebSocket() {
           setGameOver(msg.rankings)
           break
         case 'error':
-          toast.error(msg.message)
+          if (msg.error_code && TERMINAL_JOIN_ERROR_CODES.has(msg.error_code)) {
+            // Rejected before ever joining the room (kicked cooldown, name
+            // taken, room full/started) — show it once on the landing page
+            // instead of a toast, and don't let onclose retry the join.
+            bailOut(ws, msg.message)
+          } else {
+            toast.error(msg.message)
+          }
           break
         case 'chat_history':
           setChatMessages(msg.messages)
@@ -102,9 +140,14 @@ export function useWebSocket() {
     }
 
     ws.onclose = () => {
+      if (!isCurrent()) return
       setConnected(false)
-      setReconnecting(true)
       wsRef.current = null
+      if (suppressReconnectRef.current) {
+        suppressReconnectRef.current = false
+        return
+      }
+      setReconnecting(true)
       // Auto-reconnect with exponential backoff
       reconnectTimer.current = window.setTimeout(() => {
         backoff.current = Math.min(backoff.current * 2, 30000)
@@ -113,7 +156,7 @@ export function useWebSocket() {
     }
 
     wsRef.current = ws
-  }, [roomCode, playerName, setConnected, setReconnecting, setLobby, updateLobbyPlayers, setGameStarted, setGameState, setGameOver, setChatMessages, appendChatMessage])
+  }, [roomCode, playerName, setConnected, setReconnecting, setLobbyState, setGameStarted, setGameState, setGameOver, setChatMessages, appendChatMessage, bailOut])
 
   const send = useCallback((msg: ClientMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -129,6 +172,7 @@ export function useWebSocket() {
   }, [])
 
   const disconnect = useCallback(() => {
+    suppressReconnectRef.current = true
     clearTimeout(reconnectTimer.current)
     wsRef.current?.close()
     wsRef.current = null
@@ -137,6 +181,7 @@ export function useWebSocket() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      suppressReconnectRef.current = true
       clearTimeout(reconnectTimer.current)
       wsRef.current?.close()
     }
