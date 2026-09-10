@@ -7,6 +7,11 @@ interface GameStore {
   // Connection
   roomCode: string | null
   playerName: string | null
+  // The last name typed/used to join anything, independent of the current
+  // room session — survives reset() (unlike playerName/roomCode above) so
+  // the landing page can prefill it after a kick, leave, or room close
+  // instead of making the player retype their name every time.
+  lastPlayerName: string | null
   isHost: boolean
   isConnected: boolean
   isReconnecting: boolean
@@ -63,9 +68,12 @@ export const useGameStore = create<GameStore>()(
   persist(
     (set) => ({
       ...initialState,
+      lastPlayerName: null as string | null,
 
+      // lastPlayerName is intentionally not part of initialState/reset() —
+      // it's meant to outlive the room session that just ended.
       setConnection: (roomCode, playerName) =>
-        set({ roomCode, playerName }),
+        set({ roomCode, playerName, lastPlayerName: playerName }),
 
       setLobbyState: ({ room_code, is_public, players, autoready }) =>
         set({
@@ -115,6 +123,7 @@ export const useGameStore = create<GameStore>()(
         roomCode: s.roomCode,
         playerName: s.playerName,
         isHost: s.isHost,
+        lastPlayerName: s.lastPlayerName,
       }),
     },
   ),

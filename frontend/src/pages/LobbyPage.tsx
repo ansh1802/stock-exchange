@@ -14,7 +14,11 @@ interface PublicRoom {
 }
 
 export default function LobbyPage() {
-  const [name, setName] = useState('')
+  // Prefilled from the last name used to join/create anything, so getting
+  // kicked, leaving, or a room closing doesn't force retyping it — this
+  // only seeds the field's initial value, it's still freely editable.
+  const lastPlayerName = useGameStore((s) => s.lastPlayerName)
+  const [name, setName] = useState(lastPlayerName ?? '')
   const [code, setCode] = useState('')
   const [isPublicRoom, setIsPublicRoom] = useState(false)
   const [publicRooms, setPublicRooms] = useState<PublicRoom[]>([])
