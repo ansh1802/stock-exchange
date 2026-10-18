@@ -5,15 +5,36 @@ import random
 import time
 
 
+BOT_NAMES = ["Ada", "Turing", "Hopper", "Lovelace", "Knuth", "Shannon", "Babbage", "Dijkstra"]
+BOT_DIFFICULTIES = ("easy", "medium", "hard")
+
+
+class BotSocket:
+    """Stands in for a bot's WebSocket: messages to a bot go nowhere."""
+
+    async def send_json(self, message):
+        pass
+
+    async def close(self):
+        pass
+
+
 class PlayerConn:
     """A player's connection state within a room."""
 
-    def __init__(self, player_id, name, websocket):
+    def __init__(self, player_id, name, websocket, bot_difficulty=None):
         self.id = player_id
         self.name = name
         self.ws = websocket
         self.connected = True
         self.last_pong = time.time()
+        # Bots: difficulty is set in the lobby; `bot` (the policy) is built at game start.
+        self.bot_difficulty = bot_difficulty
+        self.bot = None
+
+    @property
+    def is_bot(self):
+        return self.bot_difficulty is not None
 
 
 class Room:
@@ -46,6 +67,7 @@ class Room:
         self.is_public = False    # listed on the landing page when True
         # Players who left a running game — their seat can never be reclaimed.
         self.left_ids = set()
+        self.bot_task = None      # asyncio.Task driving the next bot move
 
     def touch(self):
         """Update last activity timestamp."""
@@ -89,6 +111,8 @@ class Room:
         # Reconnection: same name rejoins
         if name in self._name_to_id:
             pid = self._name_to_id[name]
+            if self.players[pid].is_bot:
+                return None, False, "name_taken"
             if pid in self.left_ids:
                 return None, False, "left"
             # Lobby only: a connected player's name can't be taken over.
@@ -118,6 +142,40 @@ class Room:
 
         return pid, False, None
 
+    def add_bot(self, difficulty):
+        """Lobby only: seat a bot. Returns (player_id, error_code)."""
+        if self.started:
+            return None, "started"
+        if len(self.players) >= 6:
+            return None, "full"
+        if difficulty not in BOT_DIFFICULTIES:
+            difficulty = "medium"
+        taken = set(self._name_to_id)
+        name = next((f"Bot {n}" for n in BOT_NAMES if f"Bot {n}" not in taken), None)
+        if name is None:
+            return None, "full"
+        pid = self._next_id
+        self._next_id += 1
+        self.players[pid] = PlayerConn(pid, name, BotSocket(), bot_difficulty=difficulty)
+        self._name_to_id[name] = pid
+        self.ready.add(pid)  # bots are always ready
+        self.touch()
+        return pid, None
+
+    def set_bot_difficulty(self, name, difficulty):
+        pid = self._name_to_id.get(name)
+        if pid is None or difficulty not in BOT_DIFFICULTIES or self.started:
+            return False
+        conn = self.players[pid]
+        if not conn.is_bot:
+            return False
+        conn.bot_difficulty = difficulty
+        self.touch()
+        return True
+
+    def human_ids(self):
+        return [pid for pid, p in self.players.items() if not p.is_bot]
+
     def remove_player(self, player_id):
         """Lobby only: drop a player entirely (leave / kick). Passes host on."""
         conn = self.players.pop(player_id, None)
@@ -126,9 +184,15 @@ class Room:
         self._name_to_id.pop(conn.name, None)
         self.ready.discard(player_id)
         if self.host_id == player_id:
-            self.host_id = min(self.players) if self.players else None
+            humans = self.human_ids()
+            self.host_id = min(humans) if humans else None
             if self.host_id is not None:
                 self.ready.discard(self.host_id)
+        if not self.human_ids():
+            # Nobody left to play with the bots — clear them out too.
+            for pid in list(self.players):
+                self._name_to_id.pop(self.players.pop(pid).name, None)
+                self.ready.discard(pid)
         self.touch()
         return conn
 
@@ -149,6 +213,7 @@ class Room:
                     "ready": pid in self.ready,
                     "is_host": pid == self.host_id,
                     "connected": p.connected,
+                    "bot": p.bot_difficulty,
                 }
                 for pid, p in self.players.items()
             ],
@@ -171,7 +236,8 @@ class Room:
         }
 
     def connected_count(self):
-        return sum(1 for p in self.players.values() if p.connected)
+        """Connected humans (bots don't keep a room alive)."""
+        return sum(1 for p in self.players.values() if p.connected and not p.is_bot)
 
     # ── Messaging ────────────────────────────────────────────────────────
 
@@ -196,7 +262,7 @@ class Room:
         if not self.game:
             return
         for player in self.players.values():
-            if player.connected:
+            if player.connected and not player.is_bot:
                 try:
                     state = self.game.to_player_dict(player.id)
                     await player.ws.send_json({"type": "game_state", "state": state})

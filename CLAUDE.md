@@ -45,6 +45,8 @@ Frontend runs at `http://localhost:5173` and proxies `/ws` (WebSocket) and `/api
 - `phases.py` — Phase transitions: `deal_cards`, `begin_card_reveal`, `complete_card_reveal`, `chairman_director_action`, `share_suspend_action`, `currency_settlement`, `complete_currency_settlement`, `end_day`
 - `debug_presets.py` — Decorator-based preset registry for testing specific game scenarios (chairman, director, share suspend, currency, etc.)
 
+**`bots/`** — Token-free bot players. `policy.py` has one `Bot` class with three profiles (`params.py`: easy / medium / hard; hard weights tuned offline by `balance/tune.py`). `Bot.act(game)` returns a client-format message or `None`; bots only read what their seat can see. Server side: `PlayerConn.bot_difficulty` marks a bot seat (no-op `BotSocket`), lobby messages `add_bot` / `set_bot_difficulty` (host, lobby only), and `schedule_bots(room)` — called at the end of every `broadcast_game_state` — runs one `room.bot_task` that waits 1.2–2.4 s and then dispatches through `after_action` (same path as humans). Bots never count as connected for cleanup, never hold the new-day timer, never become host; the last human leaving ends the game.
+
 **Dependency flow:** `constants` ← `models` ← `deck`, `helpers` ← `actions`, `phases`. No circular imports.
 
 ### Frontend (`frontend/`)
@@ -69,6 +71,7 @@ Frontend runs at `http://localhost:5173` and proxies `/ws` (WebSocket) and `/api
 - `StockTicker`, `PlayerHand`, `GameLog` — Core game UI panels
 - `PlayerBoard` — Center grid showing all players' cash, net worth, holdings, position icons
 - `ActionBar` + `TradeModal` — Bottom trade controls (replaced TradePanel). Max / RI buttons on their own row; turn countdown in the header
+- `lobby/PlayerList` also hosts bot controls: "Add bot" row + per-bot Easy/Medium/Hard toggle (host)
 - `LeaveGameModal` — Mid-game exit confirmation (type LEAVE). Opened from the Exit icon in `DayRoundIndicator`
 - `lobby/PlayerList`, `lobby/StartButton`, `lobby/PublicRooms` — Ready badges + host Kick, Ready toggle / Public switch / gated Start, landing-page open-room list
 - `RightsIssueOverlay`, `DebentureOverlay` — Power card animations
@@ -157,9 +160,11 @@ Detailed design docs for each phase of development live in `development-history/
 | Phase 9 | [`development-history/phase_9_tutorial_and_currency_refactor.md`](development-history/phase_9_tutorial_and_currency_refactor.md) | Tutorial infrastructure (RulebookPage with 10 chapters, TutorialPage hub, first-encounter tooltips, Coachmark + Spotlight components, tutorialStorage). Currency settlement phase collapsed into `card_reveal`: snapshotted at `begin_card_reveal`, animated as a tail stage in `CardRevealOverlay`, applied at `_finalize_card_reveal` — `CurrencySettlementOverlay` and `complete_currency_settlement` ack deleted. Editorial-casino v2 theme opt-in. Card reveal new-value brightness fix. |
 | Phase 10 | [`development-history/phase_10_networth_graph_and_ui_polish.md`](development-history/phase_10_networth_graph_and_ui_polish.md) | Networth standings graph in ShareSuspendOverlay (animated SVG, log scale, overtake flourish, per-player legend with deltas). `networth_history` snapshotted post-settlement (Trigger A) and after each share-suspend swap (Trigger B). StockTicker prev→value display across all viewport variants. CardRevealOverlay old→new label + value pulse on chairman/director recompute. Chairman/director early broadcast fix. |
 | Phase 11 | [`development-history/phase_11_room_management_and_bugfixes.md`](development-history/phase_11_room_management_and_bugfixes.md) | GitHub #20/#22. New-day turn-timer hold (`day_start_ready`), two-step share suspend, Rights Issue pass confirm, trade-popup Max/RI row + timer. Room management: lobby-only duplicate-name refusal, Ready-gated Start, Kick, lobby + mid-game Leave (soft-removal `Player.left`, shares to market, cash burned, last player standing wins), public room list (`/api/rooms`). Engine now takes real room player ids. |
+| Phase 12 | [`development-history/phase_12_bots_and_balance.md`](development-history/phase_12_bots_and_balance.md) | Easy/Medium/Hard bots (static Python, no AI at runtime) addable from the lobby. Headless self-play simulator, self-play tuning of the hard bot, balance analysis + rule-variant testing. Findings in `balance/REPORT.md` (chairman pump is the snowball; Share Suspend strongest card but it's the comeback mechanic; Debenture near-dead). |
 | Architecture | [`development-history/game_arch_deploy_numbers.md`](development-history/game_arch_deploy_numbers.md) | Full architectural deep-dive: server-authoritative pattern, phase state machine, auto-advance loop, deployment guide, NFR numbers, scaling progression. |
 
 ## Other Directories
 
 - `base_logic_old/` — Original 6-file implementation. Do not modify.
-- `tests/` — `test_game.py` (integration test), `test_room_features.py` (server/room/leave tests, 71 checks — `backend/venv/bin/python tests/test_room_features.py`), `test_mechanics.py` (engine mechanics; 5 known pre-existing failures from the Rebalance commit), `play_client.py` (manual bot client)
+- `balance/` — Offline bot self-play tooling: `sim.py` (headless runner; patches engine `result()` — never import from the server), `evaluate.py` (tournaments), `tune.py` (hard-bot tuning), `analyze.py`, `compare_variants.py` + `variants.py` (what-if rule patches), `REPORT.md`. Run with `backend/venv/bin/python` from `balance/`. **After any rule change, re-run `tune.py` and update `backend/bots/params.py`.**
+- `tests/` — `test_bots.py` (bot lobby controls + full human+bot games through server handlers), `test_game.py` (integration test), `test_room_features.py` (server/room/leave tests, 71 checks — `backend/venv/bin/python tests/test_room_features.py`), `test_mechanics.py` (engine mechanics; 5 known pre-existing failures from the Rebalance commit), `play_client.py` (manual bot client)

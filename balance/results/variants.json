@@ -1,0 +1,44 @@
+{
+ "suspend_own_only": {
+  "ShareSuspend_pp": 0.7342692148830039,
+  "LoanStock_pp": 1.1322800555845745,
+  "Debenture_pp": 0.06093030473156158,
+  "RightsIssue_pp": 0.9391029826450563,
+  "chairman_drift": 21.049276607935827,
+  "no_chairman_drift": 1.757980744869521,
+  "chairman_days_pct": 30.660108041635556,
+  "day5_leader_wins_pct": 69.5,
+  "infosys_closed_games_pct": 28.0,
+  "winner_nw_median": 39785.25163595,
+  "hard_vs_3medium_win_pct": 79.0,
+  "engine_errors": 0
+ },
+ "chairman_own_only,deck_flat": {
+  "ShareSuspend_pp": 2.7992983241709606,
+  "LoanStock_pp": 1.1600791114797966,
+  "Debenture_pp": 0.8076623826412734,
+  "RightsIssue_pp": 1.1296038252274878,
+  "chairman_drift": 7.135057953972787,
+  "no_chairman_drift": 0.267798038153698,
+  "chairman_days_pct": 26.37571998227736,
+  "day5_leader_wins_pct": 46.0,
+  "infosys_closed_games_pct": 17.75,
+  "winner_nw_median": 13874.888251644656,
+  "hard_vs_3medium_win_pct": 74.0,
+  "engine_errors": 0
+ },
+ "chairman_own_only,suspend_own_only": {
+  "ShareSuspend_pp": 1.297761599040455,
+  "LoanStock_pp": 1.3839525242531212,
+  "Debenture_pp": 0.6783653117262048,
+  "RightsIssue_pp": 0.94609063920962,
+  "chairman_drift": 11.758373205741627,
+  "no_chairman_drift": 1.9005793309661745,
+  "chairman_days_pct": 28.087622631366752,
+  "day5_leader_wins_pct": 56.5,
+  "infosys_closed_games_pct": 34.25,
+  "winner_nw_median": 22469.242844150947,
+  "hard_vs_3medium_win_pct": 67.5,
+  "engine_errors": 0
+ }
+}

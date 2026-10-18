@@ -1,0 +1,106 @@
+gen 0 fit 0.390 win 0.408 rank 1.92 beta=0.30 risk=0.10 rel=0.50 k_chair=1.00 k_dir=0.50 suspend_rel=0.50 catchup=0.20
+gen 0 fit 0.347 win 0.367 rank 1.99 beta=0.20 risk=0.18 rel=0.44 k_chair=0.61 k_dir=0.00 suspend_rel=0.45 catchup=0.37
+gen 0 fit 0.286 win 0.308 rank 2.10 beta=0.46 risk=0.26 rel=0.56 k_chair=1.49 k_dir=0.64 suspend_rel=0.08 catchup=0.33
+gen 0 fit 0.369 win 0.388 rank 1.95 beta=0.49 risk=0.17 rel=0.08 k_chair=0.00 k_dir=0.00 suspend_rel=0.38 catchup=0.25
+gen 0 fit 0.308 win 0.329 rank 2.08 beta=0.28 risk=0.18 rel=0.34 k_chair=1.39 k_dir=0.80 suspend_rel=0.33 catchup=0.46
+gen 0 fit 0.368 win 0.388 rank 1.96 beta=0.51 risk=0.28 rel=0.34 k_chair=0.08 k_dir=0.24 suspend_rel=0.47 catchup=0.29
+gen 0 fit 0.363 win 0.383 rank 2.01 beta=0.39 risk=0.03 rel=0.26 k_chair=0.35 k_dir=1.42 suspend_rel=0.30 catchup=0.24
+gen 0 fit 0.351 win 0.371 rank 2.02 beta=0.46 risk=0.00 rel=0.51 k_chair=2.63 k_dir=0.00 suspend_rel=0.42 catchup=0.18
+gen 0 fit 0.310 win 0.333 rank 2.16 beta=0.00 risk=0.17 rel=0.48 k_chair=0.00 k_dir=1.12 suspend_rel=0.67 catchup=0.34
+gen 0 fit 0.317 win 0.338 rank 2.05 beta=0.84 risk=0.15 rel=0.53 k_chair=0.00 k_dir=0.96 suspend_rel=0.35 catchup=0.13
+gen 0 fit 0.323 win 0.346 rank 2.12 beta=0.00 risk=0.00 rel=0.37 k_chair=2.61 k_dir=0.00 suspend_rel=0.14 catchup=0.24
+gen 0 fit 0.359 win 0.379 rank 2.03 beta=0.84 risk=0.19 rel=0.03 k_chair=0.00 k_dir=0.77 suspend_rel=0.32 catchup=0.03
+== gen 0 mean {"beta": 0.433, "risk": 0.185, "rel": 0.307, "k_chair": 0.359, "k_dir": 0.247, "suspend_rel": 0.452, "catchup": 0.247}
+gen 1 fit 0.394 win 0.412 rank 1.92 beta=0.43 risk=0.18 rel=0.31 k_chair=0.36 k_dir=0.25 suspend_rel=0.45 catchup=0.25
+gen 1 fit 0.363 win 0.383 rank 2.00 beta=0.53 risk=0.27 rel=0.33 k_chair=0.47 k_dir=0.34 suspend_rel=0.53 catchup=0.27
+gen 1 fit 0.372 win 0.392 rank 1.96 beta=0.48 risk=0.23 rel=0.03 k_chair=0.94 k_dir=0.44 suspend_rel=0.48 catchup=0.17
+gen 1 fit 0.390 win 0.408 rank 1.92 beta=0.37 risk=0.25 rel=0.00 k_chair=0.27 k_dir=0.46 suspend_rel=0.39 catchup=0.31
+gen 1 fit 0.420 win 0.438 rank 1.87 beta=0.48 risk=0.17 rel=0.36 k_chair=0.65 k_dir=0.27 suspend_rel=0.51 catchup=0.22
+gen 1 fit 0.359 win 0.379 rank 2.01 beta=0.39 risk=0.26 rel=0.31 k_chair=0.00 k_dir=0.44 suspend_rel=0.53 catchup=0.23
+gen 1 fit 0.369 win 0.388 rank 1.94 beta=0.30 risk=0.17 rel=0.28 k_chair=0.22 k_dir=0.53 suspend_rel=0.40 catchup=0.30
+gen 1 fit 0.414 win 0.433 rank 1.95 beta=0.31 risk=0.13 rel=0.42 k_chair=0.87 k_dir=0.42 suspend_rel=0.47 catchup=0.25
+gen 1 fit 0.372 win 0.392 rank 1.96 beta=0.45 risk=0.23 rel=0.28 k_chair=0.48 k_dir=0.36 suspend_rel=0.45 catchup=0.28
+gen 1 fit 0.347 win 0.367 rank 1.99 beta=0.49 risk=0.33 rel=0.36 k_chair=0.16 k_dir=0.17 suspend_rel=0.45 catchup=0.28
+gen 1 fit 0.337 win 0.358 rank 2.07 beta=0.40 risk=0.21 rel=0.63 k_chair=0.00 k_dir=0.02 suspend_rel=0.46 catchup=0.26
+gen 1 fit 0.372 win 0.392 rank 1.96 beta=0.46 risk=0.15 rel=0.42 k_chair=0.49 k_dir=0.14 suspend_rel=0.57 catchup=0.26
+== gen 1 mean {"beta": 0.41, "risk": 0.162, "rel": 0.363, "k_chair": 0.628, "k_dir": 0.314, "suspend_rel": 0.477, "catchup": 0.24}
+gen 2 fit 0.416 win 0.433 rank 1.88 beta=0.41 risk=0.16 rel=0.36 k_chair=0.63 k_dir=0.31 suspend_rel=0.48 catchup=0.24
+gen 2 fit 0.399 win 0.417 rank 1.89 beta=0.37 risk=0.16 rel=0.35 k_chair=0.61 k_dir=0.07 suspend_rel=0.46 catchup=0.26
+gen 2 fit 0.410 win 0.429 rank 1.95 beta=0.33 risk=0.16 rel=0.41 k_chair=0.81 k_dir=0.45 suspend_rel=0.43 catchup=0.23
+gen 2 fit 0.424 win 0.442 rank 1.88 beta=0.39 risk=0.18 rel=0.41 k_chair=0.06 k_dir=0.41 suspend_rel=0.43 catchup=0.25
+gen 2 fit 0.437 win 0.454 rank 1.88 beta=0.30 risk=0.17 rel=0.42 k_chair=0.60 k_dir=0.33 suspend_rel=0.50 catchup=0.24
+gen 2 fit 0.406 win 0.425 rank 1.93 beta=0.40 risk=0.20 rel=0.41 k_chair=0.57 k_dir=0.56 suspend_rel=0.44 catchup=0.26
+gen 2 fit 0.399 win 0.417 rank 1.91 beta=0.39 risk=0.17 rel=0.39 k_chair=0.67 k_dir=0.37 suspend_rel=0.43 catchup=0.21
+gen 2 fit 0.402 win 0.421 rank 1.93 beta=0.45 risk=0.14 rel=0.32 k_chair=0.32 k_dir=0.43 suspend_rel=0.50 catchup=0.27
+gen 2 fit 0.394 win 0.412 rank 1.95 beta=0.34 risk=0.16 rel=0.31 k_chair=0.79 k_dir=0.46 suspend_rel=0.45 catchup=0.27
+gen 2 fit 0.402 win 0.421 rank 1.94 beta=0.48 risk=0.16 rel=0.27 k_chair=0.92 k_dir=0.31 suspend_rel=0.46 catchup=0.25
+gen 2 fit 0.411 win 0.429 rank 1.93 beta=0.44 risk=0.20 rel=0.32 k_chair=0.87 k_dir=0.45 suspend_rel=0.52 catchup=0.24
+gen 2 fit 0.402 win 0.421 rank 1.94 beta=0.36 risk=0.19 rel=0.37 k_chair=0.65 k_dir=0.44 suspend_rel=0.47 catchup=0.20
+== gen 2 mean {"beta": 0.366, "risk": 0.168, "rel": 0.397, "k_chair": 0.43, "k_dir": 0.352, "suspend_rel": 0.471, "catchup": 0.245}
+gen 3 fit 0.353 win 0.375 rank 2.08 beta=0.37 risk=0.17 rel=0.40 k_chair=0.43 k_dir=0.35 suspend_rel=0.47 catchup=0.25
+gen 3 fit 0.354 win 0.375 rank 2.07 beta=0.35 risk=0.14 rel=0.42 k_chair=0.51 k_dir=0.30 suspend_rel=0.47 catchup=0.26
+gen 3 fit 0.327 win 0.350 rank 2.13 beta=0.37 risk=0.19 rel=0.40 k_chair=0.70 k_dir=0.49 suspend_rel=0.52 catchup=0.23
+gen 3 fit 0.336 win 0.358 rank 2.10 beta=0.41 risk=0.13 rel=0.36 k_chair=0.00 k_dir=0.45 suspend_rel=0.43 catchup=0.24
+gen 3 fit 0.340 win 0.362 rank 2.10 beta=0.36 risk=0.17 rel=0.38 k_chair=0.49 k_dir=0.51 suspend_rel=0.47 catchup=0.25
+gen 3 fit 0.345 win 0.367 rank 2.07 beta=0.41 risk=0.16 rel=0.36 k_chair=0.29 k_dir=0.45 suspend_rel=0.42 catchup=0.23
+gen 3 fit 0.328 win 0.350 rank 2.09 beta=0.41 risk=0.18 rel=0.40 k_chair=0.64 k_dir=0.37 suspend_rel=0.44 catchup=0.22
+gen 3 fit 0.358 win 0.379 rank 2.08 beta=0.34 risk=0.19 rel=0.38 k_chair=0.20 k_dir=0.28 suspend_rel=0.42 catchup=0.24
+gen 3 fit 0.354 win 0.375 rank 2.06 beta=0.31 risk=0.18 rel=0.33 k_chair=0.51 k_dir=0.29 suspend_rel=0.41 catchup=0.26
+gen 3 fit 0.358 win 0.379 rank 2.05 beta=0.35 risk=0.13 rel=0.37 k_chair=0.50 k_dir=0.31 suspend_rel=0.49 catchup=0.26
+gen 3 fit 0.341 win 0.362 rank 2.08 beta=0.40 risk=0.17 rel=0.44 k_chair=0.60 k_dir=0.39 suspend_rel=0.41 catchup=0.26
+gen 3 fit 0.353 win 0.375 rank 2.10 beta=0.43 risk=0.16 rel=0.38 k_chair=0.93 k_dir=0.19 suspend_rel=0.48 catchup=0.29
+== gen 3 mean {"beta": 0.334, "risk": 0.163, "rel": 0.359, "k_chair": 0.405, "k_dir": 0.296, "suspend_rel": 0.444, "catchup": 0.253}
+gen 4 fit 0.347 win 0.367 rank 2.00 beta=0.33 risk=0.16 rel=0.36 k_chair=0.41 k_dir=0.30 suspend_rel=0.44 catchup=0.25
+gen 4 fit 0.334 win 0.354 rank 2.01 beta=0.29 risk=0.18 rel=0.42 k_chair=0.39 k_dir=0.35 suspend_rel=0.48 catchup=0.24
+gen 4 fit 0.339 win 0.358 rank 1.98 beta=0.33 risk=0.17 rel=0.38 k_chair=0.40 k_dir=0.28 suspend_rel=0.41 catchup=0.25
+gen 4 fit 0.364 win 0.383 rank 1.98 beta=0.37 risk=0.17 rel=0.33 k_chair=0.28 k_dir=0.54 suspend_rel=0.48 catchup=0.26
+gen 4 fit 0.313 win 0.333 rank 2.02 beta=0.22 risk=0.18 rel=0.37 k_chair=0.66 k_dir=0.33 suspend_rel=0.44 catchup=0.26
+gen 4 fit 0.338 win 0.358 rank 2.00 beta=0.25 risk=0.19 rel=0.37 k_chair=0.30 k_dir=0.42 suspend_rel=0.51 catchup=0.23
+gen 4 fit 0.368 win 0.388 rank 1.97 beta=0.30 risk=0.17 rel=0.36 k_chair=0.35 k_dir=0.21 suspend_rel=0.52 catchup=0.27
+gen 4 fit 0.359 win 0.379 rank 2.00 beta=0.28 risk=0.13 rel=0.41 k_chair=0.55 k_dir=0.46 suspend_rel=0.47 catchup=0.24
+gen 4 fit 0.368 win 0.388 rank 1.98 beta=0.35 risk=0.11 rel=0.34 k_chair=0.40 k_dir=0.34 suspend_rel=0.42 catchup=0.25
+gen 4 fit 0.351 win 0.371 rank 2.00 beta=0.36 risk=0.17 rel=0.38 k_chair=0.44 k_dir=0.27 suspend_rel=0.47 catchup=0.25
+gen 4 fit 0.359 win 0.379 rank 2.00 beta=0.30 risk=0.15 rel=0.36 k_chair=0.39 k_dir=0.31 suspend_rel=0.44 catchup=0.26
+gen 4 fit 0.347 win 0.367 rank 1.98 beta=0.33 risk=0.13 rel=0.37 k_chair=0.56 k_dir=0.34 suspend_rel=0.44 catchup=0.26
+== gen 4 mean {"beta": 0.342, "risk": 0.148, "rel": 0.345, "k_chair": 0.34, "k_dir": 0.363, "suspend_rel": 0.474, "catchup": 0.263}
+gen 5 fit 0.394 win 0.412 rank 1.92 beta=0.34 risk=0.15 rel=0.35 k_chair=0.34 k_dir=0.36 suspend_rel=0.47 catchup=0.26
+gen 5 fit 0.373 win 0.392 rank 1.93 beta=0.30 risk=0.10 rel=0.35 k_chair=0.20 k_dir=0.46 suspend_rel=0.43 catchup=0.22
+gen 5 fit 0.372 win 0.392 rank 1.97 beta=0.29 risk=0.19 rel=0.33 k_chair=0.13 k_dir=0.26 suspend_rel=0.50 catchup=0.27
+gen 5 fit 0.368 win 0.388 rank 1.98 beta=0.35 risk=0.19 rel=0.37 k_chair=0.34 k_dir=0.44 suspend_rel=0.54 catchup=0.28
+gen 5 fit 0.390 win 0.408 rank 1.92 beta=0.39 risk=0.12 rel=0.34 k_chair=0.45 k_dir=0.32 suspend_rel=0.52 catchup=0.27
+gen 5 fit 0.402 win 0.421 rank 1.93 beta=0.38 risk=0.14 rel=0.42 k_chair=0.53 k_dir=0.33 suspend_rel=0.48 catchup=0.31
+gen 5 fit 0.398 win 0.417 rank 1.94 beta=0.33 risk=0.17 rel=0.37 k_chair=0.34 k_dir=0.21 suspend_rel=0.48 catchup=0.27
+gen 5 fit 0.381 win 0.400 rank 1.93 beta=0.39 risk=0.17 rel=0.35 k_chair=0.47 k_dir=0.44 suspend_rel=0.48 catchup=0.26
+gen 5 fit 0.390 win 0.408 rank 1.93 beta=0.33 risk=0.17 rel=0.31 k_chair=0.25 k_dir=0.36 suspend_rel=0.41 catchup=0.25
+gen 5 fit 0.402 win 0.421 rank 1.92 beta=0.25 risk=0.13 rel=0.36 k_chair=0.43 k_dir=0.36 suspend_rel=0.46 catchup=0.24
+gen 5 fit 0.402 win 0.421 rank 1.93 beta=0.42 risk=0.16 rel=0.38 k_chair=0.21 k_dir=0.34 suspend_rel=0.40 catchup=0.28
+gen 5 fit 0.398 win 0.417 rank 1.93 beta=0.38 risk=0.10 rel=0.34 k_chair=0.43 k_dir=0.13 suspend_rel=0.40 catchup=0.24
+== gen 5 mean {"beta": 0.353, "risk": 0.145, "rel": 0.387, "k_chair": 0.386, "k_dir": 0.342, "suspend_rel": 0.446, "catchup": 0.274}
+gen 6 fit 0.354 win 0.375 rank 2.05 beta=0.35 risk=0.14 rel=0.39 k_chair=0.39 k_dir=0.34 suspend_rel=0.45 catchup=0.27
+gen 6 fit 0.362 win 0.383 rank 2.08 beta=0.31 risk=0.12 rel=0.39 k_chair=0.42 k_dir=0.40 suspend_rel=0.47 catchup=0.32
+gen 6 fit 0.358 win 0.379 rank 2.06 beta=0.44 risk=0.12 rel=0.37 k_chair=0.23 k_dir=0.25 suspend_rel=0.44 catchup=0.27
+gen 6 fit 0.353 win 0.375 rank 2.09 beta=0.39 risk=0.12 rel=0.35 k_chair=0.38 k_dir=0.32 suspend_rel=0.44 catchup=0.27
+gen 6 fit 0.345 win 0.367 rank 2.08 beta=0.30 risk=0.16 rel=0.40 k_chair=0.37 k_dir=0.28 suspend_rel=0.44 catchup=0.19
+gen 6 fit 0.358 win 0.379 rank 2.07 beta=0.28 risk=0.15 rel=0.34 k_chair=0.42 k_dir=0.36 suspend_rel=0.40 catchup=0.27
+gen 6 fit 0.341 win 0.362 rank 2.09 beta=0.33 risk=0.15 rel=0.41 k_chair=0.38 k_dir=0.27 suspend_rel=0.44 catchup=0.27
+gen 6 fit 0.358 win 0.379 rank 2.07 beta=0.41 risk=0.15 rel=0.37 k_chair=0.18 k_dir=0.31 suspend_rel=0.42 catchup=0.24
+gen 6 fit 0.345 win 0.367 rank 2.06 beta=0.34 risk=0.14 rel=0.39 k_chair=0.46 k_dir=0.31 suspend_rel=0.53 catchup=0.26
+gen 6 fit 0.354 win 0.375 rank 2.07 beta=0.43 risk=0.15 rel=0.42 k_chair=0.03 k_dir=0.27 suspend_rel=0.45 catchup=0.29
+gen 6 fit 0.357 win 0.379 rank 2.09 beta=0.52 risk=0.15 rel=0.43 k_chair=0.50 k_dir=0.43 suspend_rel=0.46 catchup=0.27
+gen 6 fit 0.345 win 0.367 rank 2.07 beta=0.39 risk=0.13 rel=0.42 k_chair=0.23 k_dir=0.36 suspend_rel=0.52 catchup=0.27
+== gen 6 mean {"beta": 0.342, "risk": 0.129, "rel": 0.367, "k_chair": 0.356, "k_dir": 0.333, "suspend_rel": 0.437, "catchup": 0.287}
+gen 7 fit 0.290 win 0.312 rank 2.12 beta=0.34 risk=0.13 rel=0.37 k_chair=0.36 k_dir=0.33 suspend_rel=0.44 catchup=0.29
+gen 7 fit 0.286 win 0.308 rank 2.10 beta=0.34 risk=0.15 rel=0.37 k_chair=0.23 k_dir=0.36 suspend_rel=0.45 catchup=0.30
+gen 7 fit 0.303 win 0.325 rank 2.10 beta=0.29 risk=0.16 rel=0.42 k_chair=0.36 k_dir=0.36 suspend_rel=0.42 catchup=0.32
+gen 7 fit 0.282 win 0.304 rank 2.12 beta=0.29 risk=0.14 rel=0.35 k_chair=0.25 k_dir=0.40 suspend_rel=0.48 catchup=0.29
+gen 7 fit 0.303 win 0.325 rank 2.10 beta=0.29 risk=0.14 rel=0.37 k_chair=0.40 k_dir=0.47 suspend_rel=0.47 catchup=0.27
+gen 7 fit 0.299 win 0.321 rank 2.08 beta=0.50 risk=0.13 rel=0.39 k_chair=0.26 k_dir=0.33 suspend_rel=0.38 catchup=0.33
+gen 7 fit 0.320 win 0.342 rank 2.07 beta=0.44 risk=0.11 rel=0.32 k_chair=0.11 k_dir=0.44 suspend_rel=0.42 catchup=0.29
+gen 7 fit 0.298 win 0.321 rank 2.14 beta=0.32 risk=0.13 rel=0.33 k_chair=0.36 k_dir=0.20 suspend_rel=0.44 catchup=0.29
+gen 7 fit 0.316 win 0.338 rank 2.06 beta=0.37 risk=0.12 rel=0.34 k_chair=0.38 k_dir=0.29 suspend_rel=0.48 catchup=0.30
+gen 7 fit 0.282 win 0.304 rank 2.11 beta=0.33 risk=0.12 rel=0.35 k_chair=0.22 k_dir=0.30 suspend_rel=0.45 catchup=0.30
+gen 7 fit 0.286 win 0.308 rank 2.12 beta=0.38 risk=0.17 rel=0.35 k_chair=0.36 k_dir=0.58 suspend_rel=0.38 catchup=0.27
+gen 7 fit 0.303 win 0.325 rank 2.09 beta=0.35 risk=0.13 rel=0.38 k_chair=0.32 k_dir=0.37 suspend_rel=0.44 catchup=0.30
+== gen 7 mean {"beta": 0.388, "risk": 0.121, "rel": 0.347, "k_chair": 0.271, "k_dir": 0.365, "suspend_rel": 0.449, "catchup": 0.298}
+
+FINAL MEAN: {"beta": 0.388, "risk": 0.121, "rel": 0.347, "k_chair": 0.271, "k_dir": 0.365, "suspend_rel": 0.449, "catchup": 0.298}

@@ -5,6 +5,7 @@ Run from the backend/ directory:
 """
 
 import os
+import random
 import asyncio
 from contextlib import asynccontextmanager
 
@@ -15,6 +16,7 @@ from fastapi.responses import FileResponse
 import game_engine as ge
 from room_manager import RoomManager
 from engine.debug_presets import apply_preset, PRESETS
+from bots import make_bot
 
 rooms = RoomManager()
 
@@ -487,6 +489,7 @@ def build_client_state(room, player_id):
             "is_you": p["id"] == player_id,
             "connected": conn.connected if conn else False,
             "left": p.get("left", False),
+            "bot": conn.bot_difficulty if conn else None,
         }
         players.append(entry)
 
@@ -632,6 +635,24 @@ async def handle_action(room, player_id, data):
         return
 
     # ── Lobby actions ────────────────────────────────────────────────────
+    if action_type in ("add_bot", "set_bot_difficulty"):
+        if room.started:
+            await room.send_to(player_id, {"type": "error", "message": "Game already started."})
+            return
+        if player_id != room.host_id:
+            await room.send_to(player_id, {"type": "error", "message": "Only the host can manage bots."})
+            return
+        if action_type == "add_bot":
+            _, err = room.add_bot(data.get("difficulty", "medium"))
+            if err:
+                await room.send_to(player_id, {"type": "error", "message": JOIN_ERRORS.get(err, "Can't add a bot.")})
+                return
+        elif not room.set_bot_difficulty(data.get("player_name"), data.get("difficulty")):
+            await room.send_to(player_id, {"type": "error", "message": "Can't change that bot."})
+            return
+        await broadcast_lobby(room)
+        return
+
     if action_type in ("set_ready", "kick_player", "set_public"):
         if room.started:
             await room.send_to(player_id, {"type": "error", "message": "Game already started."})
@@ -691,29 +712,34 @@ async def handle_action(room, player_id, data):
     })
 
     if result["success"]:
-        room.touch()
-        # Skip logging and broadcasting for idempotent no-ops (e.g. duplicate reveal_complete)
-        # and for "Waiting for N more..." acks during multi-player completion phases.
-        if "already" not in result["message"] and not result["message"].startswith("Waiting for"):
-            conn = room.players.get(player_id)
-            actor = conn.name if conn else f"Player {player_id}"
-            room.game_log.append(f"{actor}: {result['message']}")
+        await after_action(room, player_id, action_type, result)
 
-            # Surface the post-action state BEFORE auto_advance for cases where
-            # the engine mutates reveal_data and then auto_advance immediately
-            # walks past phases that would clear it. Specifically: the LAST
-            # chairman/director discard for the LAST company (e.g. Infosys)
-            # triggers _finalize_card_reveal → share_suspend → ... → dealing,
-            # and deal_cards() empties reveal_data. Without this early push,
-            # clients never see the recomputed delta / new_value that the
-            # CardRevealOverlay's pulse animation keys off of.
-            if action_type == "chairman_director":
-                await broadcast_game_state(room)
 
-            await auto_advance(room)
-            await check_and_start_turn_timer(room)
+async def after_action(room, player_id, action_type, result):
+    """Log, advance and broadcast after a successful game action (human or bot)."""
+    room.touch()
+    # Skip logging and broadcasting for idempotent no-ops (e.g. duplicate reveal_complete)
+    # and for "Waiting for N more..." acks during multi-player completion phases.
+    if "already" not in result["message"] and not result["message"].startswith("Waiting for"):
+        conn = room.players.get(player_id)
+        actor = conn.name if conn else f"Player {player_id}"
+        room.game_log.append(f"{actor}: {result['message']}")
+
+        # Surface the post-action state BEFORE auto_advance for cases where
+        # the engine mutates reveal_data and then auto_advance immediately
+        # walks past phases that would clear it. Specifically: the LAST
+        # chairman/director discard for the LAST company (e.g. Infosys)
+        # triggers _finalize_card_reveal → share_suspend → ... → dealing,
+        # and deal_cards() empties reveal_data. Without this early push,
+        # clients never see the recomputed delta / new_value that the
+        # CardRevealOverlay's pulse animation keys off of.
+        if action_type == "chairman_director":
             await broadcast_game_state(room)
-            await check_and_start_disconnect_timer(room)
+
+        await auto_advance(room)
+        await check_and_start_turn_timer(room)
+        await broadcast_game_state(room)
+        await check_and_start_disconnect_timer(room)
 
 
 def dispatch_action(game, player_id, data):
@@ -829,6 +855,9 @@ async def handle_leave_room(room, player_id):
     room.game_log.append(f"{conn.name} left the game — shares returned to market, cash forfeited")
     await _eject(room, conn, "left")
 
+    if not any(pid not in room.left_ids for pid in room.human_ids()):
+        room.game.game_phase = "game_over"  # only bots left — nobody to play for
+
     if room.game.game_phase == "game_over":
         cancel_turn_timer(room)
         cancel_disconnect_timer(room)
@@ -841,6 +870,80 @@ async def handle_leave_room(room, player_id):
     await check_and_start_turn_timer(room)
     await broadcast_game_state(room)
     await check_and_start_disconnect_timer(room)
+
+
+# ── Bots ─────────────────────────────────────────────────────────────────────
+
+# Pause before a bot's move so humans can follow the table (and see it "think").
+BOT_MOVE_DELAY = (1.2, 2.4)
+BOT_ACK_DELAY = 0.5  # reveal_complete acks: no reason to make humans wait
+
+
+def _bot_move(room):
+    """(conn, message) for the first bot that needs to act now, else (None, None)."""
+    game = room.game
+    bots = [(pid, c) for pid, c in room.players.items() if c.bot is not None and pid not in room.left_ids]
+    for _, conn in bots:
+        conn.bot.observe(game)  # every bot snapshots the day start, not just the actor
+    for pid, conn in bots:
+        msg = conn.bot.act(game)
+        if msg is not None:
+            return conn, msg
+    return None, None
+
+
+def schedule_bots(room):
+    """Start the bot driver if a bot has a move and none is pending."""
+    if not room.game or room.game.game_phase == "game_over":
+        return
+    if room.bot_task and not room.bot_task.done():
+        return
+    if not any(c.bot for c in room.players.values()):
+        return
+    conn, _ = _bot_move(room)
+    if conn is not None:
+        room.bot_task = asyncio.create_task(_run_bot(room))
+
+
+async def _run_bot(room):
+    try:
+        conn, msg = _bot_move(room)
+        if conn is None:
+            return
+        quick = msg["type"] == "reveal_complete"
+        await asyncio.sleep(BOT_ACK_DELAY if quick else random.uniform(*BOT_MOVE_DELAY))
+        if not room.game or room.game.game_phase == "game_over":
+            return
+        # The table may have moved on while we waited — decide afresh.
+        conn, msg = _bot_move(room)
+        if conn is None:
+            return
+        result = dispatch_action(room.game, conn.id, msg)
+        if not result or not result["success"]:
+            fallback = {
+                "player_turn": {"type": "pass"},
+                "rights_issue": {"type": "rights_issue_buy", "quantity": 0},
+                "share_suspend": {"type": "share_suspend", "company_num": 0},
+                "card_reveal": {"type": "chairman_director", "discard_own_idx": -1},
+            }.get(room.game.game_phase)
+            print(f"[bot] {conn.name} move {msg} rejected: {result and result['message']}")
+            if fallback is None:
+                return
+            msg = fallback
+            result = dispatch_action(room.game, conn.id, msg)
+            if not result or not result["success"]:
+                return
+        room.bot_task = None  # let the broadcast below schedule the next bot
+        await after_action(room, conn.id, msg["type"], result)
+        schedule_bots(room)  # "waiting for N more" acks don't broadcast
+    except asyncio.CancelledError:
+        pass
+    except Exception:
+        import traceback
+        traceback.print_exc()
+    finally:
+        if room.bot_task is asyncio.current_task():
+            room.bot_task = None
 
 
 # ── Game start ───────────────────────────────────────────────────────────────
@@ -869,6 +972,9 @@ async def handle_start_game(room, player_id, debug_preset=None, turn_timer_secon
 
     room.game = ge.GameState(num_players, player_ids=list(room.players))
     room.started = True
+    for pid, conn in room.players.items():
+        if conn.is_bot:
+            conn.bot = make_bot(pid, conn.bot_difficulty, seed=random.randrange(1 << 30))
     ge.deal_cards(room.game)
 
     if debug_preset:
@@ -894,7 +1000,7 @@ async def broadcast_game_state(room):
     if not room.game:
         return
     for player in room.players.values():
-        if player.connected:
+        if player.connected and not player.is_bot:
             try:
                 state = build_client_state(room, player.id)
                 await player.ws.send_json({"type": "game_state", "state": state})
@@ -902,6 +1008,8 @@ async def broadcast_game_state(room):
                 import traceback
                 traceback.print_exc()
                 player.connected = False
+    # Every state change ends in a broadcast — the one place bots get woken.
+    schedule_bots(room)
 
 
 # ── Auto-advance through automated phases ────────────────────────────────────
@@ -965,7 +1073,7 @@ async def auto_advance(room):
             # turn timer until they ack `day_start_ready` (or the fallback).
             clear_day_start(room)
             room.day_start_pending = {
-                pid for pid, conn in room.players.items() if conn.connected
+                pid for pid, conn in room.players.items() if conn.connected and not conn.is_bot
             }
             await room.broadcast({"type": "phase_change", "phase": "dealing", "message": r["message"]})
             advanced = True
