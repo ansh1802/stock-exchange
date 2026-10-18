@@ -18,6 +18,25 @@ interface SuspendAnim {
   newValue: number
 }
 
+function WaitingDots({ className }: { className?: string }) {
+  return (
+    <motion.span
+      className={cn('inline-flex items-center gap-1', className)}
+      animate={{ opacity: [0.3, 1, 0.3] }}
+      transition={{ duration: 1.5, repeat: Infinity }}
+    >
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="w-1 h-1 rounded-full bg-current"
+          animate={{ y: [0, -3, 0] }}
+          transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }}
+        />
+      ))}
+    </motion.span>
+  )
+}
+
 export default function ShareSuspendOverlay({ send, onComplete }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
@@ -42,13 +61,21 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
   const isMyTurn = gameState?.current_player_name === playerName
   const animBusy = activeAnim !== null || animQueue.length > 0
 
-  // ── Networth standings graph (Trigger A on mount, Trigger B per swap) ──
+  // ── Networth standings graph ──
+  // Every game_state broadcast replaces gameState.players with a new array, so
+  // memoise on the *content* the graph cares about (ids/names/left) rather than
+  // the array identity. Keeps the players prop referentially stable across the
+  // many broadcasts that land while this overlay is open.
+  const playersKey = (gameState?.players ?? [])
+    .map((p) => `${p.id}:${p.name}:${p.left ? 1 : 0}:${p.is_you ? 1 : 0}`)
+    .join('|')
   const graphPlayers = useMemo(() => {
     if (!gameState) return []
     return gameState.players
       .filter((p) => !p.left)
       .map((p) => ({ id: p.id, name: p.name, isYou: p.is_you }))
-  }, [gameState?.players])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playersKey])
 
   // Highlight the player currently choosing whether to suspend (front of queue),
   // falling back to the local player so the line never goes un-haloed.
@@ -70,9 +97,8 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
     return hist.length - 1
   }, [gameState?.networth_history])
 
-  // Snapshot bump: stringified last entry. Trigger A first writes it (graphCurrentDay
-  // increments when history gains a new entry); Trigger B rewrites it in place when
-  // a suspend swap fires. Either change re-runs the anim.
+  // Stringified last entry. Trigger A first writes it; Trigger B rewrites it in
+  // place when a suspend swap fires. Used to detect "SS APPLIED".
   const currentDaySnapKey = useMemo(() => {
     const hist = gameState?.networth_history
     if (!hist || hist.length === 0) return ''
@@ -154,8 +180,8 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
   // Start 5s countdown after the graph travel animation finishes.
   // backendReady fires at the same moment for all players (backend broadcasts
   // the finalized state simultaneously), so everyone's countdown is in sync.
-  // The graph animation starts when backendReady flips the replayKey — we delay
-  // by GRAPH_TRAVEL_MS so the countdown only appears once the line finishes traveling.
+  // The graph travel starts when the finalized snapshot lands (same moment) —
+  // delay by GRAPH_TRAVEL_MS so the countdown only appears once the line finishes.
   const graphAnimTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => {
     if (!backendReady || hasQueue || animBusy || countdown !== null) return
@@ -197,9 +223,19 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
 
   if (!gameState) return null
 
+  const myDecision = hasQueue && isMyTurn
+  const selected = selectedCompany !== null ? gameState.companies[selectedCompany - 1] : null
+  const status = hasQueue
+    ? myDecision
+      ? 'Halting a company undoes today’s move on it.'
+      : 'Someone is deciding whether to halt a company.'
+    : everHadQueue
+      ? 'Share suspend complete.'
+      : 'No share suspend cards this round.'
+
   return (
     <motion.div
-      className="fixed inset-0 z-[60] flex items-center justify-center"
+      className="fixed inset-0 z-[60] flex flex-col"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -219,45 +255,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
         ))}
       </div>
 
-      {/* Top-right: waiting indicator or synchronized countdown */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="absolute top-6 right-8 z-10"
-      >
-        {!backendReady && !hasQueue ? (
-          <div className="text-center">
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Waiting for</p>
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest">players to finish</p>
-            <motion.div
-              className="flex justify-center gap-1 mt-2"
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-1 h-1 rounded-full bg-gray-500"
-                  animate={{ y: [0, -3, 0] }}
-                  transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }}
-                />
-              ))}
-            </motion.div>
-          </div>
-        ) : countdown !== null ? (
-          <div className="text-center">
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Next phase in</p>
-            <span className={cn(
-              'font-mono text-3xl font-bold',
-              countdown <= 2 ? 'text-red-400' : 'text-amber-400',
-            )}>
-              {countdown}s
-            </span>
-          </div>
-        ) : null}
-      </motion.div>
-
-      {/* HALTED animation banner (top area) */}
+      {/* HALTED banner — transient, floats over the chart */}
       <AnimatePresence>
         {activeAnim && (
           <motion.div
@@ -265,7 +263,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-20 left-0 right-0 z-20 flex justify-center"
+            className="absolute top-28 md:top-36 left-0 right-0 z-20 flex justify-center pointer-events-none"
           >
             <div className="bg-gray-900/90 border border-amber-500/30 rounded-xl px-8 py-5 text-center space-y-3">
               <div className="flex items-center justify-center gap-3">
@@ -307,197 +305,190 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
         )}
       </AnimatePresence>
 
-      {/* Main content */}
+      {/* Page: header + body, everything in flow and bounded by the viewport. */}
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-        className="relative w-full max-w-3xl mx-4 max-h-[92vh] flex flex-col"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="relative flex-1 min-h-0 w-full max-w-6xl mx-auto flex flex-col gap-3 md:gap-4 px-4 md:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]"
       >
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-5 py-4">
-        {/* Title */}
-        <div className="text-center space-y-2">
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-block px-6 py-2 bg-amber-600/20 border border-amber-500/30 rounded-lg"
-          >
-            <h2
-              className="text-2xl font-bold text-amber-400 tracking-wider"
+        {/* Header — title left, clock right */}
+        <div className="flex items-end justify-between gap-4 shrink-0">
+          <div className="min-w-0">
+            <p className="text-gray-500 text-[10px] md:text-xs tracking-[0.3em] uppercase font-mono">
+              End of Day {graphCurrentDay}
+            </p>
+            <h1
+              className="text-xl md:text-2xl text-amber-400 leading-tight tracking-tight"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Share Suspend
-            </h2>
-          </motion.div>
-          <p className="text-sm text-gray-500 font-mono">
-            {hasQueue
-              ? 'Swap a company\'s value with its pre-fluctuation price'
-              : everHadQueue
-                ? 'Share suspend complete'
-                : 'No share suspend cards this round'}
-          </p>
+            </h1>
+            <p className="text-[11px] md:text-xs text-gray-500 font-mono truncate">{status}</p>
+          </div>
+          <div className="text-right shrink-0">
+            {!backendReady && !hasQueue ? (
+              <div className="text-[10px] text-gray-500 uppercase tracking-widest leading-tight">
+                <p>Waiting for</p>
+                <p>players to finish</p>
+                <WaitingDots className="mt-1 text-gray-500" />
+              </div>
+            ) : countdown !== null ? (
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest">Next phase in</p>
+                <span className={cn(
+                  'font-mono text-2xl md:text-3xl font-bold tabular-nums leading-none',
+                  countdown <= 2 ? 'text-red-400' : 'text-amber-400',
+                )}>
+                  {countdown}s
+                </span>
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        {/* Standings graph — animates Trigger A on mount, Trigger B per swap */}
-        {gameState.networth_history && gameState.networth_history.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-          >
-            <NetworthGraph
-              history={gameState.networth_history}
-              currentDay={graphCurrentDay}
-              players={graphPlayers}
-              activePlayerId={graphActivePlayerId}
-              viewport={isMobile ? 'mobile' : 'desktop'}
-              replayKey={currentDaySnapKey}
-              title={`Standings · Day ${graphCurrentDay}`}
-              pillText={`DAY ${graphCurrentDay} / 10`}
-              ssApplied={ssApplied}
-            />
-          </motion.div>
-        )}
+        {/* Body — chart fills, ticket is fixed-size. Column on phones, two
+            columns on desktop so the whole decision fits beside the chart. */}
+        <div className="flex-1 min-h-0 flex flex-col gap-3 md:grid md:grid-cols-[minmax(0,1fr)_21rem] md:gap-5">
+          <div className="flex-1 min-h-0">
+            {gameState.networth_history && gameState.networth_history.length > 0 && (
+              <NetworthGraph
+                history={gameState.networth_history}
+                currentDay={graphCurrentDay}
+                players={graphPlayers}
+                activePlayerId={graphActivePlayerId}
+                viewport={isMobile ? 'mobile' : 'desktop'}
+                title={`Standings · Day ${graphCurrentDay}`}
+                pillText={`DAY ${graphCurrentDay} / 10`}
+                ssApplied={ssApplied}
+                fill
+              />
+            )}
+          </div>
 
-        {/* Action area — only when queue is active */}
-        {hasQueue && isMyTurn ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="space-y-2 rounded-2xl border border-amber-500/30 bg-amber-500/[0.04] p-3"
-          >
-            <p className="text-center text-xs text-amber-400 uppercase tracking-widest font-mono pb-1">
-              Pick a company to halt
-            </p>
-            {gameState.companies.map((co, i) => {
-              const diff = co.value - co.pre_fluct_value
-              const selected = selectedCompany === i + 1
-              return (
-                <motion.button
-                  key={co.name}
-                  onClick={() => setSelectedCompany(selected ? null : i + 1)}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + i * 0.06 }}
-                  aria-pressed={selected}
-                  className={cn(
-                    'w-full flex items-center justify-between px-4 min-h-[48px] rounded-xl border-2 transition-colors',
-                    selected
-                      ? 'border-amber-400 bg-amber-500/15'
-                      : 'border-gray-700 bg-gray-900 hover:border-gray-500',
-                  )}
-                >
-                  <span className="flex items-center gap-3">
-                    <span
-                      className={cn(
-                        'w-4 h-4 rounded-full border-2 flex items-center justify-center',
-                        selected ? 'border-amber-400' : 'border-gray-600',
+          {/* Ticket — one company list that is selectable on your turn and
+              read-only otherwise, so nothing is shown twice. */}
+          <div className="shrink-0 md:min-h-0 flex flex-col gap-2">
+            <div className="flex items-baseline justify-between gap-2 px-0.5">
+              <p
+                className={cn(
+                  'text-sm md:text-base leading-tight',
+                  myDecision ? 'text-amber-300' : 'text-gray-300',
+                )}
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                {myDecision
+                  ? 'Halt a company?'
+                  : hasQueue
+                    ? `Waiting for ${gameState.current_player_name}`
+                    : 'Today’s moves'}
+              </p>
+              {hasQueue && !isMyTurn ? (
+                <WaitingDots className="text-amber-500" />
+              ) : (
+                <span className="text-[10px] font-mono text-gray-600 whitespace-nowrap">before → after</span>
+              )}
+            </div>
+
+            <div
+              className={cn(
+                'grid gap-1.5 grid-cols-2 md:grid-cols-1',
+                myDecision ? '' : 'opacity-80',
+              )}
+              role={myDecision ? 'radiogroup' : undefined}
+              aria-label={myDecision ? 'Company to halt' : 'Prices after today’s cards'}
+            >
+              {gameState.companies.map((co, i) => {
+                const diff = co.value - co.pre_fluct_value
+                const tone = diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-gray-300'
+                const isSelected = selectedCompany === i + 1
+                const inner = (
+                  <>
+                    <span className="flex items-center gap-2 min-w-0">
+                      {myDecision && (
+                        <span
+                          className={cn(
+                            'hidden md:flex w-3.5 h-3.5 rounded-full border-2 items-center justify-center shrink-0',
+                            isSelected ? 'border-amber-400' : 'border-gray-600',
+                          )}
+                        >
+                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                        </span>
                       )}
+                      <span className={cn('w-2 h-2 rounded-full shrink-0', COMPANY_COLOR[co.name])} />
+                      <span className={cn('text-xs md:text-sm font-medium truncate', COMPANY_TEXT_COLOR[co.name])}>
+                        {co.name}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1 md:gap-1.5 font-mono text-xs md:text-sm shrink-0 tabular-nums">
+                      <span className="text-gray-500">${co.pre_fluct_value}</span>
+                      <span className="text-gray-700">&rarr;</span>
+                      <span className={cn('font-bold', tone)}>${co.value}</span>
+                    </span>
+                  </>
+                )
+                if (!myDecision) {
+                  return (
+                    <div
+                      key={co.name}
+                      className="flex items-center justify-between gap-2 px-2.5 md:px-3 min-h-[40px] md:min-h-[42px] rounded-lg border border-dashed border-gray-800"
                     >
-                      {selected && <span className="w-2 h-2 rounded-full bg-amber-400" />}
-                    </span>
-                    <span className={cn('w-2.5 h-2.5 rounded-full', COMPANY_COLOR[co.name])} />
-                    <span className={cn('text-sm font-medium', COMPANY_TEXT_COLOR[co.name])}>{co.name}</span>
-                  </span>
-                  <span className="flex items-center gap-2 font-mono text-sm">
-                    <span className={cn(
-                      'font-bold',
-                      diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-gray-400',
-                    )}>
-                      ${co.value}
-                    </span>
-                    <span className="text-gray-600">&rarr;</span>
-                    <span className="text-amber-300">${co.pre_fluct_value}</span>
-                  </span>
-                </motion.button>
-              )
-            })}
-            <p className="text-center text-[11px] text-gray-500 font-mono pt-1">
-              Halting reverts today&apos;s move: current &rarr; pre-fluctuation price
-            </p>
-          </motion.div>
-        ) : hasQueue ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-4">
-            <p className="text-gray-500">
-              Waiting for <span className="text-white font-medium">{gameState.current_player_name}</span>
-            </p>
-            <motion.div
-              className="flex justify-center gap-1 mt-4"
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-1.5 h-1.5 rounded-full bg-amber-500"
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }}
-                />
-              ))}
-            </motion.div>
-          </motion.div>
-        ) : null}
+                      {inner}
+                    </div>
+                  )
+                }
+                return (
+                  <button
+                    key={co.name}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    onClick={() => setSelectedCompany(isSelected ? null : i + 1)}
+                    className={cn(
+                      'flex items-center justify-between gap-2 px-2.5 md:px-3 min-h-[44px] md:min-h-[42px] rounded-lg border-2 transition-colors text-left',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70',
+                      isSelected
+                        ? 'border-amber-400 bg-amber-500/15'
+                        : 'border-gray-700 bg-gray-900 hover:border-gray-500',
+                    )}
+                  >
+                    {inner}
+                  </button>
+                )
+              })}
+            </div>
 
-        {/* Prices table — always visible, read-only (visually secondary) */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="space-y-3 opacity-80 pointer-events-none select-none"
-        >
-          <p className="text-center text-xs text-gray-500 uppercase tracking-widest font-mono">
-            Prices After Fluctuation
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {gameState.companies.map((co) => {
-              const diff = co.value - co.pre_fluct_value
-              const tone =
-                diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-gray-300'
-              return (
-                <div
-                  key={co.name}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg border border-dashed border-gray-800"
+            {/* Decision footer — in flow, directly under the list */}
+            {myDecision && (
+              <div className="flex gap-2 pt-1 md:mt-auto">
+                <motion.button
+                  onClick={handleHalt}
+                  disabled={selectedCompany === null}
+                  whileTap={selectedCompany !== null ? { scale: 0.98 } : {}}
+                  className="flex-1 min-h-[48px] px-3 rounded-xl font-bold transition-colors bg-amber-500 text-gray-950 hover:bg-amber-400 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed"
                 >
-                  <span className="flex items-center gap-2">
-                    <span className={cn('w-2 h-2 rounded-full', COMPANY_COLOR[co.name])} />
-                    <span className={cn('text-sm font-medium', COMPANY_TEXT_COLOR[co.name])}>{co.name}</span>
-                  </span>
-                  <span className="flex items-center gap-2 font-mono text-sm">
-                    <span className="text-gray-500">${co.pre_fluct_value}</span>
-                    <span className="text-gray-700">&rarr;</span>
-                    <span className={cn('font-bold', tone)}>${co.value}</span>
-                  </span>
-                </div>
-              )
-            })}
+                  {selected ? (
+                    <span className="flex flex-col leading-tight">
+                      <span>Halt {selected.name}</span>
+                      <span className="text-[11px] font-mono font-medium opacity-80">
+                        back to ${selected.pre_fluct_value}
+                      </span>
+                    </span>
+                  ) : (
+                    'Select a company'
+                  )}
+                </motion.button>
+                <motion.button
+                  onClick={handlePass}
+                  whileTap={{ scale: 0.98 }}
+                  className="px-6 min-h-[48px] bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-medium border border-gray-700 transition-colors"
+                >
+                  Pass
+                </motion.button>
+              </div>
+            )}
           </div>
-        </motion.div>
         </div>
-
-        {/* Sticky decision footer — outside the scroll area so it's always reachable */}
-        {hasQueue && isMyTurn && (
-          <div className="flex gap-2 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] border-t border-gray-800 bg-gray-950">
-            <motion.button
-              onClick={handleHalt}
-              disabled={selectedCompany === null}
-              whileTap={selectedCompany !== null ? { scale: 0.98 } : {}}
-              className="flex-1 min-h-[48px] rounded-xl font-bold transition-colors bg-amber-500 text-gray-950 hover:bg-amber-400 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed"
-            >
-              {selectedCompany !== null
-                ? `Halt ${gameState.companies[selectedCompany - 1]?.name ?? ''}`
-                : 'Select a company'}
-            </motion.button>
-            <motion.button
-              onClick={handlePass}
-              whileTap={{ scale: 0.98 }}
-              className="px-6 min-h-[48px] bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-medium border border-gray-700 transition-colors"
-            >
-              Pass
-            </motion.button>
-          </div>
-        )}
       </motion.div>
     </motion.div>
   )
