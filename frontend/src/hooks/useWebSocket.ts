@@ -11,6 +11,9 @@ export function useWebSocket() {
   const reconnectTimer = useRef<number>(0)
   const backoff = useRef(1000)
   const pendingRef = useRef<ClientMessage[]>([])
+  // Set when we're done with this room (left, kicked, refused, unmounted) so
+  // onclose doesn't schedule a reconnect.
+  const stoppedRef = useRef(false)
 
   const {
     roomCode,
@@ -19,6 +22,7 @@ export function useWebSocket() {
     setReconnecting,
     setLobby,
     updateLobbyPlayers,
+    setLobbyDetails,
     setGameStarted,
     setGameState,
     setGameOver,
@@ -30,8 +34,21 @@ export function useWebSocket() {
     if (!roomCode || !playerName) return
     if (wsRef.current?.readyState === WebSocket.OPEN) return
 
+    stoppedRef.current = false
     const url = `${WS_BASE}/ws/${roomCode}/${playerName}`
     const ws = new WebSocket(url)
+
+    // Out of this room for good: stop reconnecting and drop the session,
+    // which sends GamePage back to the landing page.
+    const exitRoom = (message: string, kind: 'info' | 'error') => {
+      stoppedRef.current = true
+      clearTimeout(reconnectTimer.current)
+      pendingRef.current = []
+      if (kind === 'error') toast.error(message)
+      else toast(message)
+      ws.close()
+      useGameStore.getState().reset()
+    }
 
     ws.onopen = () => {
       const wasReconnecting = useGameStore.getState().isReconnecting
@@ -63,6 +80,15 @@ export function useWebSocket() {
           break
         case 'lobby':
           setLobby(msg.players, msg.is_host)
+          break
+        case 'lobby_update':
+          setLobbyDetails(msg.players, msg.is_host, msg.is_public)
+          break
+        case 'join_refused':
+          exitRoom(msg.message, 'error')
+          break
+        case 'left_room':
+          exitRoom(msg.reason === 'kicked' ? 'The host removed you from the room' : 'You left the room', msg.reason === 'kicked' ? 'error' : 'info')
           break
         case 'player_joined':
           updateLobbyPlayers(msg.players)
@@ -102,6 +128,14 @@ export function useWebSocket() {
     }
 
     ws.onclose = () => {
+      // Stale socket (superseded / deliberately closed) — don't reconnect.
+      if (stoppedRef.current || wsRef.current !== ws) {
+        if (wsRef.current === ws) {
+          wsRef.current = null
+          setConnected(false)
+        }
+        return
+      }
       setConnected(false)
       setReconnecting(true)
       wsRef.current = null
@@ -113,7 +147,7 @@ export function useWebSocket() {
     }
 
     wsRef.current = ws
-  }, [roomCode, playerName, setConnected, setReconnecting, setLobby, updateLobbyPlayers, setGameStarted, setGameState, setGameOver, setChatMessages, appendChatMessage])
+  }, [roomCode, playerName, setConnected, setReconnecting, setLobby, updateLobbyPlayers, setLobbyDetails, setGameStarted, setGameState, setGameOver, setChatMessages, appendChatMessage])
 
   const send = useCallback((msg: ClientMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -129,6 +163,7 @@ export function useWebSocket() {
   }, [])
 
   const disconnect = useCallback(() => {
+    stoppedRef.current = true
     clearTimeout(reconnectTimer.current)
     wsRef.current?.close()
     wsRef.current = null
@@ -137,6 +172,7 @@ export function useWebSocket() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      stoppedRef.current = true
       clearTimeout(reconnectTimer.current)
       wsRef.current?.close()
     }

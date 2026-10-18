@@ -3,21 +3,36 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useGameStore } from '../store/useGameStore'
 import { useTheme } from '../hooks/useTheme'
 import { tutorialStorage } from '../lib/tutorialStorage'
+import PublicRooms from '../components/lobby/PublicRooms'
+
+const LAST_NAME_KEY = 'stock-exchange-last-name'
 
 export default function LobbyPage() {
-  const [name, setName] = useState('')
+  // Prefill the last-used name so leaving / being kicked doesn't mean retyping it
+  const [name, setName] = useState(() => localStorage.getItem(LAST_NAME_KEY) ?? '')
   const [code, setCode] = useState('')
   const navigate = useNavigate()
   const setConnection = useGameStore((s) => s.setConnection)
   const theme = useTheme()
   const tutorialCompleted = tutorialStorage.isCompleted()
 
+  const enterRoom = (roomCode: string) => {
+    localStorage.setItem(LAST_NAME_KEY, name.trim())
+    setConnection(roomCode, name.trim())
+    navigate(`/game/${roomCode}`)
+  }
+
   const join = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim() || !code.trim()) return
-    const roomCode = code.trim().toUpperCase()
-    setConnection(roomCode, name.trim())
-    navigate(`/game/${roomCode}`)
+    enterRoom(code.trim().toUpperCase())
+  }
+
+  // Picking a public room joins straight away if a name is set; otherwise
+  // it fills the code so the user just has to type a name.
+  const pickRoom = (roomCode: string) => {
+    setCode(roomCode)
+    if (name.trim()) enterRoom(roomCode)
   }
 
   const createRoom = () => {
@@ -244,6 +259,8 @@ export default function LobbyPage() {
             </button>
           </form>
 
+          <PublicRooms onPick={pickRoom} variant="v2" />
+
           <p
             className="mt-6 text-center font-mono"
             style={{ color: 'rgba(244,236,219,0.4)', fontSize: 10, letterSpacing: '0.15em' }}
@@ -306,6 +323,8 @@ export default function LobbyPage() {
             Join Room
           </button>
         </form>
+
+        <PublicRooms onPick={pickRoom} variant="v1" />
       </div>
     </div>
   )

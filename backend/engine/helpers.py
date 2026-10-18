@@ -96,11 +96,32 @@ def update_positions(game_state, player, company_name):
     game_state.directors[company_name] = directors
 
 
+def active_players(game_state):
+    """Players still in the game (not left)."""
+    return [p for p in game_state.players if not p.left]
+
+
+def first_active_index(game_state):
+    """Index of the first non-left player in turn order (0 if none)."""
+    for i, p in enumerate(game_state.players):
+        if not p.left:
+            return i
+    return 0
+
+
 def advance_turn(game_state):
-    """Move to next player, or to card_reveal phase when all rounds done."""
-    game_state.current_turn += 1
-    if game_state.current_turn >= game_state.num_players:
-        game_state.current_turn = 0
-        game_state.current_round += 1
-        if game_state.current_round >= game_state.rounds_per_day:
-            game_state.game_phase = "card_reveal"
+    """Move to next active player, or to card_reveal phase when all rounds done.
+
+    Left players are skipped; a round ends when the turn index wraps.
+    """
+    n = len(game_state.players)
+    for _ in range(n):
+        game_state.current_turn += 1
+        if game_state.current_turn >= n:
+            game_state.current_turn = 0
+            game_state.current_round += 1
+            if game_state.current_round >= game_state.rounds_per_day:
+                game_state.game_phase = "card_reveal"
+                return
+        if not game_state.players[game_state.current_turn].left:
+            return

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { GameState, Ranking } from '../types/game'
-import type { ChatMessage } from '../types/messages'
+import type { ChatMessage, LobbyPlayer } from '../types/messages'
 
 interface GameStore {
   // Connection
@@ -11,6 +11,8 @@ interface GameStore {
   isConnected: boolean
   isReconnecting: boolean
   lobbyPlayers: string[]
+  lobbyDetails: LobbyPlayer[]
+  isPublic: boolean
 
   // Game
   gameState: GameState | null
@@ -27,6 +29,7 @@ interface GameStore {
   setConnected: (connected: boolean) => void
   setReconnecting: (reconnecting: boolean) => void
   updateLobbyPlayers: (players: string[]) => void
+  setLobbyDetails: (players: LobbyPlayer[], isHost: boolean, isPublic: boolean) => void
   setGameStarted: () => void
   setGameState: (state: GameState) => void
   setGameOver: (rankings: Ranking[]) => void
@@ -43,6 +46,8 @@ const initialState = {
   isConnected: false,
   isReconnecting: false,
   lobbyPlayers: [],
+  lobbyDetails: [] as LobbyPlayer[],
+  isPublic: false,
   gameState: null,
   gameStarted: false,
   gameOver: null,
@@ -69,6 +74,14 @@ export const useGameStore = create<GameStore>()(
 
       updateLobbyPlayers: (players) =>
         set({ lobbyPlayers: players }),
+
+      setLobbyDetails: (players, isHost, isPublic) =>
+        set({
+          lobbyDetails: players,
+          lobbyPlayers: players.map((p) => p.name),
+          isHost,
+          isPublic,
+        }),
 
       setGameStarted: () =>
         set({ gameStarted: true }),

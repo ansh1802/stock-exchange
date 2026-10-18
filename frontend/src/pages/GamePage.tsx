@@ -58,9 +58,17 @@ export default function GamePage() {
         </div>
 
         <div className="bg-gray-900 p-6 rounded-xl border border-gray-800">
-          <PlayerList />
+          <PlayerList send={send} />
           <StartButton send={send} />
         </div>
+
+        <button
+          onClick={() => send({ type: 'leave_room' })}
+          disabled={!isConnected}
+          className="w-full min-h-[44px] text-sm text-gray-400 hover:text-red-400 border border-gray-800 hover:border-red-500/40 rounded-xl transition-colors disabled:opacity-40"
+        >
+          Leave room
+        </button>
       </div>
     </div>
   )

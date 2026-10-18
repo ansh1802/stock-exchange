@@ -1,5 +1,20 @@
 import type { GameState, Ranking } from './game'
 
+export interface LobbyPlayer {
+  name: string
+  ready: boolean
+  is_host: boolean
+  connected: boolean
+}
+
+export interface PublicRoom {
+  code: string
+  host: string
+  players: number
+  ready: number
+  max_players: number
+}
+
 export interface ChatMessage {
   name: string
   text: string
@@ -9,6 +24,9 @@ export interface ChatMessage {
 // Server → Client
 export type ServerMessage =
   | { type: 'lobby'; room_code: string; players: string[]; is_host: boolean; reconnected: boolean }
+  | { type: 'lobby_update'; players: LobbyPlayer[]; is_host: boolean; is_public: boolean }
+  | { type: 'join_refused'; code: string; message: string }
+  | { type: 'left_room'; reason: 'left' | 'kicked' }
   | { type: 'player_joined'; player_name: string; players: string[] }
   | { type: 'player_left'; player_name: string; players: string[] }
   | { type: 'game_started'; num_players: number }
@@ -37,3 +55,7 @@ export type ClientMessage =
   | { type: 'day_start_ready' }
   | { type: 'pong' }
   | { type: 'chat'; text: string }
+  | { type: 'set_ready'; ready: boolean }
+  | { type: 'set_public'; is_public: boolean }
+  | { type: 'kick_player'; player_name: string }
+  | { type: 'leave_room' }

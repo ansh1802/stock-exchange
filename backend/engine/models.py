@@ -48,6 +48,7 @@ class Player:
         self.cash = STARTING_CASH
         self.stocks = {name: 0 for name in COMPANY_NAMES}
         self.hand = []
+        self.left = False  # left the game mid-play; skipped everywhere
 
     def to_dict(self):
         return {
@@ -55,6 +56,7 @@ class Player:
             "cash": self.cash,
             "stocks": dict(self.stocks),
             "hand": [c.to_dict() for c in self.hand],
+            "left": self.left,
         }
 
     def to_public_dict(self):
@@ -63,6 +65,7 @@ class Player:
             "cash": self.cash,
             "stocks": dict(self.stocks),
             "hand_count": len(self.hand),
+            "left": self.left,
         }
 
 
@@ -76,12 +79,18 @@ class GameState:
     (snapshot in begin_card_reveal, applied alongside card values in finalize).
     """
 
-    def __init__(self, num_players):
+    def __init__(self, num_players, player_ids=None):
         if not 2 <= num_players <= 6:
             raise ValueError("num_players must be 2-6")
+        # Room ids can be non-contiguous after lobby leaves/kicks, so the
+        # server passes the real ids; standalone use defaults to 1..n.
+        if player_ids is None:
+            player_ids = list(range(1, num_players + 1))
+        if len(player_ids) != num_players:
+            raise ValueError("player_ids must have num_players entries")
 
         self.num_players = num_players
-        self.players = [Player(i + 1) for i in range(num_players)]
+        self.players = [Player(pid) for pid in player_ids]
         self.companies = [
             Company(name, val, ticker)
             for name, ticker, val in zip(COMPANY_NAMES, COMPANY_TICKERS, COMPANY_BASE_VALUES)

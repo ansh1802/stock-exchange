@@ -41,6 +41,11 @@ class Room:
         # The turn timer holds until this empties (acks) or the fallback fires.
         self.day_start_pending = None
         self.day_start_fallback_task = None
+        # Lobby
+        self.ready = set()        # non-host player ids who pressed Ready
+        self.is_public = False    # listed on the landing page when True
+        # Players who left a running game — their seat can never be reclaimed.
+        self.left_ids = set()
 
     def touch(self):
         """Update last activity timestamp."""
@@ -76,20 +81,31 @@ class Room:
     # ── Player management ────────────────────────────────────────────────
 
     def add_player(self, name, websocket):
-        """Add or reconnect a player. Returns (player_id, reconnected)."""
+        """Add or reconnect a player.
+
+        Returns (player_id, reconnected, error_code). error_code is None on
+        success, else one of "name_taken", "left", "started", "full".
+        """
         # Reconnection: same name rejoins
         if name in self._name_to_id:
             pid = self._name_to_id[name]
+            if pid in self.left_ids:
+                return None, False, "left"
+            # Lobby only: a connected player's name can't be taken over.
+            # Mid-game, same-name always reclaims (the server can think a dead
+            # socket is live for up to 45s; don't lock the owner out).
+            if not self.started and self.players[pid].connected:
+                return None, False, "name_taken"
             self.players[pid].ws = websocket
             self.players[pid].connected = True
             self.players[pid].last_pong = time.time()
             self.touch()
-            return pid, True
+            return pid, True, None
 
         if self.started:
-            return None, False  # can't join mid-game
+            return None, False, "started"
         if len(self.players) >= 6:
-            return None, False  # room full
+            return None, False, "full"
 
         pid = self._next_id
         self._next_id += 1
@@ -100,14 +116,59 @@ class Room:
         if self.host_id is None:
             self.host_id = pid
 
-        return pid, False
+        return pid, False, None
+
+    def remove_player(self, player_id):
+        """Lobby only: drop a player entirely (leave / kick). Passes host on."""
+        conn = self.players.pop(player_id, None)
+        if conn is None:
+            return None
+        self._name_to_id.pop(conn.name, None)
+        self.ready.discard(player_id)
+        if self.host_id == player_id:
+            self.host_id = min(self.players) if self.players else None
+            if self.host_id is not None:
+                self.ready.discard(self.host_id)
+        self.touch()
+        return conn
 
     def disconnect_player(self, player_id):
         if player_id in self.players:
             self.players[player_id].connected = False
 
     def get_player_names(self):
-        return [p.name for p in self.players.values()]
+        return [p.name for pid, p in self.players.items() if pid not in self.left_ids]
+
+    def lobby_view(self, for_player_id):
+        """Lobby state for one client (host flag differs per player)."""
+        return {
+            "type": "lobby_update",
+            "players": [
+                {
+                    "name": p.name,
+                    "ready": pid in self.ready,
+                    "is_host": pid == self.host_id,
+                    "connected": p.connected,
+                }
+                for pid, p in self.players.items()
+            ],
+            "is_host": for_player_id == self.host_id,
+            "is_public": self.is_public,
+        }
+
+    def all_ready(self):
+        """Every non-host player has pressed Ready."""
+        return all(pid in self.ready for pid in self.players if pid != self.host_id)
+
+    def public_summary(self):
+        host = self.players.get(self.host_id)
+        return {
+            "code": self.code,
+            "host": host.name if host else "",
+            "players": len(self.players),
+            "ready": len(self.ready),
+            "max_players": 6,
+        }
 
     def connected_count(self):
         return sum(1 for p in self.players.values() if p.connected)
@@ -176,6 +237,14 @@ class RoomManager:
                     to_remove.append(code)
         for code in to_remove:
             self.rooms.pop(code, None)
+
+    def public_lobbies(self):
+        """Public rooms that haven't started and still have someone in them."""
+        return [
+            room.public_summary()
+            for room in self.rooms.values()
+            if room.is_public and not room.started and room.connected_count() > 0
+        ]
 
     def create_room(self):
         code = self._generate_code()

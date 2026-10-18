@@ -45,7 +45,9 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
   // ── Networth standings graph (Trigger A on mount, Trigger B per swap) ──
   const graphPlayers = useMemo(() => {
     if (!gameState) return []
-    return gameState.players.map((p) => ({ id: p.id, name: p.name, isYou: p.is_you }))
+    return gameState.players
+      .filter((p) => !p.left)
+      .map((p) => ({ id: p.id, name: p.name, isYou: p.is_you }))
   }, [gameState?.players])
 
   // Highlight the player currently choosing whether to suspend (front of queue),

@@ -40,6 +40,8 @@ from .phases import (
     end_day,
 )
 
+from .leave import leave_game
+
 __all__ = [
     # Constants
     "COMPANY_NAMES", "COMPANY_BASE_VALUES", "POWER_CARD_NAMES",
@@ -57,4 +59,5 @@ __all__ = [
     "deal_cards", "begin_card_reveal", "complete_card_reveal",
     "chairman_director_action", "share_suspend_action",
     "end_day",
+    "leave_game",
 ]
