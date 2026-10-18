@@ -120,7 +120,7 @@ export function useWebSocket() {
       wsRef.current.send(JSON.stringify(msg))
     } else {
       // Queue player actions for retry on reconnect (skip animation signals)
-      const animSignals = ['reveal_complete', 'pong']
+      const animSignals = ['reveal_complete', 'day_start_ready', 'pong']
       if (!animSignals.includes(msg.type)) {
         pendingRef.current.push(msg)
         toast.warning('Action queued — will send when reconnected')

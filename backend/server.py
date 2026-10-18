@@ -81,6 +81,10 @@ DISCONNECT_TIMEOUTS = {
 
 VALID_TURN_TIMERS = {15, 30, 45, 60, 75, 90}
 
+# Max wait for clients to finish the end-of-day overlay before the first turn
+# timer of a new day starts anyway (covers stuck / reconnecting clients).
+DAY_START_FALLBACK_SECS = 20
+
 
 async def check_and_start_disconnect_timer(room):
     """If the active player is disconnected, start an auto-action timer.
@@ -247,6 +251,19 @@ async def check_and_start_turn_timer(room):
         cancel_turn_timer(room)
         return
 
+    # New day: hold the first turn's clock until clients are back on the board.
+    if room.day_start_pending:
+        room.day_start_pending = {
+            pid for pid in room.day_start_pending
+            if room.players.get(pid) and room.players[pid].connected
+        }
+    if room.day_start_pending:
+        cancel_turn_timer(room)
+        if not room.day_start_fallback_task:
+            room.day_start_fallback_task = asyncio.create_task(_day_start_fallback(room))
+        return
+    clear_day_start(room)
+
     if room.turn_timer_task and room.turn_timer_player_id == active_pid:
         return  # already ticking for this player
 
@@ -257,6 +274,37 @@ async def check_and_start_turn_timer(room):
     room.turn_timer_task = asyncio.create_task(
         _run_turn_timer(room, active_pid, duration)
     )
+
+
+def clear_day_start(room):
+    """Drop the new-day hold (and its fallback task)."""
+    room.day_start_pending = None
+    task = room.day_start_fallback_task
+    room.day_start_fallback_task = None
+    if task and task is not asyncio.current_task():
+        task.cancel()
+
+
+async def _day_start_fallback(room):
+    """Start the first turn timer anyway if some client never acks."""
+    try:
+        await asyncio.sleep(DAY_START_FALLBACK_SECS)
+        room.day_start_fallback_task = None
+        room.day_start_pending = None
+        await check_and_start_turn_timer(room)
+        await broadcast_game_state(room)
+    except asyncio.CancelledError:
+        pass
+
+
+async def handle_day_start_ready(room, player_id):
+    """Client finished the end-of-day overlay and is back on the board."""
+    if not room.day_start_pending or player_id not in room.day_start_pending:
+        return
+    room.day_start_pending.discard(player_id)
+    if not room.day_start_pending:
+        await check_and_start_turn_timer(room)
+        await broadcast_game_state(room)
 
 
 async def _run_turn_timer(room, player_id, duration):
@@ -570,6 +618,10 @@ async def handle_action(room, player_id, data):
         await room.send_to(player_id, {"type": "error", "message": "Game has not started yet."})
         return
 
+    if action_type == "day_start_ready":
+        await handle_day_start_ready(room, player_id)
+        return
+
     result = dispatch_action(room.game, player_id, data)
     if result is None:
         await room.send_to(player_id, {"type": "error", "message": f"Unknown action: {action_type}"})
@@ -766,6 +818,12 @@ async def auto_advance(room):
         elif phase == "dealing":
             r = ge.deal_cards(game)
             room.game_log.append(r["message"])
+            # Clients are still on the end-of-day overlay — hold the first
+            # turn timer until they ack `day_start_ready` (or the fallback).
+            clear_day_start(room)
+            room.day_start_pending = {
+                pid for pid, conn in room.players.items() if conn.connected
+            }
             await room.broadcast({"type": "phase_change", "phase": "dealing", "message": r["message"]})
             advanced = True
 

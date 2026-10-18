@@ -7,6 +7,7 @@ import { COMPANY_COLOR, COMPANY_TICKER } from '../../lib/constants'
 import { formatCash } from '../../lib/format'
 import { X } from 'lucide-react'
 import type { ClientMessage } from '../../types/messages'
+import TurnTimerDisplay from './TurnTimerDisplay'
 
 interface Props {
   mode: 'buy' | 'sell'
@@ -133,9 +134,12 @@ export default function TradeModal({ mode, send, onClose }: Props) {
           )}>
             {isBuy ? 'Buy Shares' : 'Sell Shares'}
           </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-3">
+            <TurnTimerDisplay />
+            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Company selector */}
@@ -210,20 +214,23 @@ export default function TradeModal({ mode, send, onClose }: Props) {
               >
                 +5
               </button>
-              {/* Max button */}
+            </div>
+
+            {/* Smart-fill row — Max + RI, equal width, full touch size */}
+            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setQuantity(maxQty)}
                 disabled={maxQty === 0}
                 className={cn(
-                  'text-xs font-medium px-2 py-1 rounded border disabled:opacity-30 disabled:cursor-not-allowed',
+                  'text-sm font-medium rounded-lg border disabled:opacity-30 disabled:cursor-not-allowed',
+                  isMobile ? 'min-h-[44px]' : 'py-2',
                   isBuy
                     ? 'border-emerald-600 bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600/20'
                     : 'border-red-600 bg-red-600/10 text-red-400 hover:bg-red-600/20',
                 )}
               >
-                max {maxQty}
+                Max {maxQty}
               </button>
-              {/* RI smart-fill button */}
               <button
                 onClick={() => riQty !== null && setQuantity(riQty)}
                 disabled={riQty === null || riQty === 0}
@@ -233,7 +240,8 @@ export default function TradeModal({ mode, send, onClose }: Props) {
                     : 'Sell minimum shares to fund a full Rights Issue on your current holdings'
                 }
                 className={cn(
-                  'text-xs font-medium px-2 py-1 rounded border disabled:opacity-30 disabled:cursor-not-allowed',
+                  'text-sm font-medium rounded-lg border disabled:opacity-30 disabled:cursor-not-allowed',
+                  isMobile ? 'min-h-[44px]' : 'py-2',
                   'border-amber-600 bg-amber-600/10 text-amber-400 hover:bg-amber-600/20',
                 )}
               >

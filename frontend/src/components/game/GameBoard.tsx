@@ -123,9 +123,12 @@ export default function GameBoard({ send }: Props) {
 
   // When share_suspend overlay completes (timer expired), close out the
   // overlay sequence. Currency settlement is now part of CardRevealOverlay.
+  // Also tells the server we're back on the board, so the first turn timer
+  // of the new day can start (server holds it until every client acks).
   const handleSuspendComplete = useCallback(() => {
     setAnimPhase('none')
-  }, [])
+    send({ type: 'day_start_ready' })
+  }, [send])
 
   if (!gameState) return null
 

@@ -37,6 +37,10 @@ class Room:
         self.turn_timer_deadline = None       # unix timestamp (float) or None
         self.turn_timer_player_id = None      # which player_id the timer is ticking for
         self.day_end_countdown_deadline = None  # unix timestamp; non-null during the pre-reveal "ending day in Ns" pause
+        # First turn of a new day: player ids still on the end-of-day overlay.
+        # The turn timer holds until this empties (acks) or the fallback fires.
+        self.day_start_pending = None
+        self.day_start_fallback_task = None
 
     def touch(self):
         """Update last activity timestamp."""

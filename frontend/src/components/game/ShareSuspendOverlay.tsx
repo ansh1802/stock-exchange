@@ -174,12 +174,23 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
     if (countdown === 0) onComplete()
   }, [countdown, onComplete])
 
-  const handleSelect = useCallback((companyNum: number) => {
-    send({ type: 'share_suspend', company_num: companyNum })
-  }, [send])
+  // Two-step halt: tapping a row only selects it; the footer Halt button
+  // commits. Stops scroll/drag gestures on mobile from firing a suspend.
+  const [selectedCompany, setSelectedCompany] = useState<number | null>(null)
+  const queueHeadKey = `${gameState?.suspend_queue.length ?? 0}:${gameState?.suspend_queue[0] ?? ''}`
+  useEffect(() => {
+    setSelectedCompany(null)
+  }, [queueHeadKey])
+
+  const handleHalt = useCallback(() => {
+    if (selectedCompany === null) return
+    send({ type: 'share_suspend', company_num: selectedCompany })
+    setSelectedCompany(null)
+  }, [send, selectedCompany])
 
   const handlePass = useCallback(() => {
     send({ type: 'share_suspend', company_num: 0 })
+    setSelectedCompany(null)
   }, [send])
 
   if (!gameState) return null
@@ -299,8 +310,9 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-        className="relative w-full max-w-3xl mx-4 space-y-5 max-h-[92vh] overflow-y-auto py-4"
+        className="relative w-full max-w-3xl mx-4 max-h-[92vh] flex flex-col"
       >
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-5 py-4">
         {/* Title */}
         <div className="text-center space-y-2">
           <motion.div
@@ -352,58 +364,57 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="space-y-3"
+            className="space-y-2 rounded-2xl border border-amber-500/30 bg-amber-500/[0.04] p-3"
           >
+            <p className="text-center text-xs text-amber-400 uppercase tracking-widest font-mono pb-1">
+              Pick a company to halt
+            </p>
             {gameState.companies.map((co, i) => {
               const diff = co.value - co.pre_fluct_value
+              const selected = selectedCompany === i + 1
               return (
                 <motion.button
                   key={co.name}
-                  onClick={() => handleSelect(i + 1)}
+                  onClick={() => setSelectedCompany(selected ? null : i + 1)}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 + i * 0.06 }}
-                  whileHover={{ scale: 1.02, x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-900/80 hover:bg-gray-800/80 rounded-xl border border-gray-800 hover:border-gray-600 transition-colors group"
+                  aria-pressed={selected}
+                  className={cn(
+                    'w-full flex items-center justify-between px-4 min-h-[48px] rounded-xl border-2 transition-colors',
+                    selected
+                      ? 'border-amber-400 bg-amber-500/15'
+                      : 'border-gray-700 bg-gray-900 hover:border-gray-500',
+                  )}
                 >
                   <span className="flex items-center gap-3">
+                    <span
+                      className={cn(
+                        'w-4 h-4 rounded-full border-2 flex items-center justify-center',
+                        selected ? 'border-amber-400' : 'border-gray-600',
+                      )}
+                    >
+                      {selected && <span className="w-2 h-2 rounded-full bg-amber-400" />}
+                    </span>
                     <span className={cn('w-2.5 h-2.5 rounded-full', COMPANY_COLOR[co.name])} />
                     <span className={cn('text-sm font-medium', COMPANY_TEXT_COLOR[co.name])}>{co.name}</span>
                   </span>
-                  <span className="flex items-center gap-3 font-mono text-sm">
-                    <span className="text-gray-500">${co.pre_fluct_value}</span>
-                    <motion.span
-                      className="text-gray-700"
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      &rarr;
-                    </motion.span>
+                  <span className="flex items-center gap-2 font-mono text-sm">
                     <span className={cn(
                       'font-bold',
                       diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-red-400' : 'text-gray-400',
                     )}>
                       ${co.value}
                     </span>
-                    <span className="text-xs opacity-0 group-hover:opacity-100 transition-opacity text-amber-400">
-                      HALT
-                    </span>
+                    <span className="text-gray-600">&rarr;</span>
+                    <span className="text-amber-300">${co.pre_fluct_value}</span>
                   </span>
                 </motion.button>
               )
             })}
-            <motion.button
-              onClick={handlePass}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full py-3 bg-gray-800/50 hover:bg-gray-700/50 text-gray-400 rounded-xl font-medium border border-gray-800 transition-colors"
-            >
-              Pass
-            </motion.button>
+            <p className="text-center text-[11px] text-gray-500 font-mono pt-1">
+              Halting reverts today&apos;s move: current &rarr; pre-fluctuation price
+            </p>
           </motion.div>
         ) : hasQueue ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-4">
@@ -427,12 +438,12 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
           </motion.div>
         ) : null}
 
-        {/* Prices table — always visible */}
+        {/* Prices table — always visible, read-only (visually secondary) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="space-y-3"
+          className="space-y-3 opacity-80 pointer-events-none select-none"
         >
           <p className="text-center text-xs text-gray-500 uppercase tracking-widest font-mono">
             Prices After Fluctuation
@@ -445,7 +456,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
               return (
                 <div
                   key={co.name}
-                  className="flex items-center justify-between px-3 py-2.5 bg-gray-900/60 rounded-lg border border-gray-800"
+                  className="flex items-center justify-between px-3 py-2 rounded-lg border border-dashed border-gray-800"
                 >
                   <span className="flex items-center gap-2">
                     <span className={cn('w-2 h-2 rounded-full', COMPANY_COLOR[co.name])} />
@@ -461,6 +472,30 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
             })}
           </div>
         </motion.div>
+        </div>
+
+        {/* Sticky decision footer — outside the scroll area so it's always reachable */}
+        {hasQueue && isMyTurn && (
+          <div className="flex gap-2 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] border-t border-gray-800 bg-gray-950">
+            <motion.button
+              onClick={handleHalt}
+              disabled={selectedCompany === null}
+              whileTap={selectedCompany !== null ? { scale: 0.98 } : {}}
+              className="flex-1 min-h-[48px] rounded-xl font-bold transition-colors bg-amber-500 text-gray-950 hover:bg-amber-400 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed"
+            >
+              {selectedCompany !== null
+                ? `Halt ${gameState.companies[selectedCompany - 1]?.name ?? ''}`
+                : 'Select a company'}
+            </motion.button>
+            <motion.button
+              onClick={handlePass}
+              whileTap={{ scale: 0.98 }}
+              className="px-6 min-h-[48px] bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-medium border border-gray-700 transition-colors"
+            >
+              Pass
+            </motion.button>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   )

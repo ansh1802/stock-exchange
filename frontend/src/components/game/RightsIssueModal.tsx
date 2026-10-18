@@ -10,6 +10,7 @@ export default function RightsIssueModal({ send }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
   const [quantity, setQuantity] = useState(0)
+  const [confirmingPass, setConfirmingPass] = useState(false)
 
   if (!gameState || gameState.rights_issue_company === null) return null
 
@@ -41,7 +42,14 @@ export default function RightsIssueModal({ send }: Props) {
     setQuantity(0)
   }
 
+  // Confirm before giving up a rights issue the player could actually take
+  // (eligible, shares available, can afford at least one).
   const handlePass = () => {
+    if (maxQty > 0 && !confirmingPass) {
+      setConfirmingPass(true)
+      return
+    }
+    setConfirmingPass(false)
     send({ type: 'rights_issue_buy', quantity: 0 })
   }
 
@@ -113,6 +121,28 @@ export default function RightsIssueModal({ send }: Props) {
               <span className="text-white">${quantity * price}</span>
             </p>
 
+            {confirmingPass ? (
+              <div className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
+                <p className="text-sm text-amber-200">
+                  Pass on up to <span className="font-mono font-bold">{maxQty}</span> {company.name} shares at{' '}
+                  <span className="font-mono">${price}</span>?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConfirmingPass(false)}
+                    className="flex-1 min-h-[44px] bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handlePass}
+                    className="flex-1 min-h-[44px] bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg font-medium"
+                  >
+                    Yes, pass
+                  </button>
+                </div>
+              </div>
+            ) : (
             <div className="flex gap-2">
               <button
                 onClick={handleBuy}
@@ -128,6 +158,7 @@ export default function RightsIssueModal({ send }: Props) {
                 Pass
               </button>
             </div>
+            )}
           </>
         ) : (
           <p className="text-gray-400 text-center py-4">
