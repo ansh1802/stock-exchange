@@ -28,11 +28,60 @@ async def cleanup_loop():
         rooms.cleanup_stale_rooms()
 
 
+WATCHDOG_INTERVAL = 10
+REVEAL_STALL_LOG_SECS = 20
+
+
+async def watchdog_loop():
+    """Self-heal bot wake-ups and leave evidence when a reveal sits waiting.
+
+    Bots are only woken by broadcasts, so a missed wake-up would freeze a game
+    until the next broadcast. Re-running schedule_bots is a no-op unless a bot
+    actually has a move and no bot task is pending.
+    """
+    while True:
+        await asyncio.sleep(WATCHDOG_INTERVAL)
+        for room in list(rooms.rooms.values()):
+            try:
+                _watch_room(room)
+            except Exception:
+                import traceback
+                traceback.print_exc()
+
+
+def _watch_room(room):
+    game = room.game
+    if not room.started or not game or game.game_phase == "game_over":
+        return
+    waiting = (game.game_phase == "card_reveal" and game.reveal_data
+               and not game.chairman_director_queue)
+    if not waiting:
+        room.reveal_wait_since = None
+        return
+    now = _time.time()
+    if room.reveal_wait_since is None:
+        room.reveal_wait_since = now
+        room.reveal_stall_logged = False
+    elif now - room.reveal_wait_since >= REVEAL_STALL_LOG_SECS and not room.reveal_stall_logged:
+        room.reveal_stall_logged = True
+        missing = [(p.id, room.players[p.id].name, "bot" if room.players[p.id].is_bot else "human",
+                    room.players[p.id].connected)
+                   for p in game.players
+                   if not p.left and p.id not in game.reveal_complete_players]
+        bt = room.bot_task
+        print(f"[watchdog] room {room.code} day {game.current_day}: card_reveal waiting "
+              f"{now - room.reveal_wait_since:.0f}s for acks from {missing}; "
+              f"bot_task={'none' if bt is None else ('done' if bt.done() else 'running')}")
+    schedule_bots(room)
+
+
 @asynccontextmanager
 async def lifespan(app):
     task = asyncio.create_task(cleanup_loop())
+    watchdog = asyncio.create_task(watchdog_loop())
     yield
     task.cancel()
+    watchdog.cancel()
 
 
 app = FastAPI(title="Stock Exchange Game", lifespan=lifespan)
@@ -183,6 +232,10 @@ async def _run_disconnect_timer(room, player_id, timeout_secs, action_data):
         if not room.game:
             return
 
+        # Detach before advancing: auto_advance may pause (pre-reveal), and a
+        # cancel_disconnect_timer() from a concurrent re-check must not kill us.
+        _detach_timer(room, "disconnect_timer")
+
         # Log and dispatch the auto-action
         room.game_log.append(f"{player_conn.name} timed out — auto-skipped")
         result = dispatch_action(room.game, player_id, action_data)
@@ -194,10 +247,6 @@ async def _run_disconnect_timer(room, player_id, timeout_secs, action_data):
             await check_and_start_disconnect_timer(room)
     except asyncio.CancelledError:
         pass
-    finally:
-        if room.disconnect_timer_player_id == player_id:
-            room.disconnect_timer = None
-            room.disconnect_timer_player_id = None
 
 
 async def _auto_reveal_complete(room, player_ids):
@@ -206,6 +255,7 @@ async def _auto_reveal_complete(room, player_ids):
         await asyncio.sleep(15)
         if not room.game:
             return
+        _detach_timer(room, "disconnect_timer")  # see _run_disconnect_timer
         for pid in player_ids:
             pc = room.players.get(pid)
             if pc and not pc.connected and pid not in room.game.reveal_complete_players:
@@ -220,14 +270,32 @@ async def _auto_reveal_complete(room, player_ids):
     except asyncio.CancelledError:
         pass
     finally:
-        if room.disconnect_timer_player_id == "reveal_multi":
-            room.disconnect_timer = None
+        if room.disconnect_timer is None and room.disconnect_timer_player_id == "reveal_multi":
             room.disconnect_timer_player_id = None
 
 
 class _StubConn:
     """Fallback for missing player connections in dict lookups."""
     connected = True
+
+
+def _detach_timer(room, attr):
+    """Unregister the running timer task from `room` once it has fired.
+
+    A fired timer goes on to run auto_advance, which can pause (the 3s
+    pre-reveal "ending day" beat). While it is still registered, any
+    cancel_*_timer() — e.g. from the disconnect handler or a reconnect —
+    would cancel the task mid-pause and leave the day-end state stuck.
+    Only detaches if `attr` is this very task, never a newer timer.
+    """
+    if getattr(room, attr) is not asyncio.current_task():
+        return
+    setattr(room, attr, None)
+    if attr == "turn_timer_task":
+        room.turn_timer_deadline = None
+        room.turn_timer_player_id = None
+    else:
+        room.disconnect_timer_player_id = None
 
 
 def cancel_disconnect_timer(room):
@@ -326,6 +394,7 @@ async def _run_turn_timer(room, player_id, duration):
                 and room.get_active_player_id() == player_id):
             conn = room.players.get(player_id)
             actor = conn.name if conn else f"Player {player_id}"
+            _detach_timer(room, "turn_timer_task")  # see _detach_timer
             room.game_log.append(f"{actor} ran out of time — auto-passed")
             result = ge.pass_turn(room.game, player_id)
             if result and result["success"]:
@@ -335,11 +404,6 @@ async def _run_turn_timer(room, player_id, duration):
                 await check_and_start_disconnect_timer(room)
     except asyncio.CancelledError:
         pass
-    finally:
-        if room.turn_timer_player_id == player_id:
-            room.turn_timer_task = None
-            room.turn_timer_deadline = None
-            room.turn_timer_player_id = None
 
 
 # ── WebSocket endpoint ───────────────────────────────────────────────────────
@@ -1042,9 +1106,13 @@ async def auto_advance(room):
             # pattern as the turn timer.
             import time as _time
             room.day_end_countdown_deadline = _time.time() + 3.0
-            await broadcast_game_state(room)
-            await asyncio.sleep(3.0)
-            room.day_end_countdown_deadline = None
+            try:
+                await broadcast_game_state(room)
+                await asyncio.sleep(3.0)
+            finally:
+                # Never leave the deadline set: it makes every later
+                # auto_advance bail out at the guard above, stalling the game.
+                room.day_end_countdown_deadline = None
             if game.game_phase != "card_reveal" or game.reveal_data:
                 break  # a mid-game leave ended the game during the pause
             # Just entered card_reveal — compute reveal data and CD queue
