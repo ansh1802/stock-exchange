@@ -23,24 +23,25 @@ npm run dev
 python tests/test_game.py
 ```
 
-Frontend runs at `http://localhost:5173` and proxies WebSocket to `localhost:8000` via Vite config. Open multiple tabs to test multiplayer.
+Frontend runs at `http://localhost:5173` and proxies `/ws` (WebSocket) and `/api` to `localhost:8000` via Vite config. If those ports are taken by other projects, run the backend on another port and start Vite with `VITE_WS_URL=ws://localhost:<port> npx vite --port <free> --strictPort` (the proxy target is hardcoded to 8000). Open multiple tabs to test multiplayer.
 
 ## Architecture
 
 ### Backend (`backend/`)
 
-**`server.py`** — FastAPI WebSocket server. Players connect at `/ws/{room_code}/{player_name}`. Handles lobby (join/start), dispatches player actions to the game engine, auto-advances through automated phases, and broadcasts per-player state after each action. Resolves active player from sub-phase queues (rights_issue, share_suspend, chairman_director) rather than just `current_turn`. Includes heartbeat ping/pong (15s interval, 45s stale threshold), disconnect timer system (auto-passes for offline players), and a background room cleanup loop.
+**`server.py`** — FastAPI WebSocket server. Players connect at `/ws/{room_code}/{player_name}`. Handles lobby (join/start), dispatches player actions to the game engine, auto-advances through automated phases, and broadcasts per-player state after each action. Resolves active player from sub-phase queues (rights_issue, share_suspend, chairman_director) rather than just `current_turn`. Includes heartbeat ping/pong (15s interval, 45s stale threshold), disconnect timer system (auto-passes for offline players), and a background room cleanup loop. Also handles lobby actions (`set_ready`, `kick_player`, `set_public`, `leave_room` — lobby and mid-game), `broadcast_lobby`, the new-day timer hold (`day_start_ready`), and `GET /api/rooms` (public lobby list).
 
-**`room_manager.py`** — `RoomManager` creates/tracks rooms with 4-char codes. `Room` holds player connections, game state, host ID, game log. Supports reconnection by name. Rooms persist with TTL-based cleanup (5 min for empty lobbies, 2 hours for active games) — never deleted immediately on disconnect.
+**`room_manager.py`** — `RoomManager` creates/tracks rooms with 4-char codes. `Room` holds player connections, game state, host ID, game log. Supports reconnection by name (lobby: a *connected* player's name is refused with `name_taken`; mid-game: same name always reclaims the seat; players in `left_ids` can never reclaim). Also owns lobby state: `ready`, `is_public`, `remove_player` (host transfer), `lobby_view`, `public_lobbies`. Rooms persist with TTL-based cleanup (5 min for empty lobbies, 2 hours for active games) — never deleted immediately on disconnect.
 
 **`game_engine.py`** — Thin wrapper that re-exports the `engine/` package and adds `create_game()`.
 
 **`engine/` package:**
 - `constants.py` — Game config (company names/values, card counts, cash/share defaults, chairman/director thresholds)
-- `models.py` — `Card`, `Company`, `Player`, `GameState` with `to_dict()` / `to_player_dict()`. GameState includes `chairman` and `directors` position tracking.
+- `models.py` — `Card`, `Company`, `Player` (has `left` flag), `GameState(num_players, player_ids=None)` with `to_dict()` / `to_player_dict()`. The server passes real room ids (non-contiguous after lobby leaves). GameState includes `chairman` and `directors` position tracking.
 - `deck.py` — `build_deck()` produces the 100-card deck (84 company + 16 power)
-- `helpers.py` — Shared validation (`validate_turn`, `validate_company`, `advance_turn`), `result()` builder, `update_positions()` for chairman/director tracking after trades
+- `helpers.py` — Shared validation (`validate_turn`, `validate_company`, `advance_turn` — skips left players), `active_players()`, `first_active_index()`, `result()` builder, `update_positions()` for chairman/director tracking after trades
 - `actions.py` — Player turn actions: `buy_stock`, `sell_stock`, `pass_turn`, power card functions. Power cards are consumed after use.
+- `leave.py` — `leave_game`: mid-game leave via soft removal (`Player.left`). Shares back to market, cash burned, hand discarded, removed from turns/queues, game over if <2 active players.
 - `phases.py` — Phase transitions: `deal_cards`, `begin_card_reveal`, `complete_card_reveal`, `chairman_director_action`, `share_suspend_action`, `currency_settlement`, `complete_currency_settlement`, `end_day`
 - `debug_presets.py` — Decorator-based preset registry for testing specific game scenarios (chairman, director, share suspend, currency, etc.)
 
@@ -62,12 +63,14 @@ Frontend runs at `http://localhost:5173` and proxies WebSocket to `localhost:800
 
 **Key components:**
 - `CardRevealOverlay` — Full-screen "Closing Bell" animation with staged card reveal per company. Internal state machine: `company_intro → revealing_cards → final_value → chairman_director → complete`. Uses `useMemo` for derived visible cards (not accumulated state).
-- `ShareSuspendOverlay` / `ShareSuspendModal` — Share suspend decision UI
+- `ShareSuspendOverlay` — Share suspend decision UI. Two-step: tap selects, sticky Halt/Pass footer commits
 - `CurrencySettlementOverlay` — Cash +/- 10% animation
 - `ChairmanDirectorModal` — End-of-day card discard selection
 - `StockTicker`, `PlayerHand`, `GameLog` — Core game UI panels
 - `PlayerBoard` — Center grid showing all players' cash, net worth, holdings, position icons
-- `ActionBar` + `TradeModal` — Bottom trade controls (replaced TradePanel)
+- `ActionBar` + `TradeModal` — Bottom trade controls (replaced TradePanel). Max / RI buttons on their own row; turn countdown in the header
+- `LeaveGameModal` — Mid-game exit confirmation (type LEAVE). Opened from the Exit icon in `DayRoundIndicator`
+- `lobby/PlayerList`, `lobby/StartButton`, `lobby/PublicRooms` — Ready badges + host Kick, Ready toggle / Public switch / gated Start, landing-page open-room list
 - `RightsIssueOverlay`, `DebentureOverlay` — Power card animations
 
 **`lib/constants.ts`** — Company color/text-color maps, company number lookups (1-based).
@@ -96,7 +99,11 @@ The server auto-advances through phases that don't need player input. Card revea
 
 **Company numbers are 1-based** in the API (1=Vodafone through 6=Infosys).
 
-**WebSocket message protocol:** Client sends `{"type": "buy", "company_num": 4, "quantity": 5}` etc. Server responds with `{"type": "action_result", ...}` to the actor and `{"type": "game_state", "state": ...}` to all players.
+**Left players (mid-game leave):** `Player.left` soft-removes a player — they stay in `GameState.players` so ids/indices never shift. Any code that loops over players, builds a queue or waits for acks must skip them (`active_players()`). Their cards are discarded (unless the day's reveal is already computed), they rank last, and `room.left_ids` blocks any rejoin. Disconnected/idle players are never auto-removed — leaving is explicit only.
+
+**Lobby rules:** Start requires every non-host player Ready (server-enforced). Host can Kick (lobby only; kicked players may rejoin) and mark the room Public. Duplicate-name refusal is **lobby only** by design — mid-game reclaim must stay permissive because the server can think a dead socket is live for up to 45s.
+
+**WebSocket message protocol:** Client sends `{"type": "buy", "company_num": 4, "quantity": 5}` etc. Server responds with `{"type": "action_result", ...}` to the actor and `{"type": "game_state", "state": ...}` to all players. Lobby/room messages: client `set_ready`, `set_public`, `kick_player`, `leave_room`, `day_start_ready`; server `lobby_update`, `join_refused` (`name_taken|left|started|full`), `left_room` (`left|kicked`). `join_refused` / `left_room` end the session client-side (no auto-reconnect).
 
 **Animation state is decoupled from backend state.** The frontend maintains its own `animPhase` to drive overlays independently of the backend phase. This prevents re-animation on reconnect and allows smooth transitions. **Important caveat:** Components that react to value changes during animated phases (e.g., ShareSuspendOverlay) must wait for the backend phase to confirm before tracking diffs — the frontend animation may finish before the backend has finalized.
 
@@ -114,16 +121,23 @@ The server auto-advances through phases that don't need player input. Card revea
 - Deadline broadcast via `build_client_state` (`turn_timer_deadline` is an absolute unix timestamp) so reconnecting clients get the correct remaining time automatically.
 - `useTurnUrgency` hook computes fraction-based urgency (>0.5 calm, >0.25 warning, ≤0.25 critical) — drives both the top-right `TurnTimerDisplay` and the active player's card ring/dot/name color (green → amber → red with faster pulse at critical).
 - `check_and_start_turn_timer` must be called *before* `broadcast_game_state` at every advancement site so the broadcast carries the fresh deadline.
+- **New-day hold:** after `deal_cards` on day 2+, `room.day_start_pending` holds the first turn's clock until each connected client sends `day_start_ready` (sent when the end-of-day overlay closes), with a 20s fallback (`DAY_START_FALLBACK_SECS`). The deadline is `null` while held.
 
 ## Deployment
 
-**Hosted on Railway** (single service, Dockerfile-based). Multi-stage build: Node builds frontend → Python serves everything.
+**Hosted on GCP** in project `stock-exchange-7354` (region `asia-south1`). Migrated off Railway — `railway.toml` is gone. **See [`DEPLOYMENT.md`](DEPLOYMENT.md) for the full reference**; the essentials:
 
-- `Dockerfile` — Stage 1: `node:20-slim` builds frontend. Stage 2: `python:3.12-slim` runs uvicorn.
-- `railway.toml` — Points to Dockerfile, health check at `/`, restart on failure.
-- `.dockerignore` — Excludes dev files from image.
+- **Frontend** — Firebase Hosting at https://stock-exchange.web.app (the URL to share).
+- **Backend** — Cloud Run service `stock-exchange` at https://stock-exchange-116318124618.asia-south1.run.app.
+- **Deploy** — `./deploy.sh [backend|frontend|all]`. Manual; no push-to-deploy trigger.
+- `Dockerfile` — unchanged. Stage 1: `node:20-slim` builds frontend. Stage 2: `python:3.12-slim` runs uvicorn. The Cloud Run image includes the frontend, so the Cloud Run URL serves a working game on its own — useful for isolating Hosting problems from backend problems.
+- `.gcloudignore` — Cloud Build upload context. When present, gcloud ignores `.gitignore`, so `node_modules` must be listed explicitly. Keep in sync with `.dockerignore`.
 
-In production, FastAPI serves both WebSocket connections (`/ws/...`) and frontend static files (`/*` catch-all with SPA fallback). The catch-all uses direct `FileResponse` (not `StaticFiles`) to avoid 301 redirects. WebSocket URL auto-detects `ws://` vs `wss://` from `window.location.protocol`.
+**Firebase Hosting cannot proxy WebSockets.** A rewrite from Hosting to Cloud Run drops the upgrade handshake. The frontend therefore dials Cloud Run directly: `deploy.sh` bakes `VITE_WS_URL` into the bundle at build time. Without that variable `useWebSocket.ts` falls back to the page origin and auto-detects `ws://` vs `wss://`, which is what keeps local dev and the Cloud Run fallback URL working.
+
+**Cloud Run flags are load-bearing, not cosmetic.** Game state is in process memory, so `--max-instances 1` (a second instance splits a room), `--no-cpu-throttling` (throttled CPU freezes turn timers and the cleanup loop), `--concurrency 250` (the ceiling on simultaneous players), and `--timeout 3600` (the max socket lifetime; reconnect handles the cut) are all required. Two consequences: **deploying ends games in progress**, and a room dies if every player disconnects at once and the instance goes idle. Fixing either means moving room state to Redis or Firestore.
+
+FastAPI serves both WebSocket connections (`/ws/...`) and frontend static files (`/*` catch-all with SPA fallback). The catch-all uses direct `FileResponse` (not `StaticFiles`) to avoid 301 redirects.
 
 ## Development History
 
@@ -142,9 +156,10 @@ Detailed design docs for each phase of development live in `development-history/
 | Phase 8 | [`development-history/phase_8_mobile_ui.md`](development-history/phase_8_mobile_ui.md) | Mobile UI stabilisation. Single codebase, `useIsMobile()` fork at 768px. Backend `Company.ticker`, CAPS tickers across surfaces. New mobile components: `MobilePlayerBoard` (always-visible rows, auto-scroll), `MobileCardStrip` + `ViewAllDrawer`, `MobileTabBar` + `MobileLogChat` (merged log+chat). Mobile `DayRoundIndicator`, `TurnTimerDisplay.alwaysShow`, 44px touch targets, safe-area padding, top-center Sonner on mobile. |
 | Phase 9 | [`development-history/phase_9_tutorial_and_currency_refactor.md`](development-history/phase_9_tutorial_and_currency_refactor.md) | Tutorial infrastructure (RulebookPage with 10 chapters, TutorialPage hub, first-encounter tooltips, Coachmark + Spotlight components, tutorialStorage). Currency settlement phase collapsed into `card_reveal`: snapshotted at `begin_card_reveal`, animated as a tail stage in `CardRevealOverlay`, applied at `_finalize_card_reveal` — `CurrencySettlementOverlay` and `complete_currency_settlement` ack deleted. Editorial-casino v2 theme opt-in. Card reveal new-value brightness fix. |
 | Phase 10 | [`development-history/phase_10_networth_graph_and_ui_polish.md`](development-history/phase_10_networth_graph_and_ui_polish.md) | Networth standings graph in ShareSuspendOverlay (animated SVG, log scale, overtake flourish, per-player legend with deltas). `networth_history` snapshotted post-settlement (Trigger A) and after each share-suspend swap (Trigger B). StockTicker prev→value display across all viewport variants. CardRevealOverlay old→new label + value pulse on chairman/director recompute. Chairman/director early broadcast fix. |
+| Phase 11 | [`development-history/phase_11_room_management_and_bugfixes.md`](development-history/phase_11_room_management_and_bugfixes.md) | GitHub #20/#22. New-day turn-timer hold (`day_start_ready`), two-step share suspend, Rights Issue pass confirm, trade-popup Max/RI row + timer. Room management: lobby-only duplicate-name refusal, Ready-gated Start, Kick, lobby + mid-game Leave (soft-removal `Player.left`, shares to market, cash burned, last player standing wins), public room list (`/api/rooms`). Engine now takes real room player ids. |
 | Architecture | [`development-history/game_arch_deploy_numbers.md`](development-history/game_arch_deploy_numbers.md) | Full architectural deep-dive: server-authoritative pattern, phase state machine, auto-advance loop, deployment guide, NFR numbers, scaling progression. |
 
 ## Other Directories
 
 - `base_logic_old/` — Original 6-file implementation. Do not modify.
-- `tests/` — `test_game.py` (integration test), `play_client.py` (manual bot client)
+- `tests/` — `test_game.py` (integration test), `test_room_features.py` (server/room/leave tests, 71 checks — `backend/venv/bin/python tests/test_room_features.py`), `test_mechanics.py` (engine mechanics; 5 known pre-existing failures from the Rebalance commit), `play_client.py` (manual bot client)

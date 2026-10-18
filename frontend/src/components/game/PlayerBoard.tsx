@@ -83,7 +83,9 @@ export default function PlayerBoard() {
 
         const isCurrent = player.name === current_player_name
         const isYou = player.name === playerName
-        const isDisconnected = player.connected === false && !isYou
+        // Left players render like disconnected ones, tagged LEFT instead of WifiOff
+        const hasLeft = !!player.left
+        const isDisconnected = (player.connected === false && !isYou) || hasLeft
         const holdings = Object.entries(player.stocks).filter(([, qty]) => qty > 0)
         const netWorth = portfolioValue(player, companies)
 
@@ -104,8 +106,11 @@ export default function PlayerBoard() {
               {isCurrent && !isDisconnected && (
                 <span className={cn('w-2.5 h-2.5 rounded-full', style.dot, style.pulse)} />
               )}
-              {isDisconnected && (
+              {isDisconnected && !hasLeft && (
                 <WifiOff size={14} className="text-red-400 flex-shrink-0" />
+              )}
+              {hasLeft && (
+                <span className="text-[10px] font-mono uppercase tracking-widest text-red-400/80 border border-red-500/30 rounded px-1.5 flex-shrink-0">Left</span>
               )}
               <span className={cn(
                 'text-base font-bold truncate',

@@ -22,6 +22,8 @@ export interface Player {
   stocks: Record<string, number>
   is_you: boolean
   connected?: boolean
+  // Left the game mid-play — shares returned, cash forfeited, skipped in turns
+  left?: boolean
 }
 
 export type GamePhase =
@@ -97,4 +99,5 @@ export interface Ranking {
   cash: number
   net_worth: number
   stocks: Record<string, number>
+  left?: boolean
 }

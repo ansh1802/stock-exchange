@@ -1,0 +1,19 @@
+# Uploaded to Cloud Build as the Docker build context.
+# Keep this in sync with .dockerignore.
+.git
+.gitignore
+.gcloudignore
+.idea
+.claude
+.playwright-mcp
+node_modules
+**/node_modules
+__pycache__
+**/__pycache__
+*.pyc
+frontend/dist
+base_logic_old
+development-history
+tests
+*.png
+railway.toml

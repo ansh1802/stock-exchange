@@ -141,6 +141,7 @@ export default function GameOverScreen({ rankings }: Props) {
                     }}
                   >
                     {r.name}
+                    {r.left && <span className="ml-2 text-xs font-mono uppercase tracking-widest opacity-60">(left)</span>}
                   </div>
                   <div
                     className="flex gap-3 mt-0.5 font-mono"
@@ -224,7 +225,10 @@ export default function GameOverScreen({ rankings }: Props) {
                 #{i + 1}
               </span>
               <div className="flex-1">
-                <div className="text-white font-medium">{r.name}</div>
+                <div className="text-white font-medium">
+                  {r.name}
+                  {r.left && <span className="ml-2 text-xs font-mono uppercase tracking-widest text-gray-500">(left)</span>}
+                </div>
                 <div className="flex gap-3 mt-1 text-xs text-gray-400 font-mono">
                   <span>Cash: {formatCash(r.cash)}</span>
                   <span className="text-gray-600">|</span>

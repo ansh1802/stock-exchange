@@ -110,7 +110,9 @@ export default function MobilePlayerBoard() {
       {ordered.map((player) => {
         const isYou = player.name === playerName
         const isCurrent = player.name === current_player_name
-        const isDisconnected = player.connected === false && !isYou
+        // Left players render like disconnected ones, tagged LEFT instead of WifiOff
+        const hasLeft = !!player.left
+        const isDisconnected = (player.connected === false && !isYou) || hasLeft
         const netWorth = portfolioValue(player, companies)
         const stockValue = netWorth - player.cash
         const holdings = Object.entries(player.stocks).filter(([, q]) => q > 0)
@@ -144,7 +146,10 @@ export default function MobilePlayerBoard() {
               ) : (
                 <span className="w-2 h-2 rounded-full bg-gray-600 flex-shrink-0" />
               )}
-              {isDisconnected && <WifiOff size={11} className="text-red-400 flex-shrink-0" />}
+              {isDisconnected && !hasLeft && <WifiOff size={11} className="text-red-400 flex-shrink-0" />}
+              {hasLeft && (
+                <span className="text-[9px] font-mono uppercase tracking-widest text-red-400/80 border border-red-500/30 rounded px-1">Left</span>
+              )}
               <span
                 className={cn(
                   'font-semibold text-sm truncate max-w-[110px]',

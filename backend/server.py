@@ -81,6 +81,17 @@ DISCONNECT_TIMEOUTS = {
 
 VALID_TURN_TIMERS = {15, 30, 45, 60, 75, 90}
 
+JOIN_ERRORS = {
+    "name_taken": "That name is taken in this room. Pick another.",
+    "left": "You left this game and can't rejoin it.",
+    "started": "That game has already started.",
+    "full": "That room is full (6 players).",
+}
+
+# Max wait for clients to finish the end-of-day overlay before the first turn
+# timer of a new day starts anyway (covers stuck / reconnecting clients).
+DAY_START_FALLBACK_SECS = 20
+
 
 async def check_and_start_disconnect_timer(room):
     """If the active player is disconnected, start an auto-action timer.
@@ -101,7 +112,8 @@ async def check_and_start_disconnect_timer(room):
         # Check if any disconnected player hasn't sent reveal_complete
         missing = [
             p.id for p in game.players
-            if p.id not in game.reveal_complete_players
+            if not p.left
+            and p.id not in game.reveal_complete_players
             and not room.players.get(p.id, _StubConn()).connected
         ]
         if missing:
@@ -247,6 +259,19 @@ async def check_and_start_turn_timer(room):
         cancel_turn_timer(room)
         return
 
+    # New day: hold the first turn's clock until clients are back on the board.
+    if room.day_start_pending:
+        room.day_start_pending = {
+            pid for pid in room.day_start_pending
+            if room.players.get(pid) and room.players[pid].connected
+        }
+    if room.day_start_pending:
+        cancel_turn_timer(room)
+        if not room.day_start_fallback_task:
+            room.day_start_fallback_task = asyncio.create_task(_day_start_fallback(room))
+        return
+    clear_day_start(room)
+
     if room.turn_timer_task and room.turn_timer_player_id == active_pid:
         return  # already ticking for this player
 
@@ -257,6 +282,37 @@ async def check_and_start_turn_timer(room):
     room.turn_timer_task = asyncio.create_task(
         _run_turn_timer(room, active_pid, duration)
     )
+
+
+def clear_day_start(room):
+    """Drop the new-day hold (and its fallback task)."""
+    room.day_start_pending = None
+    task = room.day_start_fallback_task
+    room.day_start_fallback_task = None
+    if task and task is not asyncio.current_task():
+        task.cancel()
+
+
+async def _day_start_fallback(room):
+    """Start the first turn timer anyway if some client never acks."""
+    try:
+        await asyncio.sleep(DAY_START_FALLBACK_SECS)
+        room.day_start_fallback_task = None
+        room.day_start_pending = None
+        await check_and_start_turn_timer(room)
+        await broadcast_game_state(room)
+    except asyncio.CancelledError:
+        pass
+
+
+async def handle_day_start_ready(room, player_id):
+    """Client finished the end-of-day overlay and is back on the board."""
+    if not room.day_start_pending or player_id not in room.day_start_pending:
+        return
+    room.day_start_pending.discard(player_id)
+    if not room.day_start_pending:
+        await check_and_start_turn_timer(room)
+        await broadcast_game_state(room)
 
 
 async def _run_turn_timer(room, player_id, duration):
@@ -292,12 +348,25 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
     await websocket.accept()
 
     room = rooms.get_or_create(room_code)
-    player_id, reconnected = room.add_player(player_name, websocket)
+
+    # Lobby name clash: probe the existing socket first. A page refresh can
+    # land before the server has processed the old socket's close.
+    existing_id = room._name_to_id.get(player_name)
+    if not room.started and existing_id is not None:
+        existing = room.players[existing_id]
+        if existing.connected:
+            try:
+                await existing.ws.send_json({"type": "ping"})
+            except Exception:
+                existing.connected = False
+
+    player_id, reconnected, join_error = room.add_player(player_name, websocket)
 
     if player_id is None:
         await websocket.send_json({
-            "type": "error",
-            "message": "Cannot join: game already started or room is full.",
+            "type": "join_refused",
+            "code": join_error,
+            "message": JOIN_ERRORS.get(join_error, "Cannot join this room."),
         })
         await websocket.close()
         return
@@ -336,6 +405,7 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
         "player_name": player_name,
         "players": room.get_player_names(),
     })
+    await broadcast_lobby(room)
 
     # Start heartbeat ping loop
     ping_task = asyncio.create_task(ping_loop(websocket, player_conn))
@@ -360,8 +430,14 @@ async def game_ws(websocket: WebSocket, room_code: str, player_name: str):
         pass
     finally:
         ping_task.cancel()
+        conn = room.players.get(player_id)
+        # Left / kicked (seat gone or marked left), or this socket was
+        # superseded by a reconnect — nothing more to report.
+        if conn is None or conn.ws is not websocket or player_id in room.left_ids:
+            return
         room.disconnect_player(player_id)
         room.touch()
+        await broadcast_lobby(room)
         await room.broadcast({
             "type": "player_left",
             "player_name": player_name,
@@ -410,6 +486,7 @@ def build_client_state(room, player_id):
             "stocks": sparse_stocks,
             "is_you": p["id"] == player_id,
             "connected": conn.connected if conn else False,
+            "left": p.get("left", False),
         }
         players.append(entry)
 
@@ -549,7 +626,34 @@ async def handle_action(room, player_id, data):
         await room.broadcast({"type": "chat_message", **msg})
         return
 
-    # ── Lobby action ─────────────────────────────────────────────────────
+    # ── Leave (lobby or mid-game) ────────────────────────────────────────
+    if action_type == "leave_room":
+        await handle_leave_room(room, player_id)
+        return
+
+    # ── Lobby actions ────────────────────────────────────────────────────
+    if action_type in ("set_ready", "kick_player", "set_public"):
+        if room.started:
+            await room.send_to(player_id, {"type": "error", "message": "Game already started."})
+            return
+        if action_type == "set_ready":
+            if player_id != room.host_id:
+                if data.get("ready"):
+                    room.ready.add(player_id)
+                else:
+                    room.ready.discard(player_id)
+        elif action_type == "set_public":
+            if player_id != room.host_id:
+                await room.send_to(player_id, {"type": "error", "message": "Only the host can change this."})
+                return
+            room.is_public = bool(data.get("is_public"))
+        else:
+            await handle_kick(room, player_id, data.get("player_name"))
+            return
+        room.touch()
+        await broadcast_lobby(room)
+        return
+
     if action_type == "start_game":
         await handle_start_game(
             room, player_id,
@@ -568,6 +672,10 @@ async def handle_action(room, player_id, data):
     # ── All other actions require a running game ─────────────────────────
     if not room.started or not room.game:
         await room.send_to(player_id, {"type": "error", "message": "Game has not started yet."})
+        return
+
+    if action_type == "day_start_ready":
+        await handle_day_start_ready(room, player_id)
         return
 
     result = dispatch_action(room.game, player_id, data)
@@ -656,6 +764,85 @@ def dispatch_action(game, player_id, data):
     return None
 
 
+# ── Lobby / leave ────────────────────────────────────────────────────────────
+
+
+async def broadcast_lobby(room):
+    """Send each lobby client its view (players, ready, host, public)."""
+    if room.started:
+        return
+    for pid in list(room.players):
+        await room.send_to(pid, room.lobby_view(pid))
+
+
+async def _eject(room, conn, reason):
+    """Tell a client it's out of the room and close its socket."""
+    try:
+        await conn.ws.send_json({"type": "left_room", "reason": reason})
+    except Exception:
+        pass
+    try:
+        await conn.ws.close()
+    except Exception:
+        pass
+
+
+async def handle_kick(room, player_id, target_name):
+    if player_id != room.host_id:
+        await room.send_to(player_id, {"type": "error", "message": "Only the host can remove players."})
+        return
+    target_id = room._name_to_id.get(target_name)
+    if target_id is None or target_id == player_id:
+        await room.send_to(player_id, {"type": "error", "message": "Can't remove that player."})
+        return
+    conn = room.remove_player(target_id)
+    await _eject(room, conn, "kicked")
+    await broadcast_lobby(room)
+
+
+async def handle_leave_room(room, player_id):
+    """Explicit leave. Lobby: drop the seat. Mid-game: engine leave_game."""
+    conn = room.players.get(player_id)
+    if conn is None:
+        return
+
+    if not room.started or not room.game:
+        room.remove_player(player_id)
+        await _eject(room, conn, "left")
+        await broadcast_lobby(room)
+        return
+
+    if room.game.game_phase == "game_over" or player_id in room.left_ids:
+        await _eject(room, conn, "left")
+        return
+
+    result = ge.leave_game(room.game, player_id)
+    if not result["success"]:
+        await room.send_to(player_id, {"type": "error", "message": result["message"]})
+        return
+
+    room.left_ids.add(player_id)
+    conn.connected = False
+    if room.day_start_pending:
+        room.day_start_pending.discard(player_id)
+    room.touch()
+    room.game_log.append(f"{conn.name} left the game — shares returned to market, cash forfeited")
+    await _eject(room, conn, "left")
+
+    if room.game.game_phase == "game_over":
+        cancel_turn_timer(room)
+        cancel_disconnect_timer(room)
+        clear_day_start(room)
+        await broadcast_game_state(room)
+        await broadcast_game_over(room)
+        return
+
+    await auto_advance(room)
+    await check_and_start_turn_timer(room)
+    await broadcast_game_state(room)
+    await check_and_start_disconnect_timer(room)
+
+
 # ── Game start ───────────────────────────────────────────────────────────────
 
 
@@ -673,10 +860,14 @@ async def handle_start_game(room, player_id, debug_preset=None, turn_timer_secon
         await room.send_to(player_id, {"type": "error", "message": "Need at least 2 players."})
         return
 
+    if not room.all_ready():
+        await room.send_to(player_id, {"type": "error", "message": "Everyone needs to be ready first."})
+        return
+
     if turn_timer_seconds in VALID_TURN_TIMERS:
         room.turn_timer_seconds = turn_timer_seconds
 
-    room.game = ge.GameState(num_players)
+    room.game = ge.GameState(num_players, player_ids=list(room.players))
     room.started = True
     ge.deal_cards(room.game)
 
@@ -734,6 +925,8 @@ async def auto_advance(room):
         phase = game.game_phase
 
         if phase == "card_reveal" and not game.reveal_data:
+            if room.day_end_countdown_deadline is not None:
+                break  # another auto_advance is already in the pre-reveal pause
             # Pause for 3s so players can register the final turn's outcome
             # before the closing bell animation. The deadline is broadcast as
             # `day_end_countdown_deadline` so the top indicator can render
@@ -744,6 +937,8 @@ async def auto_advance(room):
             await broadcast_game_state(room)
             await asyncio.sleep(3.0)
             room.day_end_countdown_deadline = None
+            if game.game_phase != "card_reveal" or game.reveal_data:
+                break  # a mid-game leave ended the game during the pause
             # Just entered card_reveal — compute reveal data and CD queue
             r = ge.begin_card_reveal(game)
             room.game_log.append(r["message"])
@@ -766,6 +961,12 @@ async def auto_advance(room):
         elif phase == "dealing":
             r = ge.deal_cards(game)
             room.game_log.append(r["message"])
+            # Clients are still on the end-of-day overlay — hold the first
+            # turn timer until they ack `day_start_ready` (or the fallback).
+            clear_day_start(room)
+            room.day_start_pending = {
+                pid for pid, conn in room.players.items() if conn.connected
+            }
             await room.broadcast({"type": "phase_change", "phase": "dealing", "message": r["message"]})
             advanced = True
 
@@ -795,12 +996,22 @@ async def broadcast_game_over(room):
             "cash": player.cash,
             "net_worth": net_worth,
             "stocks": dict(player.stocks),
+            "left": player.left,
         })
 
-    rankings.sort(key=lambda r: r["net_worth"], reverse=True)
+    # Players who left rank below everyone still in the game.
+    rankings.sort(key=lambda r: (r["left"], -r["net_worth"]))
 
     room.game_log.append("Game over!")
     await room.broadcast({"type": "game_over", "rankings": rankings})
+
+
+# ── Public room discovery ────────────────────────────────────────────────────
+
+
+@app.get("/api/rooms")
+async def list_public_rooms():
+    return {"rooms": rooms.public_lobbies()}
 
 
 # ── Serve frontend static files (production) ────────────────────────────────

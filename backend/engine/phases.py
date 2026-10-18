@@ -8,7 +8,7 @@ import random
 
 from .constants import CARDS_PER_HAND, CURRENCY_RATE, MAX_DAYS, COMPANY_NAMES, CHAIRMAN_THRESHOLD, DIRECTOR_THRESHOLD
 from .deck import build_deck
-from .helpers import result, player_by_id, validate_company, advance_turn
+from .helpers import result, player_by_id, validate_company, advance_turn, active_players, first_active_index
 
 
 def deal_cards(game_state):
@@ -20,6 +20,9 @@ def deal_cards(game_state):
     random.shuffle(deck)
 
     for player in game_state.players:
+        if player.left:
+            player.hand = []
+            continue
         player.hand = deck[:CARDS_PER_HAND]
         deck = deck[CARDS_PER_HAND:]
 
@@ -28,7 +31,7 @@ def deal_cards(game_state):
     game_state.reveal_complete_players = set()
 
     game_state.game_phase = "player_turn"
-    game_state.current_turn = 0
+    game_state.current_turn = first_active_index(game_state)
     game_state.current_round = 0
     return result(True, f"Day {game_state.current_day}: cards dealt.", game_state)
 
@@ -128,14 +131,22 @@ def complete_card_reveal(game_state, player_id=None):
 
     if player_id is not None:
         game_state.reveal_complete_players.add(player_id)
-        # Only finalize when all players have completed the animation
-        if len(game_state.reveal_complete_players) < game_state.num_players:
-            waiting = game_state.num_players - len(game_state.reveal_complete_players)
+        # Only finalize when all active (non-left) players have completed the animation
+        waiting = reveal_acks_missing(game_state)
+        if waiting:
             return result(True, f"Waiting for {waiting} more player(s) to finish reveal.", game_state)
 
     game_state.reveal_complete_players.clear()
     _finalize_card_reveal(game_state)
     return result(True, "Card reveal complete — values applied.", game_state)
+
+
+def reveal_acks_missing(game_state):
+    """Number of active players who haven't sent reveal_complete yet."""
+    return sum(
+        1 for p in active_players(game_state)
+        if p.id not in game_state.reveal_complete_players
+    )
 
 
 def _build_chairman_director_queue(game_state):

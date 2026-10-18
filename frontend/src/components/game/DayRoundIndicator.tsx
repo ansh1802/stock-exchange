@@ -4,9 +4,25 @@ import { cn } from '../../lib/cn'
 import { useTurnUrgency } from '../../hooks/useTurnUrgency'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import TurnTimerDisplay from './TurnTimerDisplay'
+import { LogOut } from 'lucide-react'
 
 interface Props {
   isConnected: boolean
+  onExit: () => void
+}
+
+function ExitButton({ onExit, disabled }: { onExit: () => void; disabled: boolean }) {
+  return (
+    <button
+      onClick={onExit}
+      disabled={disabled}
+      title="Exit room"
+      aria-label="Exit room"
+      className="w-9 h-9 -my-1 flex items-center justify-center rounded-md text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-30"
+    >
+      <LogOut size={15} />
+    </button>
+  )
 }
 
 // Tracks the absolute `day_end_countdown_deadline` and emits a 3..2..1
@@ -43,7 +59,7 @@ function DayEndingPill({ remaining }: { remaining: number }) {
   )
 }
 
-export default function DayRoundIndicator({ isConnected }: Props) {
+export default function DayRoundIndicator({ isConnected, onExit }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
   const turnUrgency = useTurnUrgency()
@@ -79,6 +95,7 @@ export default function DayRoundIndicator({ isConnected }: Props) {
               isConnected ? 'bg-emerald-400' : 'bg-red-400',
             )}
           />
+          <ExitButton onExit={onExit} disabled={!isConnected} />
         </div>
       </div>
     )
@@ -118,6 +135,7 @@ export default function DayRoundIndicator({ isConnected }: Props) {
             <span className="text-gray-500 text-xs">{gameState.room_code}</span>
           </>
         )}
+        <ExitButton onExit={onExit} disabled={!isConnected} />
       </div>
     </div>
   )

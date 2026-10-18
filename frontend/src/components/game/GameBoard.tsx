@@ -21,6 +21,7 @@ import RightsIssueOverlay from './RightsIssueOverlay'
 import DebentureOverlay from './DebentureOverlay'
 import ReconnectingBanner from './ReconnectingBanner'
 import RollingUpdatesModal from './RollingUpdatesModal'
+import LeaveGameModal from './LeaveGameModal'
 
 interface Props {
   send: (msg: ClientMessage) => void
@@ -36,6 +37,7 @@ export default function GameBoard({ send }: Props) {
   const [mobileTab, setMobileTab] = useState<MobileTab>('players')
 
   const [showRollingUpdates, setShowRollingUpdates] = useState(true)
+  const [showLeave, setShowLeave] = useState(false)
 
   // Animation state — decoupled from backend phase
   const [animPhase, setAnimPhase] = useState<AnimationPhase>('none')
@@ -123,9 +125,12 @@ export default function GameBoard({ send }: Props) {
 
   // When share_suspend overlay completes (timer expired), close out the
   // overlay sequence. Currency settlement is now part of CardRevealOverlay.
+  // Also tells the server we're back on the board, so the first turn timer
+  // of the new day can start (server holds it until every client acks).
   const handleSuspendComplete = useCallback(() => {
     setAnimPhase('none')
-  }, [])
+    send({ type: 'day_start_ready' })
+  }, [send])
 
   if (!gameState) return null
 
@@ -142,6 +147,8 @@ export default function GameBoard({ send }: Props) {
     <>
       {/* Rolling updates — shown once per game on mount */}
       {showRollingUpdates && <RollingUpdatesModal onClose={() => setShowRollingUpdates(false)} />}
+
+      {showLeave && <LeaveGameModal send={send} onClose={() => setShowLeave(false)} />}
 
       {/* Modals for sub-phases */}
       {phase === 'rights_issue' && !showRightsIssueOverlay && <RightsIssueModal send={send} />}
@@ -192,7 +199,7 @@ export default function GameBoard({ send }: Props) {
     return (
       <div className="flex flex-col h-screen overflow-hidden bg-gray-950">
         <ReconnectingBanner />
-        <DayRoundIndicator isConnected={isConnected} />
+        <DayRoundIndicator isConnected={isConnected} onExit={() => setShowLeave(true)} />
         <StockTicker />
 
         {/* Tab content area: flex-1, scrolls internally */}
@@ -220,7 +227,7 @@ export default function GameBoard({ send }: Props) {
       <ReconnectingBanner />
 
       {/* Top bar */}
-      <DayRoundIndicator isConnected={isConnected} />
+      <DayRoundIndicator isConnected={isConnected} onExit={() => setShowLeave(true)} />
 
       {/* Stock ticker */}
       <StockTicker />
