@@ -1,4 +1,4 @@
-import { Crown, Check, X } from 'lucide-react'
+import { Crown, Check } from 'lucide-react'
 import { useGameStore } from '../../store/useGameStore'
 import { cn } from '../../lib/cn'
 import type { ClientMessage } from '../../types/messages'
@@ -54,9 +54,9 @@ export default function PlayerList({ send }: Props) {
                     onClick={() => send({ type: 'kick_player', player_name: p.name })}
                     title={`Remove ${p.name}`}
                     aria-label={`Remove ${p.name}`}
-                    className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="px-2.5 min-h-[32px] text-xs font-medium rounded-md border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
                   >
-                    <X size={14} />
+                    Kick
                   </button>
                 )}
               </span>
