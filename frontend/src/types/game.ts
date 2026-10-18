@@ -24,6 +24,8 @@ export interface Player {
   connected?: boolean
   // Left the game mid-play — shares returned, cash forfeited, skipped in turns
   left?: boolean
+  // Bot difficulty when this seat is a bot, null for humans
+  bot?: 'easy' | 'medium' | 'hard' | null
 }
 
 export type GamePhase =

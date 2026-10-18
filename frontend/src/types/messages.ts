@@ -1,10 +1,14 @@
 import type { GameState, Ranking } from './game'
 
+export type BotDifficulty = 'easy' | 'medium' | 'hard'
+
 export interface LobbyPlayer {
   name: string
   ready: boolean
   is_host: boolean
   connected: boolean
+  // Difficulty when this seat is a bot, null for humans
+  bot?: BotDifficulty | null
 }
 
 export interface PublicRoom {
@@ -58,4 +62,6 @@ export type ClientMessage =
   | { type: 'set_ready'; ready: boolean }
   | { type: 'set_public'; is_public: boolean }
   | { type: 'kick_player'; player_name: string }
+  | { type: 'add_bot'; difficulty: BotDifficulty }
+  | { type: 'set_bot_difficulty'; player_name: string; difficulty: BotDifficulty }
   | { type: 'leave_room' }

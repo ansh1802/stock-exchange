@@ -5,7 +5,7 @@ import { useGameStore } from '../../store/useGameStore'
 import { cn } from '../../lib/cn'
 import { COMPANY_COLOR, COMPANY_TEXT_COLOR } from '../../lib/constants'
 import { formatCash } from '../../lib/format'
-import { Crown, Target, PiggyBank, WifiOff } from 'lucide-react'
+import { Crown, Target, PiggyBank, WifiOff, Bot } from 'lucide-react'
 import { useTurnUrgency, type Urgency } from '../../hooks/useTurnUrgency'
 import { portfolioValue, getPosition } from '../../lib/playerHelpers'
 import { useFirstEncounterTip } from '../../hooks/useFirstEncounterTip'
@@ -118,6 +118,11 @@ export default function PlayerBoard() {
               )}>
                 {player.name}
                 {isYou && <span className="text-gray-500 font-normal text-sm ml-1">(you)</span>}
+                {player.bot && (
+                  <span title={`${player.bot} bot`} className="inline-flex align-middle ml-1.5 text-gray-500">
+                    <Bot size={13} />
+                  </span>
+                )}
               </span>
               <span className="text-amber-300 font-mono text-sm font-semibold ml-auto">
                 {formatCash(netWorth)}

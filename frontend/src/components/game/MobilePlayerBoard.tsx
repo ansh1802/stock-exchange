@@ -3,7 +3,7 @@ import { useGameStore } from '../../store/useGameStore'
 import { cn } from '../../lib/cn'
 import { COMPANY_COLOR, COMPANY_TICKER } from '../../lib/constants'
 import { formatCash } from '../../lib/format'
-import { Crown, Target, WifiOff } from 'lucide-react'
+import { Crown, Target, WifiOff, Bot } from 'lucide-react'
 import { useTurnUrgency, type Urgency } from '../../hooks/useTurnUrgency'
 import { portfolioValue, getPosition, type Position } from '../../lib/playerHelpers'
 
@@ -159,6 +159,7 @@ export default function MobilePlayerBoard() {
                 {player.name}
               </span>
               {isYou && <span className="text-[10px] text-gray-500">(you)</span>}
+              {player.bot && <Bot size={12} className="text-gray-500 flex-shrink-0" aria-label={`${player.bot} bot`} />}
               <span className="ml-auto font-mono text-amber-300 font-bold text-sm">
                 {formatCash(netWorth)}
               </span>
