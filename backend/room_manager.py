@@ -68,6 +68,8 @@ class Room:
         # Players who left a running game — their seat can never be reclaimed.
         self.left_ids = set()
         self.bot_task = None      # asyncio.Task driving the next bot move
+        self.reveal_wait_since = None   # watchdog: when card_reveal started waiting on acks
+        self.reveal_stall_logged = False
 
     def touch(self):
         """Update last activity timestamp."""
