@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 import { playerColor } from '../../lib/playerColors'
 
 interface PlayerInfo {
@@ -13,16 +14,29 @@ interface Props {
   players: PlayerInfo[]
   activePlayerId: number | null
   viewport: 'mobile' | 'desktop'
-  // Bumping this re-runs the animation. Bump after Trigger A (post-settlement)
-  // and Trigger B (post-share-suspend) snapshots.
-  replayKey: number | string
   // Optional title bits — caller controls layout chrome around the SVG.
   title?: string
   pillText?: string
   ssApplied?: boolean
+  // Fill the parent's height (parent must be a bounded flex/grid cell).
+  fill?: boolean
 }
 
-const SVG_NS = 'http://www.w3.org/2000/svg'
+/**
+ * Animation model — declarative, data-driven.
+ *
+ * The chart is plain React SVG with framer-motion on the few elements that
+ * move. Nothing is keyed on prop identity: the entry travel plays once per
+ * `currentDay` (elements are keyed on it so a new day mounts fresh), and a
+ * Trigger B re-snapshot (share-suspend swap) only changes the *target* of the
+ * last segment / dot / label, which framer-motion tweens from wherever they
+ * are. Re-renders with identical numbers are no-ops. This replaces the old
+ * imperative `useEffect` that rebuilt and restarted the whole SVG whenever
+ * `history` / `players` got a new array identity — i.e. on every broadcast.
+ */
+export const TRAVEL_MS = 3200
+const SWAP_MS = 900
+const EASE = [0.4, 0, 0.4, 1] as const
 
 function scaleLin(d0: number, d1: number, r0: number, r1: number) {
   const span = d1 - d0 || 1
@@ -37,17 +51,12 @@ function scaleLog(d0: number, d1: number, r0: number, r1: number) {
 }
 
 function toPath(pts: Array<[number, number]>): string {
-  return pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ' ' + p[1]).join(' ')
-}
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+  return pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')
 }
 
 function readNW(snap: Record<string, number> | undefined, id: number): number | null {
   if (!snap) return null
-  const v = snap[String(id)] ?? snap[id as unknown as string]
+  const v = snap[String(id)]
   return typeof v === 'number' ? v : null
 }
 
@@ -63,9 +72,7 @@ function formatDelta(delta: number): string {
   return '±0'
 }
 
-export const TRAVEL_MS = 3200
-const HOLD_MS = 800
-const LABEL_FADE_MS = 400
+const TICK_CANDIDATES = [500, 1000, 2000, 3000, 5000, 7500, 10000, 15000, 25000]
 
 function NetworthGraph({
   history,
@@ -73,16 +80,45 @@ function NetworthGraph({
   players,
   activePlayerId,
   viewport,
-  replayKey,
   title,
   pillText,
   ssApplied,
+  fill = false,
 }: Props) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const svgHostRef = useRef<HTMLDivElement | null>(null)
+  const hostRef = useRef<HTMLDivElement | null>(null)
+  const [size, setSize] = useState({ w: 0, h: 0 })
+  const reduced = useReducedMotion() ?? false
+  const compact = viewport === 'mobile'
 
-  // Derive legend in JSX so it always renders (vs. a previous imperative
-  // mount that was getting clobbered) and so deltas update with each replay.
+  // Measure the host so the SVG scales with whatever height the layout gives it.
+  useLayoutEffect(() => {
+    const host = hostRef.current
+    if (!host) return
+    const measure = () => {
+      const r = host.getBoundingClientRect()
+      setSize((s) => {
+        const w = Math.round(r.width)
+        const h = Math.round(r.height)
+        return s.w === w && s.h === h ? s : { w, h }
+      })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(host)
+    return () => ro.disconnect()
+  }, [])
+
+  // Once the entry travel for this day has finished, later re-targets (swaps)
+  // tween at the quicker SWAP_MS so the standings "settle" rather than re-run.
+  const [travelDoneDay, setTravelDoneDay] = useState(-1)
+  useEffect(() => {
+    const t = window.setTimeout(() => setTravelDoneDay(currentDay), TRAVEL_MS + 50)
+    return () => window.clearTimeout(t)
+  }, [currentDay])
+  const travelDone = travelDoneDay === currentDay
+  const moveS = reduced ? 0 : (travelDone ? SWAP_MS : TRAVEL_MS) / 1000
+  const travelS = reduced ? 0 : TRAVEL_MS / 1000
+
   const legendRows = useMemo(() => {
     const currSnap = history[currentDay] ?? {}
     const prevSnap = currentDay > 0 ? history[currentDay - 1] : undefined
@@ -98,31 +134,16 @@ function NetworthGraph({
       .sort((a, b) => b.value - a.value)
   }, [history, currentDay, players])
 
-  useEffect(() => {
-    const host = svgHostRef.current
-    if (!host) return
-
-    const reduced = prefersReducedMotion()
-    const compact = viewport === 'mobile'
-
-    const hostRect = host.getBoundingClientRect()
-    const H = Math.max(hostRect.height, compact ? 180 : 240)
-
-    const minColPx = compact ? 36 : 56
-    const minimum = Math.max(hostRect.width, 0)
-    const ideal = (currentDay + 1) * minColPx + (compact ? 60 : 100)
-    const W = Math.max(minimum, ideal)
-
-    const PAD_L = compact ? 30 : 44
-    const PAD_R = compact ? 64 : 86
-    const PAD_T = 14
-    const PAD_B = 24
-
-    const dayStart = 0
-    const dayEnd = currentDay
+  const geo = useMemo(() => {
+    const W = Math.max(size.w, 120)
+    const H = Math.max(size.h, compact ? 120 : 160)
+    const PAD_L = compact ? 30 : 42
+    const PAD_R = compact ? 62 : 84
+    const PAD_T = 12
+    const PAD_B = 22
 
     let maxNW = 600
-    for (let d = 0; d <= dayEnd; d++) {
+    for (let d = 0; d <= currentDay; d++) {
       const snap = history[d]
       if (!snap) continue
       for (const p of players) {
@@ -132,92 +153,16 @@ function NetworthGraph({
     }
     const yMin = 300
     const yMax = maxNW * 1.18
-
-    const x = scaleLin(dayStart, dayEnd, PAD_L, W - PAD_R)
+    const x = scaleLin(0, currentDay, PAD_L, W - PAD_R)
     const y = scaleLog(yMin, yMax, H - PAD_B, PAD_T)
 
-    const svg = document.createElementNS(SVG_NS, 'svg')
-    svg.setAttribute('width', String(W))
-    svg.setAttribute('height', String(H))
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`)
-    svg.style.display = 'block'
-    svg.style.overflow = 'visible'
+    const yTicks = TICK_CANDIDATES.filter((t) => t >= yMin && t <= yMax).map((t) => ({ t, y: y(t) }))
+    const xTicks: Array<{ d: number; x: number }> = []
+    for (let d = 0; d <= currentDay; d++) xTicks.push({ d, x: x(d) })
 
-    // Y gridlines
-    const tickCandidates = [500, 1000, 2000, 3000, 5000, 7500, 10000, 15000, 25000]
-    const yTicks = tickCandidates.filter(t => t >= yMin && t <= yMax)
-    yTicks.forEach(t => {
-      const yy = y(t)
-      const line = document.createElementNS(SVG_NS, 'line')
-      line.setAttribute('x1', String(PAD_L))
-      line.setAttribute('x2', String(W - PAD_R))
-      line.setAttribute('y1', String(yy))
-      line.setAttribute('y2', String(yy))
-      line.setAttribute('stroke', 'rgba(201,161,74,0.12)')
-      line.setAttribute('stroke-width', '1')
-      line.setAttribute('stroke-dasharray', '2 4')
-      svg.appendChild(line)
-
-      const label = document.createElementNS(SVG_NS, 'text')
-      label.setAttribute('x', String(PAD_L - 6))
-      label.setAttribute('y', String(yy + 3))
-      label.setAttribute('text-anchor', 'end')
-      label.setAttribute('font-family', 'JetBrains Mono, ui-monospace, monospace')
-      label.setAttribute('font-size', String(compact ? 8 : 10))
-      label.setAttribute('fill', 'rgba(201,161,74,0.45)')
-      label.textContent = t >= 1000 ? `${t / 1000}k` : String(t)
-      svg.appendChild(label)
-    })
-
-    for (let d = dayStart; d <= dayEnd; d++) {
-      const xx = x(d)
-      const tick = document.createElementNS(SVG_NS, 'line')
-      tick.setAttribute('x1', String(xx))
-      tick.setAttribute('x2', String(xx))
-      tick.setAttribute('y1', String(H - PAD_B))
-      tick.setAttribute('y2', String(H - PAD_B + 3))
-      tick.setAttribute('stroke', 'rgba(201,161,74,0.4)')
-      svg.appendChild(tick)
-
-      const label = document.createElementNS(SVG_NS, 'text')
-      label.setAttribute('x', String(xx))
-      label.setAttribute('y', String(H - PAD_B + 14))
-      label.setAttribute('text-anchor', 'middle')
-      label.setAttribute('font-family', 'JetBrains Mono, ui-monospace, monospace')
-      label.setAttribute('font-size', String(compact ? 8 : 10))
-      label.setAttribute('fill', 'rgba(201,161,74,0.55)')
-      label.textContent = `D${d}`
-      svg.appendChild(label)
-    }
-
-    const xAxis = document.createElementNS(SVG_NS, 'line')
-    xAxis.setAttribute('x1', String(PAD_L))
-    xAxis.setAttribute('x2', String(W - PAD_R))
-    xAxis.setAttribute('y1', String(H - PAD_B))
-    xAxis.setAttribute('y2', String(H - PAD_B))
-    xAxis.setAttribute('stroke', 'rgba(201,161,74,0.3)')
-    xAxis.setAttribute('stroke-width', '1')
-    svg.appendChild(xAxis)
-
-    const yAxis = document.createElementNS(SVG_NS, 'line')
-    yAxis.setAttribute('x1', String(PAD_L))
-    yAxis.setAttribute('x2', String(PAD_L))
-    yAxis.setAttribute('y1', String(PAD_T))
-    yAxis.setAttribute('y2', String(H - PAD_B))
-    yAxis.setAttribute('stroke', 'rgba(201,161,74,0.3)')
-    yAxis.setAttribute('stroke-width', '1')
-    svg.appendChild(yAxis)
-
-    // Active player rendered last for z-order. Detect overtakes for flourish.
-    const sortedPlayers = players.slice().sort((a, b) => {
-      if (a.id === activePlayerId) return 1
-      if (b.id === activePlayerId) return -1
-      return 0
-    })
-
-    const prevSnap = history[Math.max(0, dayEnd - 1)] ?? {}
-    const currSnap = history[dayEnd] ?? {}
-    const overtakerIds = new Set<number>()
+    const prevSnap = history[Math.max(0, currentDay - 1)] ?? {}
+    const currSnap = history[currentDay] ?? {}
+    const overtakers = new Set<number>()
     for (const a of players) {
       for (const b of players) {
         if (a.id === b.id) continue
@@ -226,197 +171,84 @@ function NetworthGraph({
         const av1 = readNW(currSnap, a.id)
         const bv1 = readNW(currSnap, b.id)
         if (av0 == null || bv0 == null || av1 == null || bv1 == null) continue
-        if (av0 < bv0 && av1 > bv1) overtakerIds.add(a.id)
+        if (av0 < bv0 && av1 > bv1) overtakers.add(a.id)
       }
     }
 
-    const timeouts: number[] = []
-
-    sortedPlayers.forEach(p => {
-      const pts: Array<[number, number]> = []
-      for (let d = dayStart; d <= dayEnd; d++) {
-        const v = readNW(history[d], p.id)
-        if (v == null) continue
-        pts.push([x(d), y(v)])
-      }
-      if (pts.length < 1) return
-
-      const isActive = p.id === activePlayerId
-      const stroke = playerColor(p.id)
-      const sw = isActive ? 3 : 2
-
-      if (isActive && pts.length > 1) {
-        const halo = document.createElementNS(SVG_NS, 'path')
-        halo.setAttribute('d', toPath(pts))
-        halo.setAttribute('fill', 'none')
-        halo.setAttribute('stroke', stroke)
-        halo.setAttribute('stroke-width', String(sw + 4))
-        halo.setAttribute('stroke-opacity', '0.18')
-        halo.setAttribute('stroke-linecap', 'round')
-        halo.setAttribute('stroke-linejoin', 'round')
-        svg.appendChild(halo)
-      }
-
-      if (pts.length > 1) {
-        const staticPts = pts.slice(0, -1)
-        const newPts = pts.slice(-2)
-
-        if (staticPts.length > 1) {
-          const sp = document.createElementNS(SVG_NS, 'path')
-          sp.setAttribute('d', toPath(staticPts))
-          sp.setAttribute('fill', 'none')
-          sp.setAttribute('stroke', stroke)
-          sp.setAttribute('stroke-width', String(sw))
-          sp.setAttribute('stroke-linecap', 'round')
-          sp.setAttribute('stroke-linejoin', 'round')
-          svg.appendChild(sp)
+    // Fixed seat order (by id), independent of how the caller orders `players`.
+    // Reordering keyed <g>s moves DOM nodes, and a moved <path> restarts its
+    // in-flight travel — so the order must never change while mounted. The
+    // active halo is drawn in its own layer instead of via z-order.
+    const series = players
+      .slice()
+      .sort((a, b) => a.id - b.id)
+      .map((p) => {
+        const pts: Array<[number, number]> = []
+        for (let d = 0; d <= currentDay; d++) {
+          const v = readNW(history[d], p.id)
+          if (v == null) continue
+          pts.push([x(d), y(v)])
         }
-
-        const np = document.createElementNS(SVG_NS, 'path')
-        np.setAttribute('d', toPath(newPts))
-        np.setAttribute('fill', 'none')
-        np.setAttribute('stroke', stroke)
-        np.setAttribute('stroke-width', String(sw))
-        np.setAttribute('stroke-linecap', 'round')
-        np.setAttribute('stroke-linejoin', 'round')
-        svg.appendChild(np)
-
-        if (!reduced) {
-          const dx = newPts[1][0] - newPts[0][0]
-          const dy = newPts[1][1] - newPts[0][1]
-          const len = Math.sqrt(dx * dx + dy * dy) + 4
-          np.setAttribute('stroke-dasharray', String(len))
-          np.setAttribute('stroke-dashoffset', String(len))
-          np.style.transition = `stroke-dashoffset ${TRAVEL_MS}ms cubic-bezier(.4,0,.4,1)`
-          np.getBoundingClientRect()
-          requestAnimationFrame(() => {
-            np.setAttribute('stroke-dashoffset', '0')
-          })
-        }
-      }
-
-      const last = pts[pts.length - 1]
-      const startPt = pts.length > 1 && !reduced ? pts[pts.length - 2] : last
-
-      const dot = document.createElementNS(SVG_NS, 'circle')
-      dot.setAttribute('cx', String(startPt[0]))
-      dot.setAttribute('cy', String(startPt[1]))
-      dot.setAttribute('r', String(isActive ? 5 : 4))
-      dot.setAttribute('fill', '#0e1a14')
-      dot.setAttribute('stroke', stroke)
-      dot.setAttribute('stroke-width', String(isActive ? 2.5 : 2))
-      svg.appendChild(dot)
-      if (!reduced && pts.length > 1) {
-        dot.style.transition = `cx ${TRAVEL_MS}ms cubic-bezier(.4,0,.4,1), cy ${TRAVEL_MS}ms cubic-bezier(.4,0,.4,1)`
-        requestAnimationFrame(() => {
-          dot.setAttribute('cx', String(last[0]))
-          dot.setAttribute('cy', String(last[1]))
-        })
-      }
-
-      // Player name label rides alongside the dot — visible from the start so
-      // the audience can read who's moving where, not just the final standings.
-      const labelOffsetX = 8
-      const labelOffsetY = 3
-      const chip = document.createElementNS(SVG_NS, 'text')
-      chip.setAttribute('x', String(startPt[0] + labelOffsetX))
-      chip.setAttribute('y', String(startPt[1] + labelOffsetY))
-      chip.setAttribute('font-family', 'JetBrains Mono, ui-monospace, monospace')
-      chip.setAttribute('font-size', String(compact ? 9 : 10))
-      chip.setAttribute('fill', stroke)
-      chip.setAttribute('font-weight', String(isActive ? 700 : 500))
-      chip.setAttribute('paint-order', 'stroke')
-      chip.setAttribute('stroke', '#0e1a14')
-      chip.setAttribute('stroke-width', '3')
-      chip.style.opacity = '0'
-      chip.style.transition = `opacity ${LABEL_FADE_MS}ms ease, x ${TRAVEL_MS}ms cubic-bezier(.4,0,.4,1), y ${TRAVEL_MS}ms cubic-bezier(.4,0,.4,1)`
-      chip.textContent = p.name
-      svg.appendChild(chip)
-      // Fade in immediately, travel with the dot for the full TRAVEL_MS.
-      requestAnimationFrame(() => {
-        chip.style.opacity = '1'
-        if (!reduced && pts.length > 1) {
-          chip.setAttribute('x', String(last[0] + labelOffsetX))
-          chip.setAttribute('y', String(last[1] + labelOffsetY))
+        if (pts.length === 0) return null
+        const last = pts[pts.length - 1]
+        const start = pts.length > 1 ? pts[pts.length - 2] : last
+        return {
+          player: p,
+          isActive: p.id === activePlayerId,
+          color: playerColor(p.id),
+          staticD: pts.length > 2 ? toPath(pts.slice(0, -1)) : null,
+          segD: pts.length > 1 ? toPath(pts.slice(-2)) : null,
+          haloD: pts.length > 1 ? toPath(pts) : null,
+          start,
+          last,
+          overtook: overtakers.has(p.id),
         }
       })
+      .filter((s): s is NonNullable<typeof s> => s !== null)
 
-      // Overtake flourish — gold ring pulse, peaks late in travel.
-      if (!reduced && overtakerIds.has(p.id) && pts.length > 1) {
-        const ring = document.createElementNS(SVG_NS, 'circle')
-        ring.setAttribute('cx', String(startPt[0]))
-        ring.setAttribute('cy', String(startPt[1]))
-        ring.setAttribute('r', String(isActive ? 5 : 4))
-        ring.setAttribute('fill', 'none')
-        ring.setAttribute('stroke', '#e6c474')
-        ring.setAttribute('stroke-width', '2')
-        ring.setAttribute('opacity', '0')
-        ring.style.transition = `cx ${TRAVEL_MS}ms cubic-bezier(.4,0,.4,1), cy ${TRAVEL_MS}ms cubic-bezier(.4,0,.4,1)`
-        svg.appendChild(ring)
-        requestAnimationFrame(() => {
-          ring.setAttribute('cx', String(last[0]))
-          ring.setAttribute('cy', String(last[1]))
-        })
-        const t = window.setTimeout(() => {
-          ring.style.transition = 'r 320ms ease-out, opacity 320ms ease-out, stroke-width 320ms ease-out'
-          ring.setAttribute('r', String(isActive ? 14 : 12))
-          ring.setAttribute('stroke-width', '1')
-          ring.setAttribute('opacity', '0.9')
-          const t2 = window.setTimeout(() => {
-            ring.setAttribute('opacity', '0')
-          }, 280)
-          timeouts.push(t2)
-        }, TRAVEL_MS - 250)
-        timeouts.push(t)
-      }
-    })
-
-    host.innerHTML = ''
-    host.appendChild(svg)
-
-    const container = containerRef.current
-    if (container && compact) {
-      container.scrollLeft = container.scrollWidth - container.clientWidth
+    // Name labels sit beside the final dot; players with (near-)equal networth
+    // would print on top of each other, so push label rows apart vertically.
+    const LABEL_GAP = compact ? 10 : 11
+    const byY = series.map((s) => ({ s, ly: s.last[1] })).sort((a, b) => a.ly - b.ly)
+    for (let i = 1; i < byY.length; i++) {
+      if (byY[i].ly - byY[i - 1].ly < LABEL_GAP) byY[i].ly = byY[i - 1].ly + LABEL_GAP
     }
+    const labelY = new Map(byY.map(({ s, ly }) => [s.player.id, ly]))
 
-    return () => {
-      timeouts.forEach(t => window.clearTimeout(t))
-    }
-  }, [history, currentDay, players, activePlayerId, viewport, replayKey])
+    return { W, H, PAD_L, PAD_R, PAD_T, PAD_B, yTicks, xTicks, series, labelY }
+  }, [size, compact, history, currentDay, players, activePlayerId])
 
-  // Reference HOLD_MS so the constant survives lint/tree-shake passes; it's the
-  // dwell between travel-end and the next phase, surfaced on the wrapper for
-  // tooling. Keeps intent visible without affecting rendering.
-  void HOLD_MS
-
-  const compact = viewport === 'mobile'
+  const { W, H, PAD_L, PAD_R, PAD_T, PAD_B } = geo
+  const fontSize = compact ? 8 : 10
+  const labelFont = compact ? 9 : 10
 
   return (
     <div
       className={
-        'rounded-lg border border-amber-500/15 bg-black/30 ' +
-        (compact ? 'p-3' : 'p-4')
+        'rounded-lg border border-amber-500/15 bg-black/30 flex flex-col min-h-0 ' +
+        (compact ? 'p-2.5' : 'p-3.5') +
+        (fill ? ' h-full' : '')
       }
     >
       {(title || pillText) && (
-        <div className="flex items-start justify-between mb-3">
-          <div>
+        <div className="flex items-baseline justify-between gap-3 mb-1.5 shrink-0">
+          <div className="flex items-baseline gap-2 min-w-0">
             {title && (
               <div
-                className={(compact ? 'text-base' : 'text-lg') + ' text-amber-50/90 leading-tight'}
+                className={(compact ? 'text-sm' : 'text-base') + ' text-amber-50/90 leading-tight truncate'}
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 {title}
               </div>
             )}
-            <div className="text-[10px] tracking-[0.15em] text-amber-400 font-mono mt-0.5">
-              NETWORTH · LOG SCALE
+            <div className="text-[9px] tracking-[0.15em] text-amber-400/80 font-mono whitespace-nowrap">
+              NETWORTH · LOG
             </div>
           </div>
           {pillText && (
             <span
               className={
-                'px-2 py-0.5 rounded-full text-[10px] tracking-[0.1em] font-mono border ' +
+                'px-2 py-0.5 rounded-full text-[10px] tracking-[0.1em] font-mono border whitespace-nowrap ' +
                 (ssApplied
                   ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
                   : 'bg-amber-500/10 text-amber-300/90 border-amber-500/30')
@@ -427,75 +259,220 @@ function NetworthGraph({
           )}
         </div>
       )}
+
+      {/* Plot — fills the remaining height; SVG is sized from the measured host. */}
       <div
-        ref={containerRef}
-        className="overflow-x-auto overflow-y-hidden"
-        style={{ scrollSnapType: compact ? 'x mandatory' : undefined }}
+        ref={hostRef}
+        className="relative flex-1 min-h-0 w-full"
+        style={{ minHeight: fill ? 0 : compact ? 170 : 220 }}
       >
-        <div
-          ref={svgHostRef}
-          style={{
-            minHeight: compact ? 200 : 260,
-            minWidth: '100%',
-            position: 'relative',
-          }}
-        />
+        {size.w > 0 && (
+          <svg
+            width={W}
+            height={H}
+            viewBox={`0 0 ${W} ${H}`}
+            className="absolute inset-0 overflow-visible"
+            aria-label="Networth standings by day"
+          >
+            {geo.yTicks.map(({ t, y }) => (
+              <g key={t}>
+                <motion.line
+                  x1={PAD_L}
+                  x2={W - PAD_R}
+                  initial={false}
+                  animate={{ y1: y, y2: y }}
+                  transition={{ duration: moveS, ease: EASE }}
+                  stroke="rgba(201,161,74,0.12)"
+                  strokeWidth={1}
+                  strokeDasharray="2 4"
+                />
+                <motion.text
+                  initial={false}
+                  animate={{ attrX: PAD_L - 6, attrY: y + 3 }}
+                  transition={{ duration: moveS, ease: EASE }}
+                  textAnchor="end"
+                  fontFamily="JetBrains Mono, ui-monospace, monospace"
+                  fontSize={fontSize}
+                  fill="rgba(201,161,74,0.45)"
+                >
+                  {t >= 1000 ? `${t / 1000}k` : t}
+                </motion.text>
+              </g>
+            ))}
+
+            {geo.xTicks.map(({ d, x }) => (
+              <g key={d}>
+                <line x1={x} x2={x} y1={H - PAD_B} y2={H - PAD_B + 3} stroke="rgba(201,161,74,0.4)" />
+                <text
+                  x={x}
+                  y={H - PAD_B + 13}
+                  textAnchor="middle"
+                  fontFamily="JetBrains Mono, ui-monospace, monospace"
+                  fontSize={fontSize}
+                  fill="rgba(201,161,74,0.55)"
+                >
+                  D{d}
+                </text>
+              </g>
+            ))}
+
+            <line x1={PAD_L} x2={W - PAD_R} y1={H - PAD_B} y2={H - PAD_B} stroke="rgba(201,161,74,0.3)" />
+            <line x1={PAD_L} x2={PAD_L} y1={PAD_T} y2={H - PAD_B} stroke="rgba(201,161,74,0.3)" />
+
+            {/* Halo layer — one soft glow under the active player's whole line. */}
+            {geo.series.map((s) =>
+              s.isActive && s.haloD ? (
+                // Travels with the line during the day's entry; when the active
+                // player changes later it just fades in on the finished line.
+                <motion.path
+                  key={`halo-${s.player.id}-${currentDay}`}
+                  initial={{ pathLength: travelDone ? 1 : 0, opacity: 0, d: s.haloD }}
+                  animate={{ pathLength: 1, opacity: 1, d: s.haloD }}
+                  transition={{
+                    pathLength: { duration: travelS, ease: EASE },
+                    opacity: { duration: 0.35 },
+                    d: { duration: moveS, ease: EASE },
+                  }}
+                  fill="none"
+                  stroke={s.color}
+                  strokeWidth={7}
+                  strokeOpacity={0.18}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              ) : null,
+            )}
+
+            {geo.series.map((s) => {
+              const sw = s.isActive ? 3 : 2
+              const r = s.isActive ? 5 : 4
+              return (
+                <g key={s.player.id}>
+                  {s.staticD && (
+                    <motion.path
+                      initial={false}
+                      animate={{ d: s.staticD }}
+                      transition={{ duration: moveS, ease: EASE }}
+                      fill="none"
+                      stroke={s.color}
+                      strokeWidth={sw}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+                  {s.segD && (
+                    // Keyed on the day: mounts fresh (and travels once) per new
+                    // snapshot day; swaps only re-target `d`.
+                    <motion.path
+                      key={`seg-${currentDay}`}
+                      initial={{ pathLength: 0, d: s.segD }}
+                      animate={{ pathLength: 1, d: s.segD }}
+                      transition={{
+                        pathLength: { duration: travelS, ease: EASE },
+                        d: { duration: moveS, ease: EASE },
+                      }}
+                      fill="none"
+                      stroke={s.color}
+                      strokeWidth={sw}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+                  {s.overtook && !reduced && (
+                    <motion.circle
+                      key={`ring-${currentDay}`}
+                      initial={{ cx: s.start[0], cy: s.start[1], r, opacity: 0, strokeWidth: 2 }}
+                      animate={{
+                        cx: s.last[0],
+                        cy: s.last[1],
+                        r: [r, r, r * 2.8],
+                        opacity: [0, 0, 0.9, 0],
+                        strokeWidth: [2, 2, 1],
+                      }}
+                      transition={{
+                        cx: { duration: moveS, ease: EASE },
+                        cy: { duration: moveS, ease: EASE },
+                        r: { delay: travelS - 0.25, duration: 0.6, times: [0, 0.05, 1] },
+                        opacity: { delay: travelS - 0.25, duration: 0.6, times: [0, 0.05, 0.5, 1] },
+                        strokeWidth: { delay: travelS - 0.25, duration: 0.6, times: [0, 0.05, 1] },
+                      }}
+                      fill="none"
+                      stroke="#e6c474"
+                    />
+                  )}
+                  <motion.circle
+                    key={`dot-${currentDay}`}
+                    initial={{ cx: s.start[0], cy: s.start[1] }}
+                    animate={{ cx: s.last[0], cy: s.last[1] }}
+                    transition={{ duration: moveS, ease: EASE }}
+                    r={r}
+                    fill="#0e1a14"
+                    stroke={s.color}
+                    strokeWidth={s.isActive ? 2.5 : 2}
+                  />
+                  <motion.text
+                    key={`chip-${currentDay}`}
+                    initial={{ opacity: 0, attrX: s.start[0] + 8, attrY: s.start[1] + 3 }}
+                    animate={{
+                      opacity: 1,
+                      attrX: s.last[0] + 8,
+                      attrY: (geo.labelY.get(s.player.id) ?? s.last[1]) + 3,
+                    }}
+                    transition={{
+                      opacity: { duration: 0.4 },
+                      attrX: { duration: moveS, ease: EASE },
+                      attrY: { duration: moveS, ease: EASE },
+                    }}
+                    fontFamily="JetBrains Mono, ui-monospace, monospace"
+                    fontSize={labelFont}
+                    fontWeight={s.isActive ? 700 : 500}
+                    fill={s.color}
+                    paintOrder="stroke"
+                    stroke="#0e1a14"
+                    strokeWidth={3}
+                  >
+                    {s.player.name}
+                  </motion.text>
+                </g>
+              )
+            })}
+          </svg>
+        )}
       </div>
-      {/* Legend — leader first, with delta vs. previous day */}
-      <div
-        className={
-          'mt-3 pt-3 border-t border-amber-500/10 grid gap-x-4 gap-y-2 ' +
-          (compact ? 'grid-cols-2' : 'grid-cols-3')
-        }
-      >
+
+      {/* Legend — leader first, delta vs. previous day. One wrapping row so it
+          costs ~1 line of height instead of a 3-column block. */}
+      <div className="mt-1.5 pt-1.5 border-t border-amber-500/10 flex flex-wrap gap-x-4 gap-y-1 shrink-0">
         {legendRows.map(({ player, value, delta }) => {
           const color = playerColor(player.id)
+          const active = player.id === activePlayerId
           return (
-            <div
-              key={player.id}
-              className="flex items-center justify-between gap-2 text-[12px] text-amber-50/90"
-            >
-              <span className="flex items-center gap-2 min-w-0">
+            <div key={player.id} className="flex items-center gap-1.5 text-[11px] text-amber-50/90 min-w-0">
+              <span className="inline-block w-2 h-2 rounded-sm shrink-0" style={{ background: color }} />
+              <span
+                className="truncate max-w-[7rem]"
+                style={{ fontWeight: active ? 700 : 500, color: active ? '#e6c474' : undefined }}
+              >
+                {player.name}
+                {player.isYou ? ' (you)' : ''}
+              </span>
+              <span className="font-mono text-[10px] shrink-0" style={{ color: '#e6c474' }}>
+                ₹{formatRupees(value)}
+              </span>
+              {delta != null && (
                 <span
-                  className="inline-block w-2.5 h-2.5 rounded-sm shrink-0"
-                  style={{ background: color }}
-                />
-                <span
-                  className="truncate"
-                  style={{
-                    fontWeight: player.id === activePlayerId ? 700 : 500,
-                    color: player.id === activePlayerId ? '#e6c474' : undefined,
-                  }}
+                  className={
+                    'font-mono text-[10px] shrink-0 ' +
+                    (delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-gray-500')
+                  }
                 >
-                  {player.name}
-                  {player.isYou ? ' (you)' : ''}
+                  {formatDelta(delta)}
                 </span>
-              </span>
-              <span className="flex items-center gap-2 font-mono text-[11px] shrink-0">
-                <span style={{ color: '#e6c474' }}>₹{formatRupees(value)}</span>
-                {delta != null && (
-                  <span
-                    className={
-                      delta > 0
-                        ? 'text-emerald-400'
-                        : delta < 0
-                          ? 'text-red-400'
-                          : 'text-gray-500'
-                    }
-                  >
-                    {formatDelta(delta)}
-                  </span>
-                )}
-              </span>
+              )}
             </div>
           )
         })}
       </div>
-      {compact && (
-        <div className="text-[9px] tracking-[0.1em] text-gray-500 text-center mt-2 font-mono">
-          ◄ scroll for full history ►
-        </div>
-      )}
     </div>
   )
 }

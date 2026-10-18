@@ -15,11 +15,40 @@ interface Props {
   onClose: () => void
 }
 
+/** Trades are whole shares — the slider, ± buttons and ticks all snap to this. */
+const QTY_STEP = 1
+
+/** "Nice" tick intervals, ascending. */
+const NICE_INTERVALS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000]
+
+/** A label only gets its own tick when it's at least this far (as a fraction
+ *  of the track) from its neighbour, so labels never overlap on small maxes. */
+const MIN_TICK_GAP = 0.12
+
+/**
+ * Reference tick values for a 0..max slider. Picks the smallest "nice"
+ * interval that yields at most 4 segments, lists its multiples, and always
+ * ends on `max` itself (dropping the last multiple if it would crowd it).
+ *   max=100 → 0,25,50,75,100   max=137 → 0,50,100,137
+ *   max=10  → 0,5,10           max=5   → 0,2,4,5
+ */
+function sliderTicks(max: number): number[] {
+  if (max <= 0) return [0]
+  const interval =
+    NICE_INTERVALS.find((n) => max / n <= 4) ?? NICE_INTERVALS[NICE_INTERVALS.length - 1]
+  const ticks: number[] = []
+  for (let t = 0; t < max; t += interval) ticks.push(t)
+  const last = ticks[ticks.length - 1]
+  if (ticks.length > 1 && (max - last) / max < MIN_TICK_GAP) ticks.pop()
+  ticks.push(max)
+  return ticks
+}
+
 export default function TradeModal({ mode, send, onClose }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const isMobile = useIsMobile()
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null)
-  const [quantity, setQuantity] = useState(1)
+  const [rawQuantity, setRawQuantity] = useState(1)
 
   // RI smart-fill — must be before early returns (hook rules)
   // Returns the optimal qty to trade to best position for Rights Issue next turn.
@@ -63,7 +92,6 @@ export default function TradeModal({ mode, send, onClose }: Props) {
   if (!me) return null
 
   const company = selectedCompany !== null ? gameState.companies[selectedCompany] : null
-  const cost = company ? company.value * quantity : 0
 
   const maxBuy = company
     ? Math.min(
@@ -74,6 +102,18 @@ export default function TradeModal({ mode, send, onClose }: Props) {
   const myHolding = company ? (me.stocks[company.name] ?? 0) : 0
   const maxSell = myHolding
   const maxQty = mode === 'buy' ? maxBuy : maxSell
+
+  // Single source of truth for the quantity: every control (slider, ±, Max,
+  // RI, tick labels) writes through `setQuantity`, and the rendered/sent value
+  // is clamped to the *current* max so a stale selection can never exceed it
+  // when max shrinks (company switch, state refresh).
+  const clampQty = (n: number) =>
+    Math.min(maxQty, Math.max(0, Math.round(n / QTY_STEP) * QTY_STEP))
+  const quantity = clampQty(rawQuantity)
+  const setQuantity = (n: number) => setRawQuantity(clampQty(n))
+  const ticks = sliderTicks(maxQty)
+  const fillPct = maxQty > 0 ? (quantity / maxQty) * 100 : 0
+  const cost = company ? company.value * quantity : 0
 
   // RI scenario after current quantity selection
   const riPreview = company && company.value > 0
@@ -152,7 +192,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
             return (
               <button
                 key={co.name}
-                onClick={() => { setSelectedCompany(i); setQuantity(1) }}
+                onClick={() => { setSelectedCompany(i); setRawQuantity(1) }}
                 disabled={disabled || noShares}
                 className={cn(
                   'rounded-lg text-xs font-medium transition-all border',
@@ -178,7 +218,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
             <div className={cn('flex items-center flex-wrap', isMobile ? 'gap-1.5' : 'gap-2')}>
               <label className="text-xs text-gray-400">Qty</label>
               <button
-                onClick={() => setQuantity(Math.max(1, quantity - 5))}
+                onClick={() => setQuantity(quantity - 5)}
                 className={cn(
                   'bg-gray-800 rounded text-gray-300 hover:bg-gray-700 text-xs',
                   isMobile ? 'w-11 h-11' : 'w-7 h-7',
@@ -187,7 +227,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
                 -5
               </button>
               <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                onClick={() => setQuantity(quantity - 1)}
                 className={cn(
                   'bg-gray-800 rounded text-gray-300 hover:bg-gray-700',
                   isMobile ? 'w-11 h-11' : 'w-7 h-7',
@@ -197,7 +237,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
               </button>
               <span className="font-mono text-white w-10 text-center text-lg">{quantity}</span>
               <button
-                onClick={() => setQuantity(Math.min(maxQty, quantity + 1))}
+                onClick={() => setQuantity(quantity + 1)}
                 className={cn(
                   'bg-gray-800 rounded text-gray-300 hover:bg-gray-700',
                   isMobile ? 'w-11 h-11' : 'w-7 h-7',
@@ -206,7 +246,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
                 +
               </button>
               <button
-                onClick={() => setQuantity(Math.min(maxQty, quantity + 5))}
+                onClick={() => setQuantity(quantity + 5)}
                 className={cn(
                   'bg-gray-800 rounded text-gray-300 hover:bg-gray-700 text-xs',
                   isMobile ? 'w-11 h-11' : 'w-7 h-7',
@@ -214,6 +254,69 @@ export default function TradeModal({ mode, send, onClose }: Props) {
               >
                 +5
               </button>
+            </div>
+
+            {/* Quantity slider — always spans 0..current max, rescales as max changes */}
+            <div className="px-1">
+              {/* 44px-tall hit area; the visual track is a thin bar centred inside it */}
+              <div className="relative h-11">
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-gray-700 overflow-hidden">
+                  <div
+                    className={cn('h-full rounded-full', isBuy ? 'bg-emerald-500' : 'bg-red-500')}
+                    style={{ width: `${fillPct}%` }}
+                  />
+                </div>
+                <input
+                  type="range"
+                  aria-label="Quantity"
+                  min={0}
+                  max={maxQty}
+                  step={QTY_STEP}
+                  value={quantity}
+                  disabled={maxQty === 0}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  className={cn(
+                    // `bg-transparent!` — the v2 theme's `html[data-theme] input` rule
+                    // out-specifies a plain utility and would paint the hit area grey.
+                    'absolute inset-0 w-full h-full m-0 p-0 border-0 appearance-none bg-transparent! cursor-pointer touch-pan-y',
+                    'focus:outline-none disabled:cursor-not-allowed',
+                    // Track pseudo-elements are invisible — the bar above is the visual track
+                    '[&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-runnable-track]:h-full',
+                    '[&::-moz-range-track]:bg-transparent [&::-moz-range-track]:h-full',
+                    // Thumb: 22px circle, colour-coded to buy/sell, white ring.
+                    // WebKit pins a custom thumb to the top of the track, so mt = (44 - 22) / 2 centres it.
+                    '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[22px] [&::-webkit-slider-thumb]:h-[22px] [&::-webkit-slider-thumb]:mt-[11px]',
+                    '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white',
+                    '[&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:shadow-black/50',
+                    '[&::-moz-range-thumb]:w-[22px] [&::-moz-range-thumb]:h-[22px] [&::-moz-range-thumb]:rounded-full',
+                    '[&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-md',
+                    isBuy
+                      ? '[&::-webkit-slider-thumb]:bg-emerald-500 [&::-moz-range-thumb]:bg-emerald-500 focus-visible:[&::-webkit-slider-thumb]:ring-2 focus-visible:[&::-webkit-slider-thumb]:ring-emerald-400/60'
+                      : '[&::-webkit-slider-thumb]:bg-red-500 [&::-moz-range-thumb]:bg-red-500 focus-visible:[&::-webkit-slider-thumb]:ring-2 focus-visible:[&::-webkit-slider-thumb]:ring-red-400/60',
+                    'disabled:[&::-webkit-slider-thumb]:bg-gray-600 disabled:[&::-moz-range-thumb]:bg-gray-600',
+                  )}
+                />
+              </div>
+              {/* Reference ticks — tappable, positioned at value/max along the track.
+                  mx-[11px] matches half the thumb width so labels line up with thumb centres. */}
+              <div className="relative h-5 mx-[11px]">
+                {ticks.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setQuantity(t)}
+                    className={cn(
+                      'absolute top-0 -translate-x-1/2 flex flex-col items-center',
+                      'font-mono text-[10px] leading-none tabular-nums transition-colors',
+                      t === quantity ? 'text-white' : 'text-gray-500 hover:text-gray-300',
+                    )}
+                    style={{ left: maxQty > 0 ? `${(t / maxQty) * 100}%` : '0%' }}
+                  >
+                    <span className="block w-px h-1.5 bg-gray-600 mb-1" />
+                    {t}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Smart-fill row — Max + RI, equal width, full touch size */}
