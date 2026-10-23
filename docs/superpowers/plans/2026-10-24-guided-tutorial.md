@@ -111,7 +111,8 @@ Chapter ids (fixed, ordered): `orientation`, `objective`, `prices`, `turns`, `tr
   export type Advance =
     | { kind: 'next' }
     | { kind: 'click' }                                  // click on the spotlit target
-    | { kind: 'action'; expect: Partial<ClientMessage> } // intercepted send must match
+    | { kind: 'value'; equals: number }                  // range input at target reaches this value
+    | { kind: 'action'; expect: Partial<ClientMessage> } // intercepted send must match (target = the commit control)
     | { kind: 'auto'; delayMs: number }                  // bot turn / pause, input fully blocked
     | { kind: 'predict'; options: { label: string; correct: boolean }[]; right: string; wrong: string }
     | { kind: 'reveal_wait'; at: string }                // wait until CardRevealOverlay reaches stage key
@@ -126,7 +127,7 @@ Chapter ids (fixed, ordered): `orientation`, `objective`, `prices`, `turns`, `tr
   ```
 - Produces (`machine.ts`):
   - `interface RunState { idx: number; picked: number | null; done: boolean }`
-  - `type MachineEvent = { type: 'next' } | { type: 'click' } | { type: 'send'; msg: ClientMessage } | { type: 'auto_elapsed' } | { type: 'predict'; option: number } | { type: 'reveal_stage'; key: string }`
+  - `type MachineEvent = { type: 'next' } | { type: 'click' } | { type: 'send'; msg: ClientMessage } | { type: 'auto_elapsed' } | { type: 'predict'; option: number } | { type: 'reveal_stage'; key: string } | { type: 'value'; value: number }`
   - `initialRun(): RunState`
   - `reduce(ch: Chapter, s: RunState, e: MachineEvent): RunState` — advances only when the event satisfies the current step's `advance`. `predict`: first pick sets `picked`; a following `next` advances. Past the last step → `done: true`.
   - `matchesExpected(expect: Partial<ClientMessage>, msg: ClientMessage): boolean` — every key in `expect` deep-equals `msg`'s.
@@ -141,6 +142,7 @@ Chapter ids (fixed, ordered): `orientation`, `objective`, `prices`, `turns`, `tr
   - `duplicate send advances once`: two identical matching sends → idx+1 only (next step expects something else).
   - `stray reveal_complete ignored` on a `next` step.
   - `predict requires pick then next`; `picked` reset to null on advance.
+  - `value advances only when value equals`;
   - `reveal_wait advances on matching stage key only`; `heldRevealStage` returns `at` for reveal_wait and `holdRevealAt` otherwise.
   - `snapChanged false for consecutive steps on same snap`.
   - `rewindToCheckpoint` returns 3 for idx 5 when step 3 is the last checkpoint; 0 when none.
@@ -213,7 +215,7 @@ Chapter ids (fixed, ordered): `orientation`, `objective`, `prices`, `turns`, `tr
 - Consumes: `Step`, `TargetId` (Task 2).
 - Produces:
   - `findTarget(id: TargetId, root?: ParentNode): HTMLElement | null` — first `[data-tutorial=id]` with non-zero client rect.
-  - `<TutorialLayer step={Step} picked={number|null} isMobile={boolean} onNext() onClick() onPredict(i) onRestartStep() onExit() />` — z-index above every game overlay/modal. Blocks pointer input everywhere except a hole over the target, built from four absolutely-positioned blocking rects; a separate non-interactive SVG draws the dim + ring. `click` advance: capture-phase listener on the target fires `onClick` after the native click. `auto` / `reveal_wait` / `reveal_end` / `suspend_end`: block everything, no hole, no coachmark text (`reveal_*`) or a small status chip (`auto`). Coachmark renders `text` (`textMobile` when `isMobile`), `**bold**` only; `next` → Next button; `predict` → options, then feedback (`right`/`wrong`) + Next. Always shows "Exit tutorial".
+  - `<TutorialLayer step={Step} picked={number|null} isMobile={boolean} onNext() onClick() onValue(v) onPredict(i) onRestartStep() onExit() />` — z-index above every game overlay/modal. Blocks pointer input everywhere except a hole over the target, built from four absolutely-positioned blocking rects; a separate non-interactive SVG draws the dim + ring. `click` advance: capture-phase listener on the target fires `onClick` after the native click. `value` advance: listens for `input` events on the range input inside the target and calls `onValue(Number(value))`. `auto` / `reveal_wait` / `reveal_end` / `suspend_end`: block everything, no hole, no coachmark text (`reveal_*`) or a small status chip (`auto`). Coachmark renders `text` (`textMobile` when `isMobile`), `**bold**` only; `next` → Next button; `predict` → options, then feedback (`right`/`wrong`) + Next. Always shows "Exit tutorial".
   - Missing target for > 1000 ms → centered coachmark with the step text and a "Restart this step" button (`onRestartStep`).
   - Test ids: `tutorial-next`, `tutorial-predict-<i>`, `tutorial-restart`, `tutorial-exit`.
 
@@ -236,13 +238,13 @@ Chapter ids (fixed, ordered): `orientation`, `objective`, `prices`, `turns`, `tr
   - `chapters/index.ts`: `CHAPTERS: Chapter[]` (ordered) and `loadFixture(id: string): Promise<Fixture>` via `import(\`../fixtures/${id}.json\`)`; `type Fixture = { chapter: string; human_id: number; snapshots: Record<string, GameState> }`.
   - `storeSwap.ts`: `enterTutorialStore(): SavedStore` (captures full current store state), `loadSnapshot(state: GameState): void` (`setGameState`, `isConnected: true`, `gameStarted: true`, `gameOver: null`, `chatMessages: []`), `restoreStore(saved: SavedStore): void`. Never writes `roomCode`/`playerName`.
   - `tutorialStorage`: `isChapterDone(id)`, `markChapterDone(id)`, `firstIncompleteChapter(ids: string[]): string`; `markCompleted()` when `recap` is done.
-  - Player page: loads fixture, `enterTutorialStore` on mount / `restoreStore` on unmount; renders `<TutorialContext.Provider><GameBoard send={intercept} /><TutorialLayer …/></…>`. `intercept(msg)`: `leave_room` → exit to `/tutorial`; else `reduce(…, {type:'send', msg})`. On every idx change: `loadSnapshot` only if `snapChanged`; `auto` steps schedule `auto_elapsed`; `restart` → `rewindToCheckpoint` and reload that step's snap. On `done`: `markChapterDone`, show chapter-done card (`data-testid="tutorial-chapter-done"`) with the chapter's chips and "Next chapter" / "All chapters". Reload mid-chapter starts the chapter at step 0.
-  - e2e walker `walkChapter(page, chapter)`: per step — `next` → click `tutorial-next`; `click`/`action` → click target (for `trade-slider` set the range input to `expect.quantity` via `fill`/`evaluate` + dispatch `input`), then for `action` steps click the commit button the step targets; `predict` → click option 0 then `tutorial-next`; `auto`/`reveal_*`/`suspend_end` → wait for the next step (timeout 30 s); ends on `tutorial-chapter-done`. Projects `desktop` 1280×720 and `mobile` 390×844; `webServer` runs Vite on 5199 (no backend needed).
+  - Player page: loads fixture, `enterTutorialStore` on mount / `restoreStore` on unmount; renders `<TutorialContext.Provider><GameBoard send={intercept} /><TutorialLayer …/></…>`. `intercept(msg)`: `leave_room` → exit to `/tutorial`; else `reduce(…, {type:'send', msg})`. On every idx change: `loadSnapshot` only if `snapChanged`; `auto` steps schedule `auto_elapsed`; `restart` → `rewindToCheckpoint` and reload that step's snap. On `done`: `markChapterDone`, show chapter-done card (`data-testid="tutorial-chapter-done"`) with the chapter's chips and "Next chapter" / "All chapters". Reload mid-chapter starts the chapter at step 0. Render `GameBoard` with `key={`${chapterId}:${restartCount}`}` so its `lastRevealDay` ref and local state reset per chapter and per restart.
+  - e2e walker `walkChapter(page, chapter)`: per step — `next` → click `tutorial-next`; `click`/`action` → click the target (for `action` the target is the commit control); `value` → set the range input inside the target to `equals` via `evaluate` (native value setter + dispatch `input`); `predict` → click option 0 then `tutorial-next`; `auto`/`reveal_*`/`suspend_end` → wait for the next step (timeout 30 s); ends on `tutorial-chapter-done`. Projects `desktop` 1280×720 and `mobile` 390×844; `webServer` runs Vite on 5199 (no backend needed).
 
 - [ ] **Step 1: Write failing tests:** `storeSwap`: enter → load → restore returns the exact prior state including a non-null `roomCode`; `loadSnapshot` never changes `roomCode`. e2e: smoke chapter completes on both projects; "exit restores" — Exit mid-chapter lands on `/tutorial` and `useGameStore.getState().gameState === null` (expose via `window.__store` in DEV only).
 - [ ] **Step 2:** `npm test` / `npx playwright test` fail.
 - [ ] **Step 3:** Implement; run `backend/venv/bin/python backend/tutorial/build_fixtures.py _smoke`.
-- [ ] **Step 4:** All pass; `tsc -b`, `build` pass; `npm run build` output contains no `_smoke`.
+- [ ] **Step 4:** All pass; `tsc -b`, `build` pass. `_smoke` is excluded from `CHAPTERS` outside DEV (its lazy fixture chunk may exist in the build; that is fine).
 - [ ] **Step 5:** Commit `feat(tutorial): player page, hub, progress, e2e harness`.
 
 ---
@@ -260,7 +262,7 @@ Each chapter task creates `backend/tutorial/chapters/<id>.py` (`build() -> Scena
 ### Task 7: `orientation` + `objective` (spec Ch 1–2)
 - 6 seats (You + all 5 bots), mid day 1, a few bot trades in the log, one bot a director somewhere so a position icon shows.
 - Lesson tests: 6 players; `available_shares` < 200 for at least one company; log has ≥ 3 entries; one position icon present (`directors` non-empty).
-- Steps: one spotlight per target in spec Ch 1 order (ticker, ticker-available, hand, player-board, day-round, timer, log — `mobileTab: 'log'` on mobile —, action-bar, exit). `objective` is 2–3 untargeted `next` steps (net worth formula, days/rounds, the bell); its last step's text is the "So what moves prices?" hook.
+- Steps: one spotlight per target in spec Ch 1 order (ticker, ticker-available, hand, player-board, day-round, timer, log — `mobileTab: 'logchat'` on mobile —, action-bar, exit). `objective` is 2–3 untargeted `next` steps (net worth formula, days/rounds, the bell); its last step's text is the "So what moves prices?" hook.
 
 ### Task 8: `prices` (spec Ch 3)
 - You hold `TCS+10`, `Reliance-15`, `Currency+`; Meera/Arjun hold cards giving Reliance ≥ +25 total; YesBank receives ≥ −25 total so it closes.
@@ -275,7 +277,7 @@ Each chapter task creates `backend/tutorial/chapters/<id>.py` (`build() -> Scena
 ### Task 10: `trading` (spec Ch 5)
 - You: `TCS+10`, `Infosys+10`, cash enough for a real position in only one. Round 1: Meera and Arjun buy TCS; Kabir buys two other companies. Kabir holds an `Infosys-` card; Meera/Arjun hold `TCS+` cards.
 - Lesson tests: TCS delta ≥ your +10 + bots' TCS cards and > Infosys delta; your affordable TCS qty × TCS price ≤ cash and affordable Infosys qty < meaningful (< ½ of TCS position value); your net worth after bell > before by the number the copy quotes.
-- Steps: watch round 1 (`auto`, log + `player-self` board spotlights), alliance reasoning, predict, buy TCS (`buy-button` click → `trade-company` → `trade-slider` action → `trade-confirm`), round 2 partial sell, RI button one-liner, bell with holds on TCS and Infosys, bluff caution, chips.
+- Steps: watch round 1 (`auto`, log + `player-self` board spotlights), alliance reasoning, predict, buy TCS (`buy-button` click → `trade-company` click → `trade-slider` value → `trade-confirm` action), round 2 partial sell, RI button one-liner, bell with holds on TCS and Infosys, bluff caution, chips.
 
 ### Task 11: `loan-stock` + `debenture` (spec Ch 6–7)
 - Loan Stock: You want Reliance (hold big `Reliance+`), cash-limited. Lesson tests: loan amount == `max(5, int(nw*0.1)//5*5)` and equals the copy's predicted-correct option; slider max next round > max before.
