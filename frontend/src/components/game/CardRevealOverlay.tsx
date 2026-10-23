@@ -7,6 +7,8 @@ import { formatCash } from '../../lib/format'
 import type { RevealCompanyData, RevealCard, CurrencyEffect } from '../../types/game'
 import type { ClientMessage } from '../../types/messages'
 import ChairmanDirectorModal from './ChairmanDirectorModal'
+import { useTutorial } from '../../tutorial/runtime/TutorialContext'
+import { stageKey } from '../../tutorial/runtime/revealStage'
 
 interface Props {
   revealData: RevealCompanyData[]
@@ -20,7 +22,7 @@ const CURRENCY_STAGGER = 600  // ms between each currency effect reveal
 const CURRENCY_INTRO = 800    // ms before first currency effect appears
 const CURRENCY_TAIL = 1500    // ms after last currency effect before completing
 
-type Stage =
+export type Stage =
   | { type: 'company_intro'; companyIdx: number }
   | { type: 'revealing_cards'; companyIdx: number; cardIdx: number }
   | { type: 'final_value'; companyIdx: number }
@@ -40,6 +42,10 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
   const [stage, setStage] = useState<Stage>({ type: 'company_intro', companyIdx: 0 })
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const sentRevealComplete = useRef(false)
+  const tutorial = useTutorial() // null in live games
+  const heldRevealStage = tutorial?.heldRevealStage ?? null
+  const reportRevealStage = tutorial?.reportRevealStage
+  const currentKey = stageKey(stage, revealData)
 
   // Snapshot currency effects on first non-empty reading and freeze them.
   // Backend clears them in finalize once all players ack — by then the animation
@@ -134,8 +140,14 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
     })
   }, [revealData, companyNeedsCd, currencyEffects.length, afterLastCompany])
 
+  // Tell the tutorial (if any) which stage just started.
+  useEffect(() => {
+    reportRevealStage?.(currentKey)
+  }, [currentKey, reportRevealStage])
+
   // Auto-advance through timed stages
   useEffect(() => {
+    if (heldRevealStage === currentKey) return // tutorial hold: schedule nothing
     if (stage.type === 'complete') {
       if (!sentRevealComplete.current) {
         sentRevealComplete.current = true
@@ -166,13 +178,14 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
 
     timerRef.current = setTimeout(advance, delays[stage.type] ?? 1000)
     return () => clearTimeout(timerRef.current)
-  }, [stage, advance, onComplete, send, currencyEffects.length])
+  }, [stage, advance, onComplete, send, currencyEffects.length, heldRevealStage, currentKey])
 
   // Watch CD queue: when all actions for current company are done, advance.
   // Uses a separate ref timer so game state re-renders don't cancel it.
   const cdTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => {
     if (stage.type !== 'chairman_director') return
+    if (heldRevealStage === currentKey) return // tutorial hold
 
     const companyName = revealData[stage.companyIdx]?.company_name
     const stillNeeded = cdQueue.some(([, cn]) => cn === companyName)
@@ -193,7 +206,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
     }
 
     return () => clearTimeout(cdTimerRef.current)
-  }, [cdQueue, stage, revealData, afterLastCompany])
+  }, [cdQueue, stage, revealData, afterLastCompany, heldRevealStage, currentKey])
 
   // Derive revealed cards from stage — no separate state needed.
   // At revealing_cards cardIdx N: cards 0..N are visible (current card just appeared).
