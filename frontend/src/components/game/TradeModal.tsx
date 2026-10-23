@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTutorial, tutorialAllows } from '../../tutorial/runtime/TutorialContext'
 import { motion } from 'framer-motion'
 import { useGameStore } from '../../store/useGameStore'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -47,6 +48,7 @@ function sliderTicks(max: number): number[] {
 export default function TradeModal({ mode, send, onClose }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const isMobile = useIsMobile()
+  const tutorial = useTutorial()
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null)
   const [rawQuantity, setRawQuantity] = useState(1)
 
@@ -130,6 +132,12 @@ export default function TradeModal({ mode, send, onClose }: Props) {
 
   const canExecute = company && quantity > 0 && quantity <= maxQty &&
     (mode === 'buy' ? company.is_open && company.value > 0 : true)
+
+  const tutorialBlocked = !tutorialAllows(
+    tutorial,
+    selectedCompany === null ? null : { type: mode, company_num: selectedCompany + 1, quantity } as ClientMessage,
+  )
+  const confirmDisabled = !canExecute || tutorialBlocked
 
   const handleExecute = () => {
     if (!canExecute || selectedCompany === null) return
@@ -371,7 +379,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
         {/* Confirm */}
         <motion.button
           onClick={handleExecute}
-          disabled={!canExecute}
+          disabled={confirmDisabled}
           whileHover={canExecute ? { scale: 1.02 } : {}}
           whileTap={canExecute ? { scale: 0.98 } : {}}
           className={cn(

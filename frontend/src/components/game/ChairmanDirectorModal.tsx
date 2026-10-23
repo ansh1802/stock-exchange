@@ -4,6 +4,7 @@ import { useGameStore } from '../../store/useGameStore'
 import { cn } from '../../lib/cn'
 import { COMPANY_COLOR } from '../../lib/constants'
 import type { ClientMessage } from '../../types/messages'
+import { useTutorial, tutorialAllows } from '../../tutorial/runtime/TutorialContext'
 
 interface Props {
   send: (msg: ClientMessage) => void
@@ -20,6 +21,7 @@ interface OtherCard {
 export default function ChairmanDirectorModal({ send, inline }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
+  const tutorial = useTutorial()
   const [selectedOwn, setSelectedOwn] = useState<number[]>([])
   const [selectedOther, setSelectedOther] = useState<OtherCard | null>(null)
 
@@ -95,22 +97,27 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
     setSelectedOther(null)
   }
 
-  const handleSubmit = () => {
-    if (!canSubmit()) return
-
+  const buildSubmitMsg = (): ClientMessage => {
     if (isChairman) {
-      send({
+      return {
         type: 'chairman_director',
         discard_own_idx: selectedOwn.length > 0 ? selectedOwn[0] : -1,
         discard_other_player_id: selectedOther?.playerId ?? null,
         discard_other_idx: selectedOther?.cardIdx ?? null,
-      })
-    } else if (isDouble) {
-      // Send as array for double director (1 or 2 cards)
-      send({ type: 'chairman_director', discard_own_idx: selectedOwn })
-    } else {
-      send({ type: 'chairman_director', discard_own_idx: selectedOwn[0] })
+      }
     }
+    // Send as array for double director (1 or 2 cards)
+    if (isDouble) return { type: 'chairman_director', discard_own_idx: selectedOwn }
+    return { type: 'chairman_director', discard_own_idx: selectedOwn[0] }
+  }
+
+  const submitBlocked = !tutorialAllows(tutorial, buildSubmitMsg())
+  const passBlocked = !tutorialAllows(tutorial, { type: 'chairman_director', discard_own_idx: -1 })
+
+  const handleSubmit = () => {
+    if (!canSubmit()) return
+
+    send(buildSubmitMsg())
 
     setSelectedOwn([])
     setSelectedOther(null)
@@ -192,7 +199,7 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
           <div className="flex gap-2 pt-1">
             <motion.button
               onClick={handleSubmit}
-              disabled={!canSubmit()}
+              disabled={!canSubmit() || submitBlocked}
               whileHover={canSubmit() ? { scale: 1.02 } : {}}
               whileTap={canSubmit() ? { scale: 0.98 } : {}}
               className={cn(
@@ -206,6 +213,7 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
             </motion.button>
             <motion.button
               onClick={handlePass}
+              disabled={passBlocked}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-300 bg-gray-800/30 hover:bg-gray-700/30 border border-gray-800 transition-colors"

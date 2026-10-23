@@ -5,6 +5,7 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 import { cn } from '../../lib/cn'
 import type { ClientMessage } from '../../types/messages'
 import TradeModal from './TradeModal'
+import { useTutorial, tutorialAllows } from '../../tutorial/runtime/TutorialContext'
 
 interface Props {
   send: (msg: ClientMessage) => void
@@ -14,6 +15,7 @@ export default function ActionBar({ send }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
   const isMobile = useIsMobile()
+  const tutorial = useTutorial()
   const [tradeMode, setTradeMode] = useState<'buy' | 'sell' | null>(null)
 
   if (!gameState) return null
@@ -52,6 +54,7 @@ export default function ActionBar({ send }: Props) {
             </motion.button>
             <motion.button
               onClick={handlePass}
+              disabled={!tutorialAllows(tutorial, { type: 'pass' })}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               className={cn(buttonClass, 'bg-gray-700 hover:bg-gray-600 text-gray-300')}

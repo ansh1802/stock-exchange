@@ -11,6 +11,7 @@ import PlayerHand from './PlayerHand'
 import ActionBar from './ActionBar'
 import GameLog from './GameLog'
 import MobilePlayerBoard from './MobilePlayerBoard'
+import { useTutorial } from '../../tutorial/runtime/TutorialContext'
 import MobileTabBar, { type MobileTab } from './MobileTabBar'
 import MobileLogChat from './MobileLogChat'
 import RightsIssueModal from './RightsIssueModal'
@@ -34,7 +35,9 @@ export default function GameBoard({ send }: Props) {
   const isConnected = useGameStore((s) => s.isConnected)
   const chatUnread = useGameStore((s) => s.chatUnread)
   const isMobile = useIsMobile()
-  const [mobileTab, setMobileTab] = useState<MobileTab>('players')
+  const tutorial = useTutorial()
+  const [localMobileTab, setMobileTab] = useState<MobileTab>('players')
+  const mobileTab: MobileTab = tutorial?.forcedMobileTab ?? localMobileTab
 
   const [showRollingUpdates, setShowRollingUpdates] = useState(true)
   const [showLeave, setShowLeave] = useState(false)
@@ -146,7 +149,7 @@ export default function GameBoard({ send }: Props) {
   const sharedOverlays = (
     <>
       {/* Rolling updates — shown once per game on mount */}
-      {showRollingUpdates && <RollingUpdatesModal onClose={() => setShowRollingUpdates(false)} />}
+      {!tutorial && showRollingUpdates && <RollingUpdatesModal onClose={() => setShowRollingUpdates(false)} />}
 
       {showLeave && <LeaveGameModal send={send} onClose={() => setShowLeave(false)} />}
 

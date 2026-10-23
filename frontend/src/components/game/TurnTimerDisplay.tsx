@@ -3,6 +3,7 @@ import { Clock } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { useTurnUrgency, type Urgency } from '../../hooks/useTurnUrgency'
 import { useGameStore } from '../../store/useGameStore'
+import { useTutorial } from '../../tutorial/runtime/TutorialContext'
 
 const COLOR_CLASSES: Record<Urgency, string> = {
   calm: 'text-emerald-400',
@@ -29,6 +30,7 @@ interface Props {
 
 export default function TurnTimerDisplay({ alwaysShow = false }: Props) {
   const turnUrgency = useTurnUrgency()
+  const tutorial = useTutorial()
   const deadline = useGameStore((s) => s.gameState?.turn_timer_deadline ?? null)
 
   // When `alwaysShow` is true but the turn isn't "active" (e.g. another
@@ -40,14 +42,16 @@ export default function TurnTimerDisplay({ alwaysShow = false }: Props) {
   )
 
   useEffect(() => {
-    if (!alwaysShow || turnUrgency.active || deadline === null) return
+    if (tutorial || !alwaysShow || turnUrgency.active || deadline === null) return
     const tick = () => setNeutralRemaining(Math.max(0, Math.ceil(deadline - Date.now() / 1000)))
     tick()
     const id = setInterval(tick, 250)
     return () => clearInterval(id)
-  }, [alwaysShow, deadline, turnUrgency.active])
+  }, [tutorial, alwaysShow, deadline, turnUrgency.active])
 
   if (!turnUrgency.active && !alwaysShow) return null
+  // Tutorial clock is frozen: no deadline-derived neutral countdown.
+  if (tutorial && !turnUrgency.active) return null
   if (!turnUrgency.active && deadline === null) return null
 
   const remaining = turnUrgency.active ? turnUrgency.remaining : neutralRemaining

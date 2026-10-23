@@ -1,6 +1,8 @@
 import { cn } from '../../lib/cn'
 import { COMPANY_COLOR } from '../../lib/constants'
 import type { Card, Company } from '../../types/game'
+import type { ClientMessage } from '../../types/messages'
+import { useTutorial, tutorialAllows } from '../../tutorial/runtime/TutorialContext'
 
 interface Props {
   card: Card
@@ -11,7 +13,9 @@ interface Props {
 }
 
 export default function PowerCardPanel({ card, companies, loanAmount, onUse, onCancel }: Props) {
+  const tutorial = useTutorial()
   const name = card.company.replace(' ', '')
+  const blocked = (msg: ClientMessage) => !tutorialAllows(tutorial, msg)
 
   if (name === 'LoanStock') {
     return (
@@ -22,6 +26,7 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
         </span>
         <button
           onClick={() => onUse(card)}
+          disabled={blocked({ type: 'loan_stock' })}
           className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-sm rounded-lg"
         >
           Use
@@ -47,6 +52,7 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
               <button
                 key={co.name}
                 onClick={() => onUse(card, companies.indexOf(co) + 1)}
+                disabled={blocked({ type: 'debenture', company_num: companies.indexOf(co) + 1 })}
                 className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg border border-gray-600"
               >
                 <span className={cn('inline-block w-1.5 h-1.5 rounded-full mr-1', COMPANY_COLOR[co.name])} />
@@ -72,6 +78,7 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
             <button
               key={co.name}
               onClick={() => onUse(card, companies.indexOf(co) + 1)}
+              disabled={blocked({ type: 'rights_issue', company_num: companies.indexOf(co) + 1 })}
               className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg border border-gray-600"
             >
               <span className={cn('inline-block w-1.5 h-1.5 rounded-full mr-1', COMPANY_COLOR[co.name])} />
