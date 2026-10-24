@@ -4,6 +4,7 @@ Run: backend/venv/bin/python tests/test_tutorial_fixtures.py
 """
 
 import os
+import re
 import sys
 import tempfile
 
@@ -1121,11 +1122,28 @@ def test_chairman_director_lesson():
           bt["chairman"]["TCS"] == 2 and sorted(bt["directors"]["TCS"]) == [1, 3])
     check("bots never play power cards", _no_bot_power_cards(bt))
 
+def test_copy_constants():
+    """Constants quoted in chapter copy still match the engine/server."""
+    header("Tutorial copy quotes engine constants")
+    from engine import constants as K
+    from room_manager import Room
+    d = os.path.join(ROOT, "frontend", "src", "tutorial", "chapters")
+    src = lambda n: open(os.path.join(d, n)).read()
+    ori, obj = src("orientation.ts"), src("objective.ts")
+    timer = Room("TEST").turn_timer_seconds
+    check("'200 shares' in copy == STARTING_SHARES", "200 shares" in ori and K.STARTING_SHARES == 200)
+    check("'3 rounds' in copy == ROUNDS_PER_DAY", "3 rounds" in obj and K.ROUNDS_PER_DAY == 3)
+    check("'ten days' in copy == MAX_DAYS", "ten days" in obj and K.MAX_DAYS == 10)
+    check("'director (50+ shares)' in copy == DIRECTOR_THRESHOLD", "(50+ shares)" in ori and K.DIRECTOR_THRESHOLD == 50)
+    quoted = {int(m) for m in re.findall(r"\*\*(\d+)s\*\*", ori)}
+    check("'**90s**' turn clock in copy == default turn_timer_seconds", quoted == {timer} == {90})
+
+
 for t in (test_setup_hands, test_setup_holdings, test_snap_shape, test_act_logs_like_server,
           test_failed_act_raises, test_bell_and_next_day, test_check_detects_drift,
           test_orientation_lesson, test_objective_lesson, test_prices_lesson, test_turns_lesson, test_trading_lesson,
           test_loan_stock_lesson, test_debenture_lesson, test_rights_issue_lesson, test_share_suspend_lesson,
-          test_act_early_snap, test_chairman_director_lesson):
+          test_act_early_snap, test_chairman_director_lesson, test_copy_constants):
     t()
 
 print(f"\n{passed} passed, {failed} failed")

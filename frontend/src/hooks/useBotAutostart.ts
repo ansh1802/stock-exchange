@@ -9,7 +9,7 @@ import type { ClientMessage } from '../types/messages'
  * Fires at most once per mount: the ref survives StrictMode's double effects,
  * and a reconnect (or a reload into a running game) never matches again.
  */
-export function useBotAutostart(enabled: boolean, send: (msg: ClientMessage) => void) {
+export function useBotAutostart(enabled: boolean, send: (msg: ClientMessage) => void, onFired?: () => void) {
   const fired = useRef(false)
   const isConnected = useGameStore((s) => s.isConnected)
   const isHost = useGameStore((s) => s.isHost)
@@ -21,5 +21,6 @@ export function useBotAutostart(enabled: boolean, send: (msg: ClientMessage) => 
     fired.current = true
     for (let i = 0; i < 3; i++) send({ type: 'add_bot', difficulty: 'easy' })
     send({ type: 'start_game' })
-  }, [enabled, isConnected, isHost, lobbySize, inGame, send])
+    onFired?.() // e.g. strip ?autostart so a reload can't re-create a bot game
+  }, [enabled, isConnected, isHost, lobbySize, inGame, send, onFired])
 }

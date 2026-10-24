@@ -50,7 +50,7 @@ const orientation: Chapter = {
     },
     {
       id: 'pass', snap: 'floor', target: 'pass-button',
-      text: 'Each turn is one move: buy, sell, play a power card, or pass. Nothing to trade yet — tap **Pass**.',
+      text: 'Each turn is one move: buy, sell, play a power card, or pass. Trading comes in a later chapter, so just tap **Pass** for now.',
       advance: { kind: 'action', expect: { type: 'pass' } },
     },
     {

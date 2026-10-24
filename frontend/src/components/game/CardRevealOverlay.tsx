@@ -46,6 +46,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
   const heldRevealStage = tutorial?.heldRevealStage ?? null
   const reportRevealStage = tutorial?.reportRevealStage
   const currentKey = stageKey(stage, revealData)
+  const isHeld = heldRevealStage === currentKey // only this stage's hold matters to the effects below
 
   // Snapshot currency effects on first non-empty reading and freeze them.
   // Backend clears them in finalize once all players ack — by then the animation
@@ -147,7 +148,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
 
   // Auto-advance through timed stages
   useEffect(() => {
-    if (heldRevealStage === currentKey) return // tutorial hold: schedule nothing
+    if (isHeld) return // tutorial hold: schedule nothing
     if (stage.type === 'complete') {
       if (!sentRevealComplete.current) {
         sentRevealComplete.current = true
@@ -178,14 +179,14 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
 
     timerRef.current = setTimeout(advance, delays[stage.type] ?? 1000)
     return () => clearTimeout(timerRef.current)
-  }, [stage, advance, onComplete, send, currencyEffects.length, heldRevealStage, currentKey])
+  }, [stage, advance, onComplete, send, currencyEffects.length, isHeld])
 
   // Watch CD queue: when all actions for current company are done, advance.
   // Uses a separate ref timer so game state re-renders don't cancel it.
   const cdTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => {
     if (stage.type !== 'chairman_director') return
-    if (heldRevealStage === currentKey) return // tutorial hold
+    if (isHeld) return // tutorial hold
 
     const companyName = revealData[stage.companyIdx]?.company_name
     const stillNeeded = cdQueue.some(([, cn]) => cn === companyName)
@@ -206,7 +207,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
     }
 
     return () => clearTimeout(cdTimerRef.current)
-  }, [cdQueue, stage, revealData, afterLastCompany, heldRevealStage, currentKey])
+  }, [cdQueue, stage, revealData, afterLastCompany, isHeld])
 
   // Derive revealed cards from stage — no separate state needed.
   // At revealing_cards cardIdx N: cards 0..N are visible (current card just appeared).

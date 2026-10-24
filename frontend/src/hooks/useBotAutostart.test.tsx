@@ -9,8 +9,8 @@ import type { GameState } from '../types/game'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
-function Probe({ enabled, send }: { enabled: boolean; send: (m: ClientMessage) => void }) {
-  useBotAutostart(enabled, send)
+function Probe({ enabled, send, onFired }: { enabled: boolean; send: (m: ClientMessage) => void; onFired?: () => void }) {
+  useBotAutostart(enabled, send, onFired)
   return null
 }
 
@@ -18,8 +18,8 @@ let host: HTMLDivElement
 let root: Root
 let send: ReturnType<typeof vi.fn<(m: ClientMessage) => void>>
 
-const mount = (enabled = true) => act(() => {
-  root.render(<StrictMode><Probe enabled={enabled} send={send} /></StrictMode>)
+const mount = (enabled = true, onFired?: () => void) => act(() => {
+  root.render(<StrictMode><Probe enabled={enabled} send={send} onFired={onFired} /></StrictMode>)
 })
 const setStore = (s: Partial<ReturnType<typeof useGameStore.getState>>) => act(() => { useGameStore.setState(s) })
 const lobby = (players: string[], isHost: boolean) => setStore({ isConnected: true, lobbyPlayers: players, isHost })
@@ -49,6 +49,14 @@ describe('useBotAutostart', () => {
     expect(send).not.toHaveBeenCalled() // not connected yet
     lobby(['You'], true)
     expect(send.mock.calls.map((c) => c[0])).toEqual(EXPECTED)
+  })
+
+  it('calls onFired once after sending (to strip ?autostart)', () => {
+    const onFired = vi.fn()
+    mount(true, onFired)
+    expect(onFired).not.toHaveBeenCalled()
+    lobby(['You'], true)
+    expect(onFired).toHaveBeenCalledTimes(1)
   })
 
   it('never fires again: reconnect re-sends the lobby', () => {

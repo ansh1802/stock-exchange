@@ -161,7 +161,7 @@ const chairmanDirector: Chapter = {
     { id: 'to-cd6', snap: 'bell6', advance: { kind: 'reveal_wait', at: cd('YesBank') } },
     atCd('YesBank', {
       id: 'cd-chairman', snap: 'bell6',
-      text: 'Top row: your YesBank cards. Bottom row: everyone else’s — remove one.',
+      text: 'Top row: your YesBank cards; bottom row: everyone else’s. Each discard is optional — pass on one or both.',
       advance: { kind: 'next' },
     }),
     atCd('YesBank', {

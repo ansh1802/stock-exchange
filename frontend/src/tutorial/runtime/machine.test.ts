@@ -150,3 +150,16 @@ describe('machine', () => {
     expect(holdsSuspendClose(step({ kind: 'suspend_end' }))).toBe(false)
   })
 })
+
+describe('registered chapters', () => {
+  it('every non-final reveal_end is followed by a suspend_end (holdsSuspendClose would hang otherwise)', async () => {
+    const { CHAPTERS } = await import('../chapters/index')
+    for (const ch of CHAPTERS) {
+      ch.steps.forEach((st, i) => {
+        if (st.advance.kind !== 'reveal_end' || i === ch.steps.length - 1) return
+        const later = ch.steps.slice(i + 1).some((x) => x.advance.kind === 'suspend_end')
+        expect(later, `${ch.id}:${st.id}`).toBe(true)
+      })
+    }
+  })
+})

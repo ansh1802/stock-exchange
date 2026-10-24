@@ -201,7 +201,7 @@ const trading: Chapter = {
     },
     {
       id: 'next-up', snap: 'after', target: 'player-self', mobileTab: 'players',
-      text: 'Your Max stopped at 7 because your $400 ran out. Next: a way to raise cash mid-day.',
+      text: 'Your Max stopped at 7 because you couldn’t afford an 8th. Next: a way to raise cash mid-day.',
       advance: { kind: 'next' },
     },
   ],

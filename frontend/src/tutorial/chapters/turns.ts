@@ -109,7 +109,7 @@ const turns: Chapter = {
     },
     {
       id: 'pass', snap: 'round2', target: 'pass-button',
-      text: 'Nothing more to do this round — tap **Pass**. A pass uses up your move too.',
+      text: 'We’ll leave trading for a later chapter — tap **Pass**. A pass uses up your move too.',
       advance: { kind: 'action', expect: { type: 'pass' } },
     },
     {
