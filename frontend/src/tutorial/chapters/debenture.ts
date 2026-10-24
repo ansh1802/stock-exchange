@@ -8,20 +8,21 @@ import type { Chapter } from '../runtime/types'
  * Debenture (YesBank reopens at its $25 base value, net worth $400 → $650),
  * then buy 16 YesBank next round. The DebentureOverlay fires off the log line
  * "You: YesBank reopened at 25." (last line of the `reopened` snapshot).
- * Engine truth: shut shares *can* be sold — for $0 — so the copy says
+ * Engine truth: CLOSED shares *can* be sold — for $0 — so the copy says
  * "can't be bought", not "can't be traded".
  */
 const debenture: Chapter = {
   id: 'debenture',
   title: 'Debenture',
-  subtitle: 'Bringing a shut company back',
+  subtitle: 'Bringing a closed company back',
   minutes: 4,
   hookFrom: 'loan-stock',
-  chips: ['A shut company is frozen at $0 — no buying, no cards — until a Debenture reopens it at its starting price'],
+  chips: ['A CLOSED company is frozen at $0 — no buying, no cards — until a Debenture reopens it at its starting price'],
   steps: [
     {
       id: 'hook', snap: 'start', target: 'ticker', targetKey: 'YesBank',
-      text: 'Remember the company that hit $0 at the bell? Yesterday it was YesBank: **BANKRUPT** — bankrupt, so it shuts.',
+      text: 'Remember the company that hit $0 at the bell? YesBank went bankrupt at yesterday’s bell, so it’s **CLOSED**.',
+      textMobile: 'Remember the company that hit $0 at the bell? YesBank went bankrupt at yesterday’s bell, so it’s **CLOSED** — the ✕ on its ticker.',
       advance: { kind: 'next' },
     },
     {
@@ -37,8 +38,8 @@ const debenture: Chapter = {
     },
     {
       id: 'greyed', snap: 'start', target: 'trade-company',
-      text: 'YesBank is greyed out: a shut company can’t be bought. Selling its shares would pay $0 each.',
-      textMobile: '**YESB** (YesBank) is greyed out: a shut company can’t be bought. Selling its shares would pay $0 each.',
+      text: 'YesBank is greyed out: a CLOSED company can’t be bought. Selling its shares would pay $0 each.',
+      textMobile: '**YESB** (YesBank) is greyed out: a CLOSED company can’t be bought. Selling its shares would pay $0 each.',
       advance: { kind: 'next' },
     },
     {
@@ -56,23 +57,23 @@ const debenture: Chapter = {
     { id: 'bell', snap: 'bell', checkpoint: true, advance: { kind: 'reveal_wait', at: 'company_intro:YesBank' } },
     {
       id: 'predict-yesbank', snap: 'bell', target: 'reveal-overlay', holdRevealAt: 'company_intro:YesBank',
-      text: 'YesBank is shut at $0, and your **+10** is in there. Where does it close?',
+      text: 'YesBank is CLOSED at $0, and your **+10** is in there. What will its price be after the bell?',
       advance: {
         kind: 'predict',
         options: [{ label: '$10 or more', correct: false }, { label: '$0', correct: true }],
-        right: 'Exactly — a shut company ignores cards. Watch.',
-        wrong: 'Not this time — a shut company ignores cards. Watch.',
+        right: 'Exactly — a CLOSED company ignores cards. Watch.',
+        wrong: 'Not this time — a CLOSED company ignores cards. Watch.',
       },
     },
     { id: 'yesbank-cards', snap: 'bell', advance: { kind: 'reveal_wait', at: 'final_value:YesBank' } },
     {
       id: 'frozen', snap: 'bell', target: 'reveal-overlay', holdRevealAt: 'final_value:YesBank',
-      text: 'Arjun’s +5 and your +10: delta **+15**, yet **$0 → $0**. A shut company’s cards are revealed but never count.',
+      text: 'Arjun’s +5 and your +10: delta **+15**, yet **$0 → $0**. A CLOSED company’s cards are revealed but never count.',
       advance: { kind: 'next' },
     },
     {
       id: 'until', snap: 'bell', target: 'reveal-overlay', holdRevealAt: 'final_value:YesBank',
-      text: 'It stays shut, bell after bell, until someone plays a **Debenture** on it.',
+      text: 'It stays CLOSED, bell after bell, until someone plays a **Debenture** on it.',
       advance: { kind: 'next' },
     },
     { id: 'end', snap: 'bell', advance: { kind: 'reveal_end' } },
@@ -84,7 +85,7 @@ const debenture: Chapter = {
     },
     {
       id: 'debenture-card', snap: 'you3', target: 'hand', targetKey: 'Debenture',
-      text: 'Arjun bought 4 Cred. Your new hand has a **Debenture** — it reopens a shut company.',
+      text: 'Arjun bought 4 Cred. Your new hand has a **Debenture** — it reopens a CLOSED company.',
       advance: { kind: 'next' },
     },
     {
@@ -108,7 +109,7 @@ const debenture: Chapter = {
     },
     {
       id: 'play', snap: 'you3', target: 'power-panel', targetKey: 'YesBank',
-      text: 'Pick **YesBank**, the shut company. Playing the card is your move this round.',
+      text: 'Pick **YesBank**, the closed company. Playing the card is your move this round.',
       advance: { kind: 'action', expect: { type: 'debenture', company_num: 2 } },
     },
     {

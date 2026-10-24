@@ -166,7 +166,7 @@ export default function StockTicker() {
                     className="font-mono ml-auto"
                     style={{ fontSize: 9, color: 'var(--color-sell)', letterSpacing: '0.15em' }}
                   >
-                    SUSPENDED
+                    CLOSED
                   </span>
                 )}
               </div>
