@@ -46,7 +46,17 @@ const rightsIssue: Chapter = {
     },
     {
       id: 'max', snap: 'you1', target: 'trade-max',
-      text: '**Max 8** spends nearly all your cash, leaving too little for the issue.',
+      text: 'Try **Max 8** first — tap it.',
+      advance: { kind: 'click' },
+    },
+    {
+      id: 'shortfall', snap: 'you1', target: 'trade-preview',
+      text: 'Balance after: **$10** — but the issue would cost 4 × $25 = **$100**. Not enough.',
+      advance: { kind: 'next' },
+    },
+    {
+      id: 'price', snap: 'you1', target: 'trade-preview',
+      text: '**$25** is the issue price: half of $55, rounded down to a multiple of $5 — never below $5.',
       advance: { kind: 'next' },
     },
     {
@@ -57,11 +67,6 @@ const rightsIssue: Chapter = {
     {
       id: 'preview', snap: 'you1', target: 'trade-preview',
       text: 'RI picked **6**. Balance after: **$120**, and the issue would cost 3 × $25 = **$75** — covered.',
-      advance: { kind: 'next' },
-    },
-    {
-      id: 'price', snap: 'you1', target: 'trade-preview',
-      text: '**$25** is the issue price: half of $55, rounded down to a multiple of $5 — never below $5.',
       advance: { kind: 'next' },
     },
     {
@@ -141,12 +146,12 @@ const rightsIssue: Chapter = {
     },
     {
       id: 'arjun-buys', snap: 'arjun-ri', target: 'rights-modal',
-      text: 'Arjun holds YesBank, so they buy first…',
+      text: 'Arjun played it, so they buy first…',
       advance: { kind: 'auto', delayMs: 2000 },
     },
     {
       id: 'skipped', snap: 'your-issue', target: 'rights-modal',
-      text: 'Arjun bought 2. Kabir and Meera hold no YesBank, so they’re skipped — your turn in the issue.',
+      text: 'Arjun has bought. Kabir and Meera hold no YesBank, so they’re skipped — your turn in the issue.',
       advance: { kind: 'next' },
     },
     {

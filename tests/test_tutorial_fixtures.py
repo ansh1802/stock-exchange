@@ -677,7 +677,8 @@ def test_rights_issue_lesson():
     q = _ri_button_buy(cash, 0, tcs, avail)
     check("RI button: buy 6 — leaves $120 for the full issue (3 x $25 = $75)",
           q == 6 and cash - q * tcs == 120 and (q // 2) * rip == 75)
-    check("Max 8 leaves too little: $10 < 4 x $25", cash - mx * tcs < (mx // 2) * rip)
+    check("Max 8 leaves too little: Balance after $10, issue 4 x $25 = $100",
+          cash - mx * tcs == 10 and (mx // 2) * rip == 100 and cash - mx * tcs < (mx // 2) * rip)
     check("no bot plays a power card before your Rights Issue", _no_bot_power_cards(y1))
 
     bo = s["bought"]
