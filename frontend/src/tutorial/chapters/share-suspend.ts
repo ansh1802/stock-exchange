@@ -171,7 +171,7 @@ const shareSuspend: Chapter = {
     },
     {
       id: 'rescued', snap: 'your-halt2', target: 'suspend-list', targetKey: 'YesBank',
-      text: 'YesBank **$0 → $15**. It stays CLOSED until the day ends, then reopens — so the standings don’t count it yet.',
+      text: 'YesBank **$0 → $15**. It stays CLOSED until the day ends, then reopens — so tonight’s standings don’t count it.',
       advance: { kind: 'next' },
     },
     {
