@@ -6,7 +6,9 @@ import { tutorialStorage } from '../lib/tutorialStorage'
 import { useGameStore } from '../store/useGameStore'
 import type { ClientMessage } from '../types/messages'
 import { CHAPTERS, findChapter, loadFixture, type Fixture } from '../tutorial/chapters/index'
+import RecapView from '../tutorial/components/RecapView'
 import TutorialLayer from '../tutorial/components/TutorialLayer'
+import { RECAP_ID } from '../tutorial/chapters/recap'
 import { TutorialContext, type TutorialApi } from '../tutorial/runtime/TutorialContext'
 import {
   allows, heldRevealStage, holdsSuspendClose, initialRun, reduce, rewindToCheckpoint, snapChanged,
@@ -20,6 +22,8 @@ export default function TutorialPlayerPage() {
   const { chapterId = '' } = useParams<{ chapterId: string }>()
   const chapter = findChapter(chapterId)
   if (!chapter) return <Notice text={`No tutorial chapter "${chapterId}".`} />
+  // The recap has no fixture or board: no store swap, just the summary page.
+  if (chapter.id === RECAP_ID) return <RecapView />
   return <ChapterPlayer key={chapter.id} chapter={chapter} />
 }
 

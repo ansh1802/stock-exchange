@@ -4,8 +4,7 @@ import { useGameStore } from '../store/useGameStore'
 import { useTheme } from '../hooks/useTheme'
 import { tutorialStorage } from '../lib/tutorialStorage'
 import PublicRooms from '../components/lobby/PublicRooms'
-
-const LAST_NAME_KEY = 'stock-exchange-last-name'
+import { LAST_NAME_KEY, generateRoomCode } from '../lib/room'
 
 export default function LobbyPage() {
   // Prefill the last-used name so leaving / being kicked doesn't mean retyping it
@@ -35,12 +34,7 @@ export default function LobbyPage() {
     if (name.trim()) enterRoom(roomCode)
   }
 
-  const createRoom = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let generated = ''
-    for (let i = 0; i < 4; i++) generated += chars[Math.floor(Math.random() * chars.length)]
-    setCode(generated)
-  }
+  const createRoom = () => setCode(generateRoomCode())
 
   if (theme === 'v2') {
     return (

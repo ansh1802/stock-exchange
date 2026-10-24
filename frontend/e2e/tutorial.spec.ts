@@ -4,7 +4,8 @@ import smoke from '../src/tutorial/chapters/_smoke'
 import { walkChapter } from './walker'
 
 // One test per chapter, titled by id: `npx playwright test -g <id>`.
-for (const chapter of [...ORDERED, smoke]) {
+// `recap` has no board to walk; recap.spec.ts covers it.
+for (const chapter of [...ORDERED.filter((c) => c.id !== 'recap'), smoke]) {
   test(`chapter ${chapter.id} completes`, async ({ page }) => {
     // Long chapters (several bells + standings) outrun the default; ~3 s a step is ample.
     test.setTimeout(Math.max(180_000, chapter.steps.length * 3_000))

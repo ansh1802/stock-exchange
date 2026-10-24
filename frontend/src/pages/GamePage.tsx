@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useGameStore } from '../store/useGameStore'
 import { useWebSocket } from '../hooks/useWebSocket'
+import { useBotAutostart } from '../hooks/useBotAutostart'
 import PlayerList from '../components/lobby/PlayerList'
 import StartButton from '../components/lobby/StartButton'
 import GameBoard from '../components/game/GameBoard'
@@ -11,6 +12,8 @@ export default function GamePage() {
   const { roomCode } = useParams<{ roomCode: string }>()
   const navigate = useNavigate()
   const { connect, send, disconnect } = useWebSocket()
+  const [searchParams] = useSearchParams()
+  useBotAutostart(searchParams.get('autostart') === 'bots3', send)
 
   const playerName = useGameStore((s) => s.playerName)
   const isConnected = useGameStore((s) => s.isConnected)
