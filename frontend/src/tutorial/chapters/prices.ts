@@ -15,7 +15,7 @@ const prices: Chapter = {
   chips: [
     'At the bell, everyone’s cards for a company are added to its price',
     'You see your cards, not theirs',
-    'A company that hits $0 shuts',
+    'A company that hits $0 goes BANKRUPT and is CLOSED',
     'Currency + adds 10% to your cash at the bell; Currency − takes 10%',
   ],
   steps: [
@@ -44,7 +44,7 @@ const prices: Chapter = {
     { id: 'bell', snap: 'bell', checkpoint: true, advance: { kind: 'reveal_wait', at: 'final_value:YesBank' } },
     {
       id: 'yesbank', snap: 'bell', target: 'reveal-overlay', holdRevealAt: 'final_value:YesBank',
-      text: 'The bell goes company by company. YesBank took Meera’s −15 and Arjun’s −10: $25 → **$0** — a company at 0 shuts; remember that.',
+      text: 'The bell goes company by company. YesBank took Meera’s −15 and Arjun’s −10: $25 → $0, **BANKRUPT**, so it’s **CLOSED** — remember that.',
       advance: { kind: 'next' },
     },
     { id: 'to-tcs', snap: 'bell', advance: { kind: 'reveal_wait', at: 'company_intro:TCS' } },
