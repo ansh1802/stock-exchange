@@ -263,9 +263,70 @@ def test_prices_lesson():
     check("after the bell your cash $418, 4 TCS worth $240", mine.cash == 418 and mine.stocks["TCS"] * 60 == 240)
 
 
+def test_turns_lesson():
+    header("turns lesson")
+    if not check("turns registered", "turns" in CHAPTERS):
+        return
+    from engine.constants import COMPANY_BASE_VALUES, ROUNDS_PER_DAY, STARTING_CASH
+    s = snaps("turns")
+    order = ["start", "bought", "meera", "arjun", "round2", "passed"]
+    check("snapshots in order", list(s) == order)
+    st = s["start"]
+    check("4 seats, fixed cast", [p["name"] for p in st["players"]] == ["You", "Meera", "Arjun", "Kabir"])
+    check("ROUNDS_PER_DAY is 3 (copy: 'round 1 of 3')", ROUNDS_PER_DAY == 3
+          and CHAPTERS["turns"]().room.game.rounds_per_day == ROUNDS_PER_DAY)
+    check("day 1, round 1, your turn first", st["day"] == 1 and st["round"] == 0 and st["current_turn"] == 0
+          and st["phase"] == "player_turn" and st["current_player_name"] == "You")
+    check("your hand: TCS +10 first", st["your_hand"][0] == {"company": "TCS", "value": 10, "positive": True,
+                                                            "is_power": False})
+    check("everyone starts with $600", all(p["cash"] == STARTING_CASH == 600 for p in st["players"]))
+    check("TCS at $55 (base)", st["companies"][3]["value"] == COMPANY_BASE_VALUES[3] == 55)
+    check("turn timer 90s", st["turn_timer_duration"] == 90)
+
+    # Who is up, and which round, at each snapshot: round ticks only after all 4 seats moved.
+    who = [(s[k]["round"], s[k]["current_player_name"]) for k in order]
+    check("turn passes You -> Meera -> Arjun -> Kabir, then round 2 You -> Meera", who == [
+        (0, "You"), (0, "Meera"), (0, "Arjun"), (0, "Kabir"), (1, "You"), (1, "Meera")])
+
+    b = s["bought"]
+    me = you(b)
+    check("your move: 4 TCS for $220, $600 -> $380", me["stocks"]["TCS"] == 4 and me["cash"] == 380
+          and 4 * 55 == 220 and b["game_log"][-1].startswith("You: Bought 4 of TCS for 220"))
+    check("after your buy the turn is Meera's, still round 1", b["current_player_name"] == "Meera"
+          and b["round"] == 0)
+
+    # Every move between snapshots is exactly one log line by the seat that was up.
+    moves = {}
+    for a, nxt in zip(order, order[1:]):
+        before, after = s[a]["game_log"], s[nxt]["game_log"]
+        added = after[len(before):]
+        actor = s[a]["current_player_name"]
+        ok = after[:len(before)] == before and len(added) == 1 and added[0].startswith(f"{actor}: ")
+        check(f"{a} -> {nxt}: exactly one move by {actor}", ok)
+        moves[actor + str(s[a]["round"])] = added[0] if added else ""
+    one_kind = ("Bought ", "Sold ", "Turn passed.", "Loan Stock used.")
+    check("each move is one buy, sell, pass or power card",
+          all(any(m.split(": ", 1)[1].startswith(k) for k in one_kind) for m in moves.values()))
+    check("round 1: Meera buys Reliance, Arjun passes, Kabir plays Loan Stock",
+          moves["Meera0"].startswith("Meera: Bought 3 of Reliance")
+          and moves["Arjun0"] == "Arjun: Turn passed."
+          and moves["Kabir0"].startswith("Kabir: Loan Stock used."))
+    check("round 2: you pass", moves["You1"] == "You: Turn passed.")
+    k = next(p for p in s["round2"]["players"] if p["name"] == "Kabir")
+    check("Kabir's Loan Stock: $600 -> $660 cash", k["cash"] == 660)
+
+    # Seat order rotates at end_day: tomorrow Meera moves first.
+    sc = CHAPTERS["turns"]()
+    g = sc.room.game
+    while g.game_phase == "player_turn":
+        sc.act(g.players[g.current_turn].id, {"type": "pass"})
+    sc.ack_reveal()
+    check("day 2 order starts with Meera", g.current_day == 2 and [p.id for p in g.players] == [2, 3, 4, 1])
+
+
 for t in (test_setup_hands, test_setup_holdings, test_snap_shape, test_act_logs_like_server,
           test_failed_act_raises, test_bell_and_next_day, test_check_detects_drift,
-          test_orientation_lesson, test_objective_lesson, test_prices_lesson):
+          test_orientation_lesson, test_objective_lesson, test_prices_lesson, test_turns_lesson):
     t()
 
 print(f"\n{passed} passed, {failed} failed")
