@@ -140,8 +140,66 @@ def test_check_detects_drift():
     check("throwaway unregistered", "_drift" not in CHAPTERS)
 
 
+def snaps(chapter_id):
+    return CHAPTERS[chapter_id]().to_fixture()["snapshots"]
+
+
+def you(snap):
+    return next(p for p in snap["players"] if p["is_you"])
+
+
+def test_orientation_lesson():
+    header("orientation lesson")
+    if not check("orientation registered", "orientation" in CHAPTERS):
+        return
+    s = snaps("orientation")
+    floor = s["floor"]
+    names = [p["name"] for p in floor["players"]]
+    check("6 seats, fixed cast", names == ["You", "Meera", "Arjun", "Kabir", "Zoya", "Dev"])
+    check("You's turn on the floor", floor["phase"] == "player_turn" and floor["current_player_name"] == "You")
+    check("day 3, round 2", floor["day"] == 3 and floor["round"] == 1 and floor["current_turn"] == 0)
+    check("some company below 200 available", any(a < 200 for a in floor["available_shares"]))
+    check("YesBank 150 avail", floor["available_shares"][1] == 150)
+    check("log has >= 3 entries", len(floor["game_log"]) >= 3)
+    check("log shows Kabir's 50 YesBank for 500",
+          any(l.startswith("Kabir: Bought 50 of YesBank for 500") for l in floor["game_log"]))
+    check("a director exists (Kabir, YesBank)", floor["directors"]["YesBank"] == [4]
+          and any(v for v in floor["directors"].values()))
+    prices = {c["name"]: c["value"] for c in floor["companies"]}
+    check("ticker prices", prices == {"Vodafone": 25, "YesBank": 10, "Cred": 50, "TCS": 70,
+                                      "Reliance": 65, "Infosys": 90})
+    check("sparkline: YesBank closes 20 -> 10", [d[1] for d in floor["price_history"]] == [20, 10])
+    me = you(floor)
+    check("your seat: $165, 5 TCS, 4 Cred",
+          me["cash"] == 165 and {k: v for k, v in me["stocks"].items() if v} == {"TCS": 5, "Cred": 4})
+    check("10 cards, no power cards", len(floor["your_hand"]) == 10
+          and not any(c["is_power"] for c in floor["your_hand"]))
+    check("turn timer 90s", floor["turn_timer_duration"] == 90)
+    passed_snap = s["passed"]
+    check("after pass: Meera's turn", passed_snap["current_player_name"] == "Meera")
+    check("pass logged", passed_snap["game_log"][-1] == "You: Turn passed.")
+
+
+def test_objective_lesson():
+    header("objective lesson")
+    if not check("objective registered", "objective" in CHAPTERS):
+        return
+    s = snaps("objective")
+    check("single snapshot", list(s) == ["table"])
+    t = s["table"]
+    check("6 seats", len(t["players"]) == 6)
+    me = you(t)
+    prices = {c["name"]: c["value"] for c in t["companies"]}
+    worth = me["cash"] + sum(q * prices[n] for n, q in me["stocks"].items())
+    check("net worth $165 + 5x70 + 4x50 = $715",
+          me["cash"] == 165 and me["stocks"]["TCS"] == 5 and prices["TCS"] == 70
+          and me["stocks"]["Cred"] == 4 and prices["Cred"] == 50 and worth == 715)
+    check("same table as orientation's end", t == snaps("orientation")["passed"])
+
+
 for t in (test_setup_hands, test_setup_holdings, test_snap_shape, test_act_logs_like_server,
-          test_failed_act_raises, test_bell_and_next_day, test_check_detects_drift):
+          test_failed_act_raises, test_bell_and_next_day, test_check_detects_drift,
+          test_orientation_lesson, test_objective_lesson):
     t()
 
 print(f"\n{passed} passed, {failed} failed")

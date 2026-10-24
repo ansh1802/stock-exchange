@@ -81,6 +81,7 @@ export default function StockTicker() {
             return (
               <div
                 key={co.name}
+                data-tutorial-key={co.name}
                 className={cn('relative px-2 py-1.5', !co.is_open && 'opacity-50')}
                 style={{ background: 'var(--color-paper)' }}
               >
@@ -138,6 +139,7 @@ export default function StockTicker() {
           return (
             <div
               key={co.name}
+              data-tutorial-key={co.name}
               className={cn(
                 'relative flex-1 min-w-[150px] px-3 py-2 transition-opacity',
                 i > 0 && 'border-l',
@@ -204,6 +206,7 @@ export default function StockTicker() {
           return (
             <div
               key={co.name}
+              data-tutorial-key={co.name}
               className={cn(
                 'px-2 py-1 rounded-md border',
                 co.is_open
@@ -241,6 +244,7 @@ export default function StockTicker() {
         return (
           <div
             key={co.name}
+            data-tutorial-key={co.name}
             className={cn(
               'flex-1 min-w-[140px] px-3 py-2 rounded-lg border transition-colors',
               co.is_open

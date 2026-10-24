@@ -56,6 +56,7 @@ export default function ActionBar({ send }: Props) {
             </motion.button>
             <motion.button
               onClick={handlePass}
+              data-tutorial="pass-button"
               disabled={!tutorialAllows(tutorial, { type: 'pass' })}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}

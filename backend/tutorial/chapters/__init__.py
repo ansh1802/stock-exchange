@@ -2,8 +2,10 @@
 
 from typing import Callable
 
-from tutorial.chapters import _smoke
+from tutorial.chapters import _smoke, objective, orientation
 
 CHAPTERS: dict[str, Callable] = {
+    "orientation": orientation.build,
+    "objective": objective.build,
     "_smoke": _smoke.build,  # dev-only harness chapter (frontend registers it only in DEV)
 }
