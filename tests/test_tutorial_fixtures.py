@@ -197,9 +197,75 @@ def test_objective_lesson():
     check("same table as orientation's end", t == snaps("orientation")["passed"])
 
 
+def test_prices_lesson():
+    header("prices lesson")
+    if not check("prices registered", "prices" in CHAPTERS):
+        return
+    from engine.constants import COMPANY_BASE_VALUES, CURRENCY_RATE, STARTING_CASH
+    s = snaps("prices")
+    check("snapshots table/passed/bell", list(s) == ["table", "passed", "bell"])
+    t = s["table"]
+    check("3 seats, fixed cast", [p["name"] for p in t["players"]] == ["You", "Meera", "Arjun"])
+    check("day 1, round 3, your turn", t["day"] == 1 and t["round"] == 2
+          and t["phase"] == "player_turn" and t["current_player_name"] == "You")
+    check("your hand: TCS +10, Reliance -15, Currency +", t["your_hand"] == [
+        {"company": "TCS", "value": 10, "positive": True, "is_power": False},
+        {"company": "Reliance", "value": 15, "positive": False, "is_power": False},
+        {"company": "Currency + ", "value": 0, "positive": True, "is_power": True},
+    ])
+    me = you(t)
+    check("you: 4 TCS bought at $55, $380 cash", me["stocks"]["TCS"] == 4 and me["cash"] == 380
+          and me["cash"] == STARTING_CASH - 4 * 55)
+    check("Meera and Arjun bought Reliance this morning",
+          any(l.startswith("Meera: Bought 3 of Reliance") for l in t["game_log"])
+          and any(l.startswith("Arjun: Bought 2 of Reliance") for l in t["game_log"]))
+    check("passed: Meera's turn", s["passed"]["current_player_name"] == "Meera"
+          and s["passed"]["game_log"][-1] == "You: Turn passed.")
+
+    b = s["bell"]
+    check("bell: card_reveal on day 1", b["phase"] == "card_reveal" and b["day"] == 1)
+    rd = {r["company_name"]: r for r in b["reveal_data"]}
+    check("reveal in ticker order", [r["company_name"] for r in b["reveal_data"]]
+          == ["Vodafone", "YesBank", "Cred", "TCS", "Reliance", "Infosys"])
+    base = dict(zip(["Vodafone", "YesBank", "Cred", "TCS", "Reliance", "Infosys"], COMPANY_BASE_VALUES))
+    check("day-1 prices are base values", all(rd[n]["old_value"] == v for n, v in base.items()))
+
+    def cards(name):
+        return [(c["player_name"], c["value"] if c["positive"] else -c["value"]) for c in rd[name]["cards"]]
+
+    check("Vodafone, Cred, Infosys: no cards", not cards("Vodafone") and not cards("Cred") and not cards("Infosys"))
+    yb = rd["YesBank"]
+    check("YesBank: Meera -15, Arjun -10 -> $25 to $0",
+          cards("YesBank") == [("Meera", -15), ("Arjun", -10)] and yb["old_value"] == 25 and yb["new_value"] == 0)
+    tcs = rd["TCS"]
+    check("TCS: You +10, Meera -5 -> +5, $55 to $60",
+          cards("TCS") == [("You", 10), ("Meera", -5)] and tcs["delta"] == 5 > 0
+          and tcs["old_value"] == 55 and tcs["new_value"] == 60)
+    rel = rd["Reliance"]
+    # Card order pins the hold stage `revealing_cards:Reliance:2` (Arjun's card, the last).
+    check("Reliance: You -15, Meera +15, Arjun +10 -> +10, $75 to $85",
+          cards("Reliance") == [("You", -15), ("Meera", 15), ("Arjun", 10)] and rel["delta"] == 10 > 0
+          and rel["old_value"] == 75 and rel["new_value"] == 85)
+    check("bots' Reliance cards >= +25", 15 + 10 >= 25)
+    check("no chairman/director queue", b["chairman_director_queue"] == [])
+    fx = b["currency_effects"]
+    check("only currency effect is your +", len(fx) == 1 and fx[0]["player_id"] == 1 and fx[0]["type"] == "+")
+    check("currency: $380 -> $418 (before * 1.1)", fx[0]["before"] == 380
+          and abs(fx[0]["after"] - fx[0]["before"] * (1 + CURRENCY_RATE)) < 1e-9 and fx[0]["after"] == 418)
+
+    sc = CHAPTERS["prices"]()
+    sc.ack_reveal()
+    g = sc.room.game
+    yesbank = g.companies[1]
+    check("after the bell YesBank is shut at $0", yesbank.value == 0 and yesbank.open is False)
+    check("after the bell TCS $60, Reliance $85", g.companies[3].value == 60 and g.companies[4].value == 85)
+    mine = next(p for p in g.players if p.id == 1)  # end_day rotates seats
+    check("after the bell your cash $418, 4 TCS worth $240", mine.cash == 418 and mine.stocks["TCS"] * 60 == 240)
+
+
 for t in (test_setup_hands, test_setup_holdings, test_snap_shape, test_act_logs_like_server,
           test_failed_act_raises, test_bell_and_next_day, test_check_detects_drift,
-          test_orientation_lesson, test_objective_lesson):
+          test_orientation_lesson, test_objective_lesson, test_prices_lesson):
     t()
 
 print(f"\n{passed} passed, {failed} failed")
