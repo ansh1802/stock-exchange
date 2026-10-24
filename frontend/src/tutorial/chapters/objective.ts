@@ -18,7 +18,7 @@ const objective: Chapter = {
       advance: { kind: 'next' },
     },
     {
-      id: 'net-worth', snap: 'table',
+      id: 'net-worth', snap: 'table', target: 'player-self', mobileTab: 'players',
       text: 'Net worth is cash plus every share at its price — the gold number on your seat. Yours: $165 + 5 TCS × $70 + 4 Cred × $50 = **$715**.',
       advance: { kind: 'next' },
     },

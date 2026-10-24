@@ -8,7 +8,7 @@ const orientation: Chapter = {
   minutes: 2,
   chips: [
     'The ticker shows each price and how many of its 200 shares the bank still has',
-    'On your turn: Buy, Sell or Pass — before the clock passes for you',
+    'On your turn: one move — buy, sell, play a power card, or pass — before the clock passes for you',
   ],
   steps: [
     {
@@ -35,13 +35,8 @@ const orientation: Chapter = {
     },
     {
       id: 'board', snap: 'floor', target: 'player-board', mobileTab: 'players',
-      text: 'The table: each player’s cash, holdings and net worth in gold. The ◎ by Kabir’s 50 YesBank marks a **director** (50+ shares).',
+      text: 'The table: cash, holdings and net worth in gold — you have **$165** cash, 5 TCS and 4 Cred. The ◎ by Kabir’s 50 YesBank marks a **director** (50+ shares).',
       advance: { kind: 'next' },
-    },
-    {
-      id: 'you', snap: 'floor', target: 'player-self', mobileTab: 'players',
-      text: 'This is you: **$165** cash, 5 TCS and 4 Cred. Tap your seat.',
-      advance: { kind: 'click' },
     },
     {
       id: 'day-round', snap: 'floor', target: 'day-round',
@@ -54,18 +49,18 @@ const orientation: Chapter = {
       advance: { kind: 'next' },
     },
     {
-      id: 'log', snap: 'floor', target: 'log', mobileTab: 'logchat',
-      text: 'Every move lands in the log, newest last. There’s Kabir’s 50 YesBank for **$500**.',
-      advance: { kind: 'next' },
-    },
-    {
       id: 'pass', snap: 'floor', target: 'pass-button',
-      text: 'Each turn you Buy, Sell or Pass. Nothing to trade yet — tap **Pass**.',
+      text: 'Each turn is one move: buy, sell, play a power card, or pass. Nothing to trade yet — tap **Pass**.',
       advance: { kind: 'action', expect: { type: 'pass' } },
     },
     {
+      id: 'log', snap: 'passed', target: 'log', mobileTab: 'logchat',
+      text: 'Your pass just landed in the log, newest last. A few lines up: Kabir’s 50 YesBank for **$500**.',
+      advance: { kind: 'next' },
+    },
+    {
       id: 'exit', snap: 'passed', target: 'exit',
-      text: 'Your turn passed to Meera. Exit sits up here any time — now, what are you actually playing for?',
+      text: 'The turn is Meera’s now. Exit sits up here any time — so what are you actually playing for?',
       advance: { kind: 'next' },
     },
   ],
