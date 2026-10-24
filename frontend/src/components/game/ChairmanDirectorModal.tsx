@@ -201,6 +201,7 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
           <div className="flex gap-2 pt-1">
             <motion.button
               onClick={handleSubmit}
+              data-tutorial-key="confirm"
               disabled={!canSubmit() || submitBlocked}
               whileHover={canSubmit() ? { scale: 1.02 } : {}}
               whileTap={canSubmit() ? { scale: 0.98 } : {}}

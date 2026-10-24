@@ -6,6 +6,8 @@ import { walkChapter } from './walker'
 // One test per chapter, titled by id: `npx playwright test -g <id>`.
 for (const chapter of [...ORDERED, smoke]) {
   test(`chapter ${chapter.id} completes`, async ({ page }) => {
+    // Long chapters (several bells + standings) outrun the default; ~3 s a step is ample.
+    test.setTimeout(Math.max(180_000, chapter.steps.length * 3_000))
     const errors: string[] = []
     page.on('pageerror', (e) => errors.push(e.message))
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()) })

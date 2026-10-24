@@ -86,7 +86,10 @@ class Scenario:
             for p in g.players:
                 update_positions(g, p, name)
 
-    def act(self, player_id, msg):
+    def act(self, player_id, msg, early_snap=None):
+        """Dispatch like server.after_action. `early_snap` records the state before
+        auto-advance, mirroring the server's early broadcast after a chairman/director
+        action (the last discard ends the day, and dealing clears reveal_data)."""
         result = server.dispatch_action(self.game, player_id, msg)
         assert result is not None, f"Unknown action: {msg!r}"
         assert result["success"], result["message"]
@@ -96,6 +99,8 @@ class Scenario:
             conn = self.room.players.get(player_id)
             actor = conn.name if conn else f"Player {player_id}"
             self.room.game_log.append(f"{actor}: {message}")
+        if early_snap is not None:
+            self.snap(early_snap)
         self._advance()
         return result
 

@@ -2,7 +2,7 @@
 
 from typing import Callable
 
-from tutorial.chapters import _smoke, debenture, loan_stock, objective, orientation, prices, rights_issue, share_suspend, trading, turns
+from tutorial.chapters import _smoke, chairman_director, debenture, loan_stock, objective, orientation, prices, rights_issue, share_suspend, trading, turns
 
 CHAPTERS: dict[str, Callable] = {
     "orientation": orientation.build,
@@ -14,5 +14,6 @@ CHAPTERS: dict[str, Callable] = {
     "debenture": debenture.build,
     "rights-issue": rights_issue.build,
     "share-suspend": share_suspend.build,
+    "chairman-director": chairman_director.build,
     "_smoke": _smoke.build,  # dev-only harness chapter (frontend registers it only in DEV)
 }
