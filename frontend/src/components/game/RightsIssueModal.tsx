@@ -110,6 +110,7 @@ export default function RightsIssueModal({ send }: Props) {
               </button>
               <button
                 onClick={() => setQuantity(maxQty)}
+                data-tutorial-key="max"
                 disabled={maxQty === 0}
                 className="ml-1 px-3 h-8 bg-gray-700 hover:bg-gray-600 disabled:opacity-40 text-gray-300 rounded text-xs font-medium flex-shrink-0"
               >
@@ -149,6 +150,7 @@ export default function RightsIssueModal({ send }: Props) {
             <div className="flex gap-2">
               <button
                 onClick={handleBuy}
+                data-tutorial-key="buy"
                 disabled={quantity === 0 || !tutorialAllows(tutorial, { type: 'rights_issue_buy', quantity })}
                 className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg font-medium"
               >

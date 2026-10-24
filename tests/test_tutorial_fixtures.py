@@ -627,10 +627,148 @@ def test_debenture_lesson():
     check("no bot plays a power card", _no_bot_power_cards(bo))
 
 
+def _ri_price(value):
+    """The engine's rights-issue price: half, rounded down to a multiple of $5, never below $5."""
+    return max(5, (value // 10) * 5)
+
+
+def _ri_button_buy(cash, holding, price, avail):
+    """TradeModal's RI smart-fill (buy): largest q that still leaves cash for the full issue after."""
+    r = _ri_price(price)
+    for q in range(min(cash // price, avail), 0, -1):
+        if cash - q * price >= ((holding + q) // 2) * r:
+            return q
+    return None
+
+
+def test_rights_issue_lesson():
+    header("rights-issue lesson")
+    if not check("rights-issue registered", "rights-issue" in CHAPTERS):
+        return
+    import game_engine as ge
+    s = snaps("rights-issue")
+    check("snapshots in order", list(s) == ["you1", "bought", "you2", "ri", "ri-done",
+                                            "arjun-ri", "your-issue", "issue-done", "you3", "passed"])
+    TCS_I, YB_I = 3, 1
+
+    # ── 8a: buy with the RI button, then play the Rights Issue ──
+    y1 = s["you1"]
+    check("day 3, round 1, your turn; seats Arjun, Kabir, You, Meera",
+          y1["day"] == 3 and y1["round"] == 0 and y1["current_player_name"] == "You"
+          and [p["name"] for p in y1["players"]] == ["Arjun", "Kabir", "You", "Meera"])
+    me = you(y1)
+    check("you: $450 cash, 6 YesBank (bought day 1), no TCS",
+          me["cash"] == 450 and me["stocks"] == {"YesBank": 6}
+          and "You: Bought 6 of YesBank for 150. Balance: 450." in y1["game_log"])
+    check("your hand: Rights Issue, TCS +10", y1["your_hand"] == [
+        {"company": "RightsIssue", "value": 0, "positive": True, "is_power": True},
+        {"company": "TCS", "value": 10, "positive": True, "is_power": False},
+    ])
+    check("TCS $55 (base, never moved), 200 available, nobody holds it",
+          _price(y1, "TCS") == 55 and y1["available_shares"][TCS_I] == 200
+          and not any("TCS" in p["stocks"] for p in y1["players"]))
+    check("YesBank $35 after the day-1 bell (+10), prev_value $35", _price(y1, "YesBank") == 35
+          and y1["companies"][YB_I]["prev_value"] == 35)
+    tcs, cash, avail = _price(y1, "TCS"), me["cash"], y1["available_shares"][TCS_I]
+    mx = min(cash // tcs, avail)
+    check("Max 8 TCS; Max would leave $10", mx == 8 and cash - mx * tcs == 10)
+    rip = _ri_price(tcs)
+    check("RI price for TCS $55 is $25 (rounded down, not $27.50)", rip == 25 and tcs / 2 == 27.5)
+    q = _ri_button_buy(cash, 0, tcs, avail)
+    check("RI button: buy 6 — leaves $120 for the full issue (3 x $25 = $75)",
+          q == 6 and cash - q * tcs == 120 and (q // 2) * rip == 75)
+    check("Max 8 leaves too little: $10 < 4 x $25", cash - mx * tcs < (mx // 2) * rip)
+    check("no bot plays a power card before your Rights Issue", _no_bot_power_cards(y1))
+
+    bo = s["bought"]
+    check("bought 6 TCS (the RI-button quantity) for $330", bo["game_log"][-1] == "You: Bought 6 of TCS for 330. Balance: 120."
+          and you(bo)["stocks"] == {"YesBank": 6, "TCS": q})
+    check("RI-button buy leaves cash >= allowance x RI price",
+          you(bo)["cash"] >= (you(bo)["stocks"]["TCS"] // 2) * rip)
+
+    y2 = s["you2"]
+    check("Meera, Arjun, Kabir moved; your turn round 2", y2["round"] == 1 and y2["current_player_name"] == "You"
+          and [l.split(":")[0] for l in _added(bo, y2)] == ["Meera", "Arjun", "Kabir"])
+    check("still only you hold TCS", [p["name"] for p in y2["players"] if "TCS" in p["stocks"]] == ["You"])
+    check("net worth $660 before the issue ($120 + 6x$55 + 6x$35)", _board_worth(y2, "You") == 660)
+    allowance = you(y2)["stocks"]["TCS"] // 2
+    check("allowance = half your holdings = 3 (not the 4 your $120 covers)",
+          allowance == 3 and you(y2)["cash"] // rip == 4)
+
+    ri = s["ri"]
+    check("rights_issue phase on TCS (company 4), queue = [You]",
+          ri["phase"] == "rights_issue" and ri["rights_issue_company"] == 4 and ri["rights_issue_queue"] == [1]
+          and ri["current_player_name"] == "You")
+    check("TCS $55 -> $25 during the issue; ticker prev $55",
+          _price(ri, "TCS") == rip and ri["companies"][TCS_I]["prev_value"] == tcs)
+    check("log: 'You: Rights issue on TCS at 25 (50% of market price).'",
+          ri["game_log"][-1] == "You: Rights issue on TCS at 25 (50% of market price).")
+    check("card consumed", not any(c["company"] == "RightsIssue" for c in ri["your_hand"]))
+
+    rd = s["ri-done"]
+    check("bought the full allowance 3 at $25 = $75; cash $45; 9 TCS",
+          rd["game_log"][-1] == f"You: Bought {allowance} shares in rights issue."
+          and you(rd)["cash"] == you(y2)["cash"] - allowance * rip == 45 and you(rd)["stocks"]["TCS"] == 9)
+    check("price restored to $55, back to player_turn, Meera's move (after you)",
+          _price(rd, "TCS") == tcs and rd["phase"] == "player_turn" and rd["rights_issue_company"] is None
+          and rd["current_player_name"] == "Meera" and rd["round"] == 1)
+    check("net worth $660 -> $750 (+$90 = 3 x ($55 - $25))",
+          _board_worth(rd, "You") == 750
+          and _board_worth(rd, "You") - _board_worth(y2, "You") == allowance * (_price(rd, "TCS") - _price(ri, "TCS")))
+
+    # ── 8b: Arjun plays a Rights Issue on YesBank — your free move ──
+    ar = s["arjun-ri"]
+    check("round 3: Arjun plays Rights Issue on YesBank (company 2)",
+          ar["round"] == 2 and ar["phase"] == "rights_issue" and ar["rights_issue_company"] == 2
+          and ar["game_log"][-1] == "Arjun: Rights issue on YesBank at 15 (50% of market price).")
+    check("YesBank $35 -> $15 (half of 35 rounded down to a multiple of 5)",
+          _price(ar, "YesBank") == _ri_price(_price(rd, "YesBank")) == 15 and _price(rd, "YesBank") == 35
+          and ar["companies"][YB_I]["prev_value"] == 35)
+    check("queue: Arjun (holds YesBank) then You; Kabir and Meera hold none -> skipped",
+          ar["rights_issue_queue"] == [3, 1] and ar["current_player_name"] == "Arjun"
+          and all("YesBank" not in p["stocks"] for p in ar["players"] if p["name"] in ("Kabir", "Meera")))
+    yi = s["your-issue"]
+    arjun_yb = next(p for p in ar["players"] if p["name"] == "Arjun")["stocks"]["YesBank"]
+    check("Arjun buys their half (4 -> 2 more); now your turn in the issue",
+          arjun_yb == 4 and yi["game_log"][-1] == "Arjun: Bought 2 shares in rights issue."
+          and yi["rights_issue_queue"] == [1] and yi["current_player_name"] == "You")
+    my = you(yi)
+    check("you: 6 YesBank -> allowance 3; $45 covers 3 x $15", my["stocks"]["YesBank"] == 6
+          and my["cash"] == 45 and min(6 // 2, my["cash"] // _price(yi, "YesBank"), yi["available_shares"][YB_I]) == 3)
+
+    idn = s["issue-done"]
+    check("you bought 3 YesBank for $45; cash $0", idn["game_log"][-1] == "You: Bought 3 shares in rights issue."
+          and you(idn)["cash"] == 0 and you(idn)["stocks"]["YesBank"] == 9)
+    check("YesBank restored to $35; normal order resumes after Arjun: Kabir's move",
+          _price(idn, "YesBank") == 35 and idn["phase"] == "player_turn" and idn["round"] == 2
+          and idn["current_player_name"] == "Kabir")
+    check("net worth $750 -> $810 (+$60 = 3 x ($35 - $15))",
+          _board_worth(idn, "You") == 810
+          and _board_worth(idn, "You") - _board_worth(rd, "You") == 3 * (_price(idn, "YesBank") - _price(yi, "YesBank")))
+
+    y3 = s["you3"]
+    check("Kabir moved; your normal round-3 move is still yours",
+          y3["round"] == 2 and y3["current_player_name"] == "You" and y3["phase"] == "player_turn"
+          and [l.split(":")[0] for l in _added(idn, y3)] == ["Kabir"])
+    pa = s["passed"]
+    check("you pass; Meera to move (no bell yet)", pa["game_log"][-1] == "You: Turn passed."
+          and pa["current_player_name"] == "Meera" and pa["phase"] == "player_turn")
+
+    # Engine truth: no holders -> card consumed, turn ends, price untouched.
+    g = ge.GameState(2, player_ids=[1, 2])
+    g.game_phase = "player_turn"
+    from engine.models import Card
+    g.players[0].hand = [Card("RightsIssue", 0, True, True)]
+    r = ge.use_rights_issue(g, 1, 4)
+    check("engine: Rights Issue with no holders ends the turn, price unchanged",
+          r["success"] and g.game_phase == "player_turn" and g.companies[3].value == 55
+          and g.current_turn == 1 and not g.players[0].hand)
+
+
 for t in (test_setup_hands, test_setup_holdings, test_snap_shape, test_act_logs_like_server,
           test_failed_act_raises, test_bell_and_next_day, test_check_detects_drift,
           test_orientation_lesson, test_objective_lesson, test_prices_lesson, test_turns_lesson, test_trading_lesson,
-          test_loan_stock_lesson, test_debenture_lesson):
+          test_loan_stock_lesson, test_debenture_lesson, test_rights_issue_lesson):
     t()
 
 print(f"\n{passed} passed, {failed} failed")

@@ -3,7 +3,7 @@ import type { MobileTab } from '../../components/game/MobileTabBar'
 
 export type TargetId = 'ticker' | 'ticker-available' | 'hand' | 'player-board' | 'player-self'
   | 'day-round' | 'timer' | 'log' | 'action-bar' | 'buy-button' | 'sell-button' | 'pass-button' | 'power-panel'
-  | 'trade-company' | 'trade-mode' | 'trade-slider' | 'trade-max' | 'trade-ri' | 'trade-confirm' | 'trade-close'
+  | 'trade-company' | 'trade-mode' | 'trade-slider' | 'trade-max' | 'trade-ri' | 'trade-preview' | 'trade-confirm' | 'trade-close'
   | 'reveal-overlay' | 'suspend-list' | 'suspend-confirm' | 'cd-modal' | 'rights-modal' | 'exit'
 
 export type Advance =
