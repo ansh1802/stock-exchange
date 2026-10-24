@@ -27,18 +27,17 @@ function overlap(a0: number, a1: number, b0: number, b1: number): number {
  * Desktop: float next to the target (below → above → right → left), shifted to
  * stay fully inside the viewport; if no side fits (huge target) sit inside the
  * viewport's lower edge. Mobile: dock to whichever edge covers less of the target.
+ * No target: centred on both layouts.
  */
 export function placeCoachmark(target: Box | null, card: Size, vp: Size, isMobile: boolean): Placement {
+  if (!target) return { mode: 'center' }
   if (isMobile) {
-    if (!target) return { mode: 'dock', edge: 'bottom' }
     const t0 = target.top - RING_PAD
     const t1 = target.top + target.height + RING_PAD
     const bottomCover = overlap(vp.height - DOCK_GUTTER - card.height, vp.height - DOCK_GUTTER, t0, t1)
     const topCover = overlap(DOCK_GUTTER, DOCK_GUTTER + card.height, t0, t1)
     return { mode: 'dock', edge: topCover < bottomCover ? 'top' : 'bottom' }
   }
-  if (!target) return { mode: 'center' }
-
   const right = target.left + target.width
   const bottom = target.top + target.height
   const cx = target.left + target.width / 2

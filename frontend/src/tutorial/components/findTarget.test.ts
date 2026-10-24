@@ -31,6 +31,24 @@ describe('findTarget', () => {
     expect(findTarget('ticker')).toBeNull()
   })
 
+  it('narrows to the keyed descendant when a key is given', () => {
+    const grid = tagged('trade-company', { width: 300, height: 100 })
+    const item = (k: string, w: number) => {
+      const b = document.createElement('button')
+      b.setAttribute('data-tutorial-key', k)
+      b.getBoundingClientRect = () => ({ left: 0, top: 0, width: w, height: 30 }) as DOMRect
+      grid.appendChild(b)
+      return b
+    }
+    item('Cred', 90)
+    const tcs = item('TCS', 90)
+    expect(findTarget('trade-company', document, 'TCS')).toBe(tcs)
+    expect(findTarget('trade-company', document, 'Infosys')).toBeNull()
+    item('own:0', 0) // zero-size keyed item never wins
+    expect(findTarget('trade-company', document, 'own:0')).toBeNull()
+    expect(findTarget('trade-company')).toBe(grid)
+  })
+
   it('searches only inside the given root', () => {
     const root = document.createElement('section')
     document.body.appendChild(root)

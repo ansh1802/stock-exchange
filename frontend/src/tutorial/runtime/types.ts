@@ -23,6 +23,10 @@ export interface Step {
   text?: string
   textMobile?: string
   target?: TargetId
+  /** Narrows `target` to the descendant tagged `data-tutorial-key=<key>` (e.g. 'TCS', 'own:0'). */
+  targetKey?: string
+  /** Overrides `target` when mobile; `null` = untargeted on mobile. `targetKey` still applies. */
+  targetMobile?: TargetId | null
   advance: Advance
   holdRevealAt?: string
   mobileTab?: MobileTab

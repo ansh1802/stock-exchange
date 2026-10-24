@@ -50,7 +50,9 @@ export default function TutorialLayer({
   step, picked, isMobile, onNext, onClick, onValue, onPredict, onRestartStep, onExit,
 }: Props) {
   const kind = step.advance.kind
-  const wantsTarget = !!step.target && !SILENT.has(kind)
+  const target = isMobile && step.targetMobile !== undefined ? step.targetMobile : step.target
+  const targetKey = step.targetKey
+  const wantsTarget = !!target && !SILENT.has(kind)
 
   const [el, setEl] = useState<HTMLElement | null>(null)
   const [rect, setRect] = useState<Box | null>(null)
@@ -72,7 +74,7 @@ export default function TutorialLayer({
       const w = window.innerWidth
       const h = window.innerHeight
       setVp((v) => (v.width === w && v.height === h ? v : { width: w, height: h }))
-      const found = wantsTarget && step.target ? findTarget(step.target) : null
+      const found = wantsTarget && target ? findTarget(target, document, targetKey) : null
       if (found !== lastEl) { lastEl = found; setEl(found) }
       const r = found ? toBox(found.getBoundingClientRect()) : null
       if (!sameBox(r, lastRect)) { lastRect = r; setRect(r) }
@@ -88,7 +90,7 @@ export default function TutorialLayer({
     }
     tick()
     return () => cancelAnimationFrame(raf)
-  }, [step, wantsTarget])
+  }, [step, target, targetKey, wantsTarget])
 
   const interactive = INTERACTIVE.has(kind) && !!el && !!rect && !missing
 
@@ -170,7 +172,7 @@ export default function TutorialLayer({
   const spot = rect && !missing ? rect : null
   const fullScreen = !!spot && spot.width >= vp.width * 0.9 && spot.height >= vp.height * 0.9
   const silent = SILENT.has(kind)
-  const untargetedRead = !step.target && (kind === 'next' || kind === 'predict')
+  const untargetedRead = !target && (kind === 'next' || kind === 'predict')
   const dim = !silent && (missing || untargetedRead || (!!spot && !fullScreen))
 
   const variant: CoachmarkVariant | null = missing ? 'missing' : silent ? null : kind === 'auto' ? 'chip' : 'card'

@@ -148,6 +148,7 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
               {ownCards.map((card, i) => (
                 <motion.button
                   key={i}
+                  data-tutorial-key={`own:${i}`}
                   onClick={() => toggleOwn(i)}
                   whileTap={{ scale: 0.95 }}
                   className={cn(
@@ -176,6 +177,7 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
                 {otherCards.map((card, i) => (
                   <motion.button
                     key={i}
+                    data-tutorial-key={`other:${card.playerId}:${card.cardIdx}`}
                     onClick={() => selectOther(card)}
                     whileTap={{ scale: 0.95 }}
                     className={cn(

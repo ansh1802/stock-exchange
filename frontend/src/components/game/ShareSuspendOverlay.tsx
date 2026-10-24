@@ -434,6 +434,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
                   return (
                     <div
                       key={co.name}
+                      data-tutorial-key={co.name}
                       className="flex items-center justify-between gap-2 px-2.5 md:px-3 min-h-[40px] md:min-h-[42px] rounded-lg border border-dashed border-gray-800"
                     >
                       {inner}
@@ -443,6 +444,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
                 return (
                   <button
                     key={co.name}
+                    data-tutorial-key={co.name}
                     type="button"
                     role="radio"
                     aria-checked={isSelected}

@@ -51,8 +51,8 @@ describe('placeCoachmark — mobile', () => {
   it('docks at the top when the target sits at the bottom', () => {
     expect(placeCoachmark(box(0, 740, 390, 60), card, m, true)).toEqual({ mode: 'dock', edge: 'top' })
   })
-  it('docks at the bottom with no target', () => {
-    expect(placeCoachmark(null, card, m, true)).toEqual({ mode: 'dock', edge: 'bottom' })
+  it('centres with no target', () => {
+    expect(placeCoachmark(null, card, m, true)).toEqual({ mode: 'center' })
   })
 })
 

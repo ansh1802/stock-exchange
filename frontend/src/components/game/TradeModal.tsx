@@ -200,6 +200,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
             return (
               <button
                 key={co.name}
+                data-tutorial-key={co.name}
                 onClick={() => { setSelectedCompany(i); setRawQuantity(1) }}
                 disabled={disabled || noShares}
                 className={cn(
