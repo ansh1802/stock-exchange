@@ -10,7 +10,7 @@
     200,
     196,
     197,
-    200
+    196
    ],
    "chairman": {
     "Cred": null,
@@ -142,7 +142,9 @@
      "is_you": false,
      "left": false,
      "name": "Kabir",
-     "stocks": {}
+     "stocks": {
+      "Infosys": 4
+     }
     }
    ],
    "price_history": [],
@@ -183,7 +185,7 @@
     200,
     196,
     200,
-    200
+    196
    ],
    "chairman": {
     "Cred": null,
@@ -311,7 +313,9 @@
      "is_you": false,
      "left": false,
      "name": "Kabir",
-     "stocks": {}
+     "stocks": {
+      "Infosys": 4
+     }
     }
    ],
    "price_history": [],
@@ -352,7 +356,7 @@
     200,
     196,
     197,
-    200
+    196
    ],
    "chairman": {
     "Cred": null,
@@ -483,7 +487,9 @@
      "is_you": false,
      "left": false,
      "name": "Kabir",
-     "stocks": {}
+     "stocks": {
+      "Infosys": 4
+     }
     }
    ],
    "price_history": [],
@@ -524,7 +530,7 @@
     200,
     196,
     197,
-    200
+    198
    ],
    "chairman": {
     "Cred": null,
@@ -602,7 +608,7 @@
     "You: Bought 4 of TCS for 220. Balance: 380.",
     "Meera: Bought 3 of Reliance for 225. Balance: 375.",
     "Arjun: Turn passed.",
-    "Kabir: Loan Stock used. Received $60 (10% of net worth).",
+    "Kabir: Sold 2 of Infosys for 160. Balance: 760.",
     "You: Turn passed."
    ],
    "networth_history": [
@@ -652,13 +658,15 @@
     },
     {
      "bot": "easy",
-     "cash": 660,
+     "cash": 760,
      "connected": true,
      "id": 4,
      "is_you": false,
      "left": false,
      "name": "Kabir",
-     "stocks": {}
+     "stocks": {
+      "Infosys": 2
+     }
     }
    ],
    "price_history": [],
@@ -699,7 +707,7 @@
     200,
     196,
     197,
-    200
+    198
    ],
    "chairman": {
     "Cred": null,
@@ -777,7 +785,7 @@
     "You: Bought 4 of TCS for 220. Balance: 380.",
     "Meera: Bought 3 of Reliance for 225. Balance: 375.",
     "Arjun: Turn passed.",
-    "Kabir: Loan Stock used. Received $60 (10% of net worth)."
+    "Kabir: Sold 2 of Infosys for 160. Balance: 760."
    ],
    "networth_history": [
     {
@@ -826,13 +834,15 @@
     },
     {
      "bot": "easy",
-     "cash": 660,
+     "cash": 760,
      "connected": true,
      "id": 4,
      "is_you": false,
      "left": false,
      "name": "Kabir",
-     "stocks": {}
+     "stocks": {
+      "Infosys": 2
+     }
     }
    ],
    "price_history": [],
@@ -873,7 +883,7 @@
     200,
     200,
     200,
-    200
+    196
    ],
    "chairman": {
     "Cred": null,
@@ -997,7 +1007,9 @@
      "is_you": false,
      "left": false,
      "name": "Kabir",
-     "stocks": {}
+     "stocks": {
+      "Infosys": 4
+     }
     }
    ],
    "price_history": [],

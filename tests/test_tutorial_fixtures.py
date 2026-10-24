@@ -304,16 +304,18 @@ def test_turns_lesson():
         ok = after[:len(before)] == before and len(added) == 1 and added[0].startswith(f"{actor}: ")
         check(f"{a} -> {nxt}: exactly one move by {actor}", ok)
         moves[actor + str(s[a]["round"])] = added[0] if added else ""
-    one_kind = ("Bought ", "Sold ", "Turn passed.", "Loan Stock used.")
-    check("each move is one buy, sell, pass or power card",
+    one_kind = ("Bought ", "Sold ", "Turn passed.")
+    check("each move is one buy, sell or pass",
           all(any(m.split(": ", 1)[1].startswith(k) for k in one_kind) for m in moves.values()))
-    check("round 1: Meera buys Reliance, Arjun passes, Kabir plays Loan Stock",
+    check("round 1: Meera buys Reliance, Arjun passes, Kabir sells Infosys",
           moves["Meera0"].startswith("Meera: Bought 3 of Reliance")
           and moves["Arjun0"] == "Arjun: Turn passed."
-          and moves["Kabir0"].startswith("Kabir: Loan Stock used."))
+          and moves["Kabir0"].startswith("Kabir: Sold 2 of Infosys"))
     check("round 2: you pass", moves["You1"] == "You: Turn passed.")
     k = next(p for p in s["round2"]["players"] if p["name"] == "Kabir")
-    check("Kabir's Loan Stock: $600 -> $660 cash", k["cash"] == 660)
+    check("Kabir's sell: 4 -> 2 Infosys, $600 -> $760", k["stocks"]["Infosys"] == 2 and k["cash"] == 760)
+    check("no power card is played in this chapter", not any("Loan Stock" in l or "Debenture" in l or "Rights" in l
+                                                            for l in s["passed"]["game_log"]))
 
     # Seat order rotates at end_day: tomorrow Meera moves first.
     sc = CHAPTERS["turns"]()

@@ -3,7 +3,7 @@ import type { Chapter } from '../runtime/types'
 /**
  * Spec Ch 4 — your turn, 3 moves a day (fixture: backend/tutorial/chapters/turns.py).
  * One full round goes round the table seat by seat (You buy, Meera buys,
- * Arjun passes, Kabir plays Loan Stock), the round ticks to 2, then You pass.
+ * Arjun passes, Kabir sells), the round ticks to 2, then You pass.
  */
 const turns: Chapter = {
   id: 'turns',
@@ -99,7 +99,7 @@ const turns: Chapter = {
     },
     {
       id: 'log', snap: 'round2', target: 'log', mobileTab: 'logchat',
-      text: 'Round 1 in the log: one line per seat — your buy, Meera’s buy, Arjun’s pass, Kabir’s **Loan Stock**, a power card.',
+      text: 'Round 1 in the log: one line per seat — your buy, Meera’s buy, Arjun’s pass, Kabir’s **sell**.',
       advance: { kind: 'next' },
     },
     {
