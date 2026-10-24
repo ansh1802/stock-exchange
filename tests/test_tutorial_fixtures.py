@@ -326,18 +326,6 @@ def test_turns_lesson():
     check("day 2 order starts with Meera", g.current_day == 2 and [p.id for p in g.players] == [2, 3, 4, 1])
 
 
-def test_setup_order():
-    header("setup seat order")
-    s = mk()
-    s.setup(order=[2, 3, 1], current_turn=0)
-    g = s.room.game
-    check("players reordered by id", [p.id for p in g.players] == [2, 3, 1])
-    s.snap("a")
-    snap = s.to_fixture()["snapshots"]["a"]
-    check("snapshot follows the order, Ada first", [p["name"] for p in snap["players"]] == ["Ada", "Bo", "You"]
-          and snap["current_player_name"] == "Ada")
-
-
 def test_trading_lesson():
     header("trading lesson")
     if not check("trading registered", "trading" in CHAPTERS):
@@ -346,76 +334,86 @@ def test_trading_lesson():
     s = snaps("trading")
     order = ["start", "meera", "arjun", "you1", "bought", "you2", "sold", "you3", "bell", "after"]
     check("snapshots in order", list(s) == order)
-    st = s["start"]
-    check("4 seats, You last: Meera, Arjun, Kabir, You",
-          [p["name"] for p in st["players"]] == ["Meera", "Arjun", "Kabir", "You"])
-    check("day 1, round 1, Meera first", st["day"] == 1 and st["round"] == 0
-          and st["phase"] == "player_turn" and st["current_player_name"] == "Meera")
-    check("nobody holds shares at the start, everyone $600",
-          all(not p["stocks"] and p["cash"] == STARTING_CASH == 600 for p in st["players"]))
-    check("your hand: TCS +10, Infosys +10", st["your_hand"] == [
-        {"company": "TCS", "value": 10, "positive": True, "is_power": False},
-        {"company": "Infosys", "value": 10, "positive": True, "is_power": False},
-    ])
-    tcs_p, inf_p = COMPANY_BASE_VALUES[3], COMPANY_BASE_VALUES[5]
-    check("TCS $55, Infosys $80 (base)", st["companies"][3]["value"] == tcs_p == 55
-          and st["companies"][5]["value"] == inf_p == 80)
 
     def by(snap, name):
         return next(p for p in snap["players"] if p["name"] == name)
 
+    def price(snap, name):
+        return next(c["value"] for c in snap["companies"] if c["name"] == name)
+
+    def worth(snap, name):
+        p = by(snap, name)
+        return p["cash"] + sum(q * price(snap, n) for n, q in p["stocks"].items())
+
+    st = s["start"]
+    # Day 1 was played through the engine: its history is real, and end_day rotated the seats.
+    check("day 2, round 1, Meera first; seats Meera, Arjun, Kabir, You",
+          st["day"] == 2 and st["round"] == 0 and st["phase"] == "player_turn"
+          and st["current_player_name"] == "Meera"
+          and [p["name"] for p in st["players"]] == ["Meera", "Arjun", "Kabir", "You"])
+    check("day 1 log: you bought 10 Vodafone for $200", "You: Bought 10 of Vodafone for 200. Balance: 400."
+          in st["game_log"] and STARTING_CASH - 10 * COMPANY_BASE_VALUES[0] == 400)
+    check("price_history = day-1 close; Vodafone $20 -> $30, TCS $55, Infosys $80 unchanged",
+          st["price_history"] == [[30, 30, 45, 55, 80, 80]]
+          and [c["value"] for c in st["companies"]] == st["price_history"][-1]
+          and COMPANY_BASE_VALUES[0] == 20 and COMPANY_BASE_VALUES[3] == 55 and COMPANY_BASE_VALUES[5] == 80)
+    nh = st["networth_history"]
+    check("networth_history consistent with holdings: day 1 You 700, Meera 610, Arjun 625, Kabir 640",
+          len(nh) == 2 and nh[1] == {1: 700, 2: 610, 3: 625, 4: 640}
+          and all(nh[1][p["id"]] == worth(st, p["name"]) for p in st["players"]))
+    me = you(st)
+    check("you start day 2 with $400 and 10 Vodafone", me["cash"] == 400 and me["stocks"] == {"Vodafone": 10})
+    check("your hand: TCS +10, Infosys +10, Vodafone -5", st["your_hand"] == [
+        {"company": "TCS", "value": 10, "positive": True, "is_power": False},
+        {"company": "Infosys", "value": 10, "positive": True, "is_power": False},
+        {"company": "Vodafone", "value": 5, "positive": False, "is_power": False},
+    ])
+
     # Round 1 (watched): one log line per bot move.
     y1 = s["you1"]
     added = y1["game_log"][len(st["game_log"]):]
-    check("round 1: Meera 6 TCS, Arjun 5 TCS, Kabir 5 Vodafone", [l.split(". Balance")[0] for l in added] == [
-        "Meera: Bought 6 of TCS for 330", "Arjun: Bought 5 of TCS for 275", "Kabir: Bought 5 of Vodafone for 100"])
-    check("board: Meera 6 TCS, Arjun 5 TCS, Kabir 5 Vodafone", by(y1, "Meera")["stocks"] == {"TCS": 6}
-          and by(y1, "Arjun")["stocks"] == {"TCS": 5} and by(y1, "Kabir")["stocks"] == {"Vodafone": 5})
+    check("round 1: Meera 4 TCS, Arjun 5 TCS, Kabir 4 Cred", [l.split(". Balance")[0] for l in added] == [
+        "Meera: Bought 4 of TCS for 220", "Arjun: Bought 5 of TCS for 275", "Kabir: Bought 4 of Cred for 180"])
     check("then it's your turn, still round 1", y1["current_player_name"] == "You" and y1["round"] == 0)
 
-    # Your buy: slider max is cash-bound (10), and what's left can't buy a real Infosys stake.
-    me1 = you(y1)
-    avail_tcs = y1["available_shares"][3]
-    max_tcs = min(me1["cash"] // tcs_p, avail_tcs)
-    check("TCS available 189 = 200 - 11", avail_tcs == STARTING_SHARES - 11 == 189)
-    check("TCS slider max 10 (cash $600 // $55), cost $550 <= cash",
-          max_tcs == 10 and 10 * tcs_p == 550 <= me1["cash"])
-    left = me1["cash"] - 10 * tcs_p
-    check("$50 left: under one Infosys share ($80)", left == 50 < inf_p
-          and (left // inf_p) * inf_p < (10 * tcs_p) / 2)
+    # Your buy: Max is cash-bound (7), and what's left can't buy a real Infosys stake.
+    tcs_p, inf_p = 55, 80
+    avail = y1["available_shares"][3]
+    check("TCS available 191 = 200 - 9", avail == STARTING_SHARES - 9 == 191)
+    check("TCS Max 7 ($400 // $55), cost $385", min(400 // tcs_p, avail) == 7 and 7 * tcs_p == 385)
+    left = 400 - 7 * tcs_p
+    check("$15 left: under one Infosys share ($80)", left == 15 < inf_p
+          and (left // inf_p) * inf_p < (7 * tcs_p) / 2)
     b = s["bought"]
-    me = you(b)
-    check("bought: 10 TCS, cash $50", me["stocks"] == {"TCS": 10} and me["cash"] == 50
-          and b["game_log"][-1].startswith("You: Bought 10 of TCS for 550"))
-    check("bought: round 2, Meera's turn", b["round"] == 1 and b["current_player_name"] == "Meera")
+    check("bought: 7 TCS, cash $15", you(b)["stocks"] == {"Vodafone": 10, "TCS": 7} and you(b)["cash"] == 15
+          and b["game_log"][-1].startswith("You: Bought 7 of TCS for 385"))
 
     y2 = s["you2"]
     added = y2["game_log"][len(b["game_log"]):]
-    check("round 2: Meera +3 TCS, Arjun passes, Kabir 4 Cred", [l.split(". Balance")[0] for l in added] == [
-        "Meera: Bought 3 of TCS for 165", "Arjun: Turn passed.", "Kabir: Bought 4 of Cred for 160"])
-    check("you2: your turn, round 2", y2["current_player_name"] == "You" and y2["round"] == 1)
-    check("sell max = holdings = 10", you(y2)["stocks"]["TCS"] == 10)
-
+    check("round 2: Meera +2 TCS, Arjun passes, Kabir 3 YesBank", [l.split(". Balance")[0] for l in added] == [
+        "Meera: Bought 2 of TCS for 110", "Arjun: Turn passed.", "Kabir: Bought 3 of YesBank for 90"])
+    check("sell max = Vodafone holdings = 10; nobody else holds Vodafone",
+          you(y2)["stocks"]["Vodafone"] == 10 and y2["available_shares"][0] == STARTING_SHARES - 10)
     so = s["sold"]
-    me = you(so)
-    check("sold 2 TCS: $110 back, cash $50 -> $160, 8 TCS", me["stocks"] == {"TCS": 8} and me["cash"] == 160
-          and 2 * tcs_p == 110 and so["game_log"][-1].startswith("You: Sold 2 of TCS for 110"))
+    check("sold 5 Vodafone at $30: $150 back, cash $15 -> $165", you(so)["stocks"] == {"Vodafone": 5, "TCS": 7}
+          and you(so)["cash"] == 165 and so["game_log"][-1].startswith("You: Sold 5 of Vodafone for 150"))
 
     y3 = s["you3"]
     added = y3["game_log"][len(so["game_log"]):]
     check("round 3: the bots pass", added == ["Meera: Turn passed.", "Arjun: Turn passed.", "Kabir: Turn passed."])
-    me = you(y3)
-    nw_before = me["cash"] + me["stocks"]["TCS"] * tcs_p
-    check("net worth before the bell $600 = $160 + 8 x $55", y3["round"] == 2 and nw_before == 600)
+    check("net worth before the bell $700", y3["round"] == 2 and worth(y3, "You") == 700)
 
     bl = s["bell"]
-    check("bell: card_reveal on day 1", bl["phase"] == "card_reveal" and bl["day"] == 1)
+    check("bell: card_reveal on day 2", bl["phase"] == "card_reveal" and bl["day"] == 2)
     rd = {r["company_name"]: r for r in bl["reveal_data"]}
 
     def cards(name):
         return [(c["player_name"], c["value"] if c["positive"] else -c["value"]) for c in rd[name]["cards"]]
 
-    t, i = rd["TCS"], rd["Infosys"]
+    v, t, i = rd["Vodafone"], rd["TCS"], rd["Infosys"]
+    check("Vodafone: You -5 only, $30 to $25; the 5 sold dodged $25",
+          cards("Vodafone") == [("You", -5)] and v["old_value"] == 30 and v["new_value"] == 25
+          and 5 * (v["old_value"] - v["new_value"]) == 25)
     # Cards land in seat order; the copy names them in this order.
     check("TCS: Meera +10, Arjun +5, You +10 -> +25, $55 to $80",
           cards("TCS") == [("Meera", 10), ("Arjun", 5), ("You", 10)] and t["delta"] == 25
@@ -425,29 +423,26 @@ def test_trading_lesson():
           cards("Infosys") == [("Kabir", -5), ("You", 10)] and i["delta"] == 5
           and i["old_value"] == 80 and i["new_value"] == 85)
     check("TCS rises more than Infosys", t["delta"] > i["delta"])
-    # Hidden hands behind the read: the alliance held + TCS, Kabir held Infosys -, nobody else backed Infosys.
-    check("Meera and Arjun held + TCS cards", ("Meera", 10) in cards("TCS") and ("Arjun", 5) in cards("TCS"))
-    check("Kabir held Infosys -, no TCS card", ("Kabir", -5) in cards("Infosys")
-          and not any(n == "Kabir" for n, _ in cards("TCS")))
+    check("Kabir held Infosys -, no TCS card", not any(n == "Kabir" for n, _ in cards("TCS")))
     check("no chairman/director queue, no currency", bl["chairman_director_queue"] == []
           and not bl["currency_effects"])
 
     af = s["after"]
-    check("after: day 2 dealt, no reveal data (no re-animation)", af["phase"] == "player_turn"
-          and not af["reveal_data"] and af["day"] == 2 and af["current_player_name"] == "Arjun")
-    me = you(af)
-    nw_after = me["cash"] + sum(q * next(c["value"] for c in af["companies"] if c["name"] == n)
-                                for n, q in me["stocks"].items())
-    check("after: net worth $800 = $160 + 8 x $80, +$200", nw_after == 800 and nw_after - nw_before == 200
-          and me["cash"] == 160 and me["stocks"] == {"TCS": 8})
+    check("after: day 3 dealt, no reveal data (no re-animation)", af["phase"] == "player_turn"
+          and not af["reveal_data"] and af["day"] == 3)
+    check("after: You $700 -> $850 = $165 + 7 x $80 + 5 x $25 (+$175 TCS, -$25 Vodafone)",
+          worth(af, "You") == 850 == 165 + 7 * 80 + 5 * 25 and 7 * 25 == 175)
+    check("selling 5 Vodafone helped: keeping 10 would end at $825", 15 + 7 * 80 + 10 * 25 == 825 < 850)
     hist = af["networth_history"]
-    check("networth_history: you $600 -> $800 on day 1", len(hist) == 2
-          and hist[0][1] == 600 and hist[1][1] == 800)
+    check("standings: You $850 ahead of Meera $770, Arjun $775 (and Kabir $660)",
+          hist[2] == {1: 850, 2: 770, 3: 775, 4: 660}
+          and all(hist[2][p["id"]] == worth(af, p["name"]) for p in af["players"])
+          and hist[2][1] > max(hist[2][2], hist[2][3], hist[2][4]))
     check("no power card is played", not any("Loan Stock" in l or "Debenture" in l or "Rights" in l
                                              for l in af["game_log"]))
 
 
-for t in (test_setup_hands, test_setup_order, test_setup_holdings, test_snap_shape, test_act_logs_like_server,
+for t in (test_setup_hands, test_setup_holdings, test_snap_shape, test_act_logs_like_server,
           test_failed_act_raises, test_bell_and_next_day, test_check_detects_drift,
           test_orientation_lesson, test_objective_lesson, test_prices_lesson, test_turns_lesson, test_trading_lesson):
     t()

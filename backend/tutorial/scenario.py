@@ -56,13 +56,9 @@ class Scenario:
 
     def setup(self, *, prices=None, closed=None, cash=None, stocks=None, hands=None,
               day=None, price_history=None, networth_history=None,
-              current_turn=None, round=None, order=None):
+              current_turn=None, round=None):
         g = self.game
         names = COMPANY_NAMES
-        if order is not None:  # seat order by player id (what end_day's rotation would produce)
-            by_id = {p.id: p for p in g.players}
-            assert sorted(order) == sorted(by_id), f"order must list every seat once: {order}"
-            g.players = [by_id[pid] for pid in order]
         for name, value in (prices or {}).items():
             g.companies[names.index(name)].value = value
         for name in closed or []:

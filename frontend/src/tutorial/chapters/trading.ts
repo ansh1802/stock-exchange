@@ -2,10 +2,11 @@ import type { Chapter } from '../runtime/types'
 
 /**
  * Spec Ch 5 — trading (fixture: backend/tutorial/chapters/trading.py).
- * You move last on day 1, so round 1 plays out first: Meera and Arjun pile
- * into TCS (an alliance), Kabir scatters. You read it, buy 10 TCS, hedge by
- * selling 2 in round 2, and the bell proves the read. Bell cards land in
- * seat order (Meera, Arjun, Kabir, You) — the copy names them that way.
+ * Day 2 (day 1 is real engine history: you hold 10 Vodafone). You move last,
+ * so round 1 plays out first: Meera and Arjun pile into TCS (an alliance),
+ * Kabir scatters. You read it and buy 7 TCS; in round 2 you sell 5 Vodafone
+ * on your −5 card; the bell proves both reads. Bell cards land in seat order
+ * (Meera, Arjun, Kabir, You) — the copy names them that way.
  */
 const trading: Chapter = {
   id: 'trading',
@@ -14,13 +15,13 @@ const trading: Chapter = {
   minutes: 4,
   hookFrom: 'turns',
   chips: [
-    'One move = one company',
+    'Each buy or sell is one company',
     'Watch what others buy — it hints at their cards',
   ],
   steps: [
     {
       id: 'hook', snap: 'start', target: 'player-board', mobileTab: 'players',
-      text: 'You can’t see their cards — but you can see what they buy. Today you move last, so watch round 1 first.',
+      text: 'You can’t see their cards — but you can see what they buy. Day 2, and you move last: watch round 1 first.',
       advance: { kind: 'next' },
     },
     {
@@ -30,7 +31,7 @@ const trading: Chapter = {
     },
     {
       id: 'arjun-moves', snap: 'meera', mobileTab: 'players',
-      text: 'Meera bought 6 TCS. Arjun’s move…',
+      text: 'Meera bought 4 TCS. Arjun’s move…',
       advance: { kind: 'auto', delayMs: 1500 },
     },
     {
@@ -40,7 +41,7 @@ const trading: Chapter = {
     },
     {
       id: 'log', snap: 'you1', target: 'log', mobileTab: 'logchat',
-      text: 'Round 1 in the log: Meera **6 TCS**, Arjun **5 TCS**, Kabir **5 Vodafone**.',
+      text: 'Round 1 in the log: Meera **4 TCS**, Arjun **5 TCS**, Kabir **4 Cred**.',
       advance: { kind: 'next' },
     },
     {
@@ -71,7 +72,7 @@ const trading: Chapter = {
     },
     {
       id: 'open-buy', snap: 'you1', target: 'buy-button', checkpoint: true,
-      text: 'One move = one company. Put it on TCS — tap **Buy**.',
+      text: 'One move, and a buy is one company — make it TCS. Tap **Buy**.',
       advance: { kind: 'click' },
     },
     {
@@ -81,13 +82,13 @@ const trading: Chapter = {
     },
     {
       id: 'qty', snap: 'you1', target: 'trade-slider',
-      text: 'Drag to **10**, your Max. Max is what your cash buys or what the bank has left — here $600 ÷ $55 runs out first.',
-      advance: { kind: 'value', equals: 10 },
+      text: 'Drag to **7**, your Max. Max is what your cash buys or what the bank has left — here $400 ÷ $55 runs out first.',
+      advance: { kind: 'value', equals: 7 },
     },
     {
       id: 'confirm', snap: 'you1', target: 'trade-confirm',
-      text: 'Balance after: **$50** — not one Infosys share at $80. Your cash backs one real position; confirm it.',
-      advance: { kind: 'action', expect: { type: 'buy', company_num: 4, quantity: 10 } },
+      text: 'Balance after: **$15** — not one Infosys share at $80. Your cash backs one real position; confirm it.',
+      advance: { kind: 'action', expect: { type: 'buy', company_num: 4, quantity: 7 } },
     },
     {
       id: 'round2-bots', snap: 'bought', mobileTab: 'logchat',
@@ -96,23 +97,30 @@ const trading: Chapter = {
     },
     {
       id: 'round2-log', snap: 'you2', target: 'log', mobileTab: 'logchat',
-      text: 'Meera added **3 TCS**, Arjun passed, Kabir bought **4 Cred** — scattered again.',
+      text: 'Meera added **2 TCS**, Arjun passed, Kabir bought **3 YesBank** — scattered again.',
+      advance: { kind: 'next' },
+    },
+    {
+      id: 'vodafone-card', snap: 'you2', target: 'hand',
+      text: 'Your **Vodafone −5** will pull Vodafone down at the bell — and you hold 10 Vodafone from yesterday.',
+      textMobile: 'Your **VODA −5** will pull Vodafone down at the bell — and you hold 10 Vodafone from yesterday.',
       advance: { kind: 'next' },
     },
     {
       id: 'open-sell', snap: 'you2', target: 'sell-button', checkpoint: true,
-      text: 'Two buyers is a strong hint, not proof. Selling a little keeps some cash safe — tap **Sell**.',
+      text: 'Act on that card this move — tap **Sell**.',
       advance: { kind: 'click' },
     },
     {
-      id: 'pick-tcs-sell', snap: 'you2', target: 'trade-company', targetKey: 'TCS',
-      text: 'Pick **TCS**.',
+      id: 'pick-vodafone', snap: 'you2', target: 'trade-company', targetKey: 'Vodafone',
+      text: 'Pick **Vodafone** — $30 a share.',
+      textMobile: 'Pick **VODA** (Vodafone) — $30 a share.',
       advance: { kind: 'click' },
     },
     {
       id: 'sell-qty', snap: 'you2', target: 'trade-slider',
-      text: 'When selling, Max is what you own: **10**. Set **2**.',
-      advance: { kind: 'value', equals: 2 },
+      text: 'When selling, Max is what you own: **10**. Sell **5** — cards you can’t see could still lift it.',
+      advance: { kind: 'value', equals: 5 },
     },
     {
       id: 'ri', snap: 'you2', target: 'trade-ri',
@@ -121,8 +129,8 @@ const trading: Chapter = {
     },
     {
       id: 'confirm-sell', snap: 'you2', target: 'trade-confirm',
-      text: 'Confirm: 2 × $55 = **$110** back, cash $50 → $160.',
-      advance: { kind: 'action', expect: { type: 'sell', company_num: 4, quantity: 2 } },
+      text: 'Confirm: 5 × $30 = **$150** back, cash $15 → $165.',
+      advance: { kind: 'action', expect: { type: 'sell', company_num: 1, quantity: 5 } },
     },
     {
       id: 'round3-bots', snap: 'sold', mobileTab: 'logchat',
@@ -131,7 +139,7 @@ const trading: Chapter = {
     },
     {
       id: 'before-bell', snap: 'you3', target: 'player-self', mobileTab: 'players',
-      text: 'All three passed. Your net worth: **$600** — $160 cash + 8 TCS × $55.',
+      text: 'All three passed. Your net worth going into the bell: **$700**.',
       advance: { kind: 'next' },
     },
     {
@@ -140,7 +148,13 @@ const trading: Chapter = {
       advance: { kind: 'action', expect: { type: 'pass' } },
     },
     // ── The closing bell ──
-    { id: 'bell', snap: 'bell', checkpoint: true, advance: { kind: 'reveal_wait', at: 'final_value:TCS' } },
+    { id: 'bell', snap: 'bell', checkpoint: true, advance: { kind: 'reveal_wait', at: 'final_value:Vodafone' } },
+    {
+      id: 'vodafone', snap: 'bell', target: 'reveal-overlay', holdRevealAt: 'final_value:Vodafone',
+      text: 'Your −5: Vodafone $30 → **$25**. The 5 you sold dodged it — **$25** kept.',
+      advance: { kind: 'next' },
+    },
+    { id: 'to-tcs', snap: 'bell', advance: { kind: 'reveal_wait', at: 'final_value:TCS' } },
     {
       id: 'tcs', snap: 'bell', target: 'reveal-overlay', holdRevealAt: 'final_value:TCS',
       text: 'Meera’s +10, Arjun’s +5 and your +10: **+25**, TCS $55 → **$80**. The alliance was real.',
@@ -165,19 +179,19 @@ const trading: Chapter = {
     },
     {
       id: 'predict-worth', snap: 'bell', target: 'reveal-overlay', holdRevealAt: 'final_value:Infosys',
-      text: 'Before the bell your net worth was **$600**. What is it now?',
+      text: 'You went into the bell at **$700**. Where did it leave you?',
       advance: {
         kind: 'predict',
-        options: [{ label: '$800', correct: true }, { label: '$850', correct: false }],
-        right: 'Exactly — 8 TCS × $80 + $160 cash.',
-        wrong: 'Not this time — you sold 2, so it’s 8 TCS × $80 + $160 cash.',
+        options: [{ label: '$825', correct: false }, { label: '$850', correct: true }],
+        right: 'Exactly — +$175 on TCS, and only −$25 on the 5 Vodafone you kept.',
+        wrong: 'Not this time — $825 is if you’d kept all 10 Vodafone. Selling 5 made it $850.',
       },
     },
     { id: 'end', snap: 'bell', advance: { kind: 'reveal_end' } },
     { id: 'standings', snap: 'after', advance: { kind: 'suspend_end' } },
     {
       id: 'worth', snap: 'after', target: 'player-self', mobileTab: 'players',
-      text: 'Net worth $600 → **$800**: your 8 TCS gained **$200**. You read the alliance and rode it.',
+      text: 'Net worth $700 → **$850** — top of the table. You read the alliance and rode it.',
       advance: { kind: 'next' },
     },
     {
@@ -187,7 +201,7 @@ const trading: Chapter = {
     },
     {
       id: 'next-up', snap: 'after', target: 'player-self', mobileTab: 'players',
-      text: 'Your Max stopped at 10 because your $600 ran out. Next: a way to raise cash mid-day.',
+      text: 'Your Max stopped at 7 because your $400 ran out. Next: a way to raise cash mid-day.',
       advance: { kind: 'next' },
     },
   ],
