@@ -138,6 +138,7 @@ export default function PlayerHand({ send }: Props) {
           <CardComponent
             key={i}
             card={card}
+            tutorialKey={card.company}
             selected={selectedCard === i}
             onClick={() => handleCardClick(i)}
           />

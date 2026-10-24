@@ -36,6 +36,7 @@ export default function MobileCardStrip({
           <CardComponent
             key={i}
             card={card}
+            tutorialKey={card.company}
             compact
             selected={selectedIdx === i}
             onClick={() => isMyTurn && onSelect(i)}

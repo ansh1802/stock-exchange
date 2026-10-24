@@ -26,6 +26,7 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
         </span>
         <button
           onClick={() => onUse(card)}
+          data-tutorial-key="use"
           disabled={blocked({ type: 'loan_stock' })}
           className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-sm rounded-lg"
         >
@@ -52,6 +53,7 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
               <button
                 key={co.name}
                 onClick={() => onUse(card, companies.indexOf(co) + 1)}
+                data-tutorial-key={co.name}
                 disabled={blocked({ type: 'debenture', company_num: companies.indexOf(co) + 1 })}
                 className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg border border-gray-600"
               >

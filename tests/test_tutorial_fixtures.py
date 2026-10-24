@@ -442,9 +442,195 @@ def test_trading_lesson():
                                              for l in af["game_log"]))
 
 
+def _price(snap, name):
+    return next(c["value"] for c in snap["companies"] if c["name"] == name)
+
+
+def _open(snap, name):
+    return next(c["is_open"] for c in snap["companies"] if c["name"] == name)
+
+
+def _board_worth(snap, name):
+    """Net worth as the board shows it (and the engine counts it): shut companies count $0."""
+    p = next(pl for pl in snap["players"] if pl["name"] == name)
+    return p["cash"] + sum(q * _price(snap, n) for n, q in p["stocks"].items() if _open(snap, n))
+
+
+def _added(prev, cur):
+    return cur["game_log"][len(prev["game_log"]):]
+
+
+def _no_bot_power_cards(snap):
+    return not any(l.split(":")[0] in ("Meera", "Arjun", "Kabir")
+                   and any(w in l for w in ("Loan Stock", "reopened", "Rights", "suspend"))
+                   for l in snap["game_log"])
+
+
+def test_loan_stock_lesson():
+    header("loan-stock lesson")
+    if not check("loan-stock registered", "loan-stock" in CHAPTERS):
+        return
+    from engine.constants import COMPANY_BASE_VALUES, LOAN_STOCK_AMOUNT, STARTING_CASH, STARTING_SHARES
+    s = snaps("loan-stock")
+    check("snapshots in order", list(s) == ["start", "meera", "you1", "loaned", "you2", "bought"])
+
+    st = s["start"]
+    check("day 2, round 1, seats Meera, Arjun, You (end_day rotated them)",
+          st["day"] == 2 and st["round"] == 0 and st["current_player_name"] == "Meera"
+          and [p["name"] for p in st["players"]] == ["Meera", "Arjun", "You"])
+    check("day 1 log: you bought 14 Cred for $560, $40 left",
+          "You: Bought 14 of Cred for 560. Balance: 40." in st["game_log"]
+          and STARTING_CASH - 14 * COMPANY_BASE_VALUES[2] == 40)
+    check("day-1 close: Cred $40 -> $60, Reliance $75 -> $35",
+          st["price_history"][-1][2] == 60 and st["price_history"][-1][4] == 35
+          and COMPANY_BASE_VALUES[4] == 75 and _price(st, "Reliance") == 35)
+    nh = st["networth_history"]
+    check("networth_history[1] matches the board for every seat",
+          all(nh[1][p["id"]] == _board_worth(st, p["name"]) for p in st["players"]))
+    me = you(st)
+    check("you: $40 cash, 14 Cred", me["cash"] == 40 and me["stocks"] == {"Cred": 14})
+    check("your hand: Reliance +20, Loan Stock", st["your_hand"] == [
+        {"company": "Reliance", "value": 20, "positive": True, "is_power": False},
+        {"company": "LoanStock", "value": 0, "positive": True, "is_power": True},
+    ])
+
+    y1 = s["you1"]
+    check("round 1: Meera 2 Infosys, Arjun 5 Vodafone, then you",
+          [l.split(". Balance")[0] for l in _added(st, y1)] == [
+              "Meera: Bought 2 of Infosys for 160", "Arjun: Bought 5 of Vodafone for 100"]
+          and y1["current_player_name"] == "You" and y1["round"] == 0)
+    rel_avail = y1["available_shares"][4]
+    max_before = min(you(y1)["cash"] // _price(y1, "Reliance"), rel_avail)
+    check("Reliance Max before the loan = 1 ($40 // $35)", rel_avail == STARTING_SHARES and max_before == 1)
+
+    nw = _board_worth(y1, "You")
+    loan = max(5, int(nw * 0.1) // 5 * 5)
+    check("net worth $880 = $40 + 14 x $60", nw == 880 == 40 + 14 * 60)
+    check("loan = max(5, int(nw*0.1)//5*5) = $85 (the predict's right answer)", loan == 85)
+    check("predict distractors: $4 = 10% of cash, $100 = rulebook's flat amount",
+          int(you(y1)["cash"] * 0.1) == 4 and LOAN_STOCK_AMOUNT == 100 and loan not in (4, 100))
+
+    lo = s["loaned"]
+    check("loaned: engine paid $85, cash $40 -> $125, card consumed",
+          lo["game_log"][-1] == "You: Loan Stock used. Received $85 (10% of net worth)."
+          and you(lo)["cash"] == 40 + loan == 125
+          and not any(c["company"] == "LoanStock" for c in lo["your_hand"]))
+    check("playing the card was the move: Meera's turn, round 2",
+          lo["current_player_name"] == "Meera" and lo["round"] == 1)
+
+    y2 = s["you2"]
+    check("round 2: Meera and Arjun pass", _added(lo, y2) == ["Meera: Turn passed.", "Arjun: Turn passed."]
+          and y2["current_player_name"] == "You" and y2["round"] == 1)
+    max_after = min(you(y2)["cash"] // _price(y2, "Reliance"), y2["available_shares"][4])
+    check("Reliance Max after the loan = 3 ($125 // $35) > 1", max_after == 3 > max_before)
+
+    b = s["bought"]
+    check("bought 3 Reliance for $105, cash $20",
+          b["game_log"][-1] == "You: Bought 3 of Reliance for 105. Balance: 20."
+          and you(b)["stocks"] == {"Cred": 14, "Reliance": 3} and you(b)["cash"] == 20)
+    check("no bot plays a power card", _no_bot_power_cards(b))
+
+
+def test_debenture_lesson():
+    header("debenture lesson")
+    if not check("debenture registered", "debenture" in CHAPTERS):
+        return
+    import re
+    import game_engine as ge
+    from engine.constants import COMPANY_BASE_VALUES, STARTING_SHARES
+    s = snaps("debenture")
+    check("snapshots in order", list(s) == ["start", "bell", "after", "you3", "reopened", "you4", "bought"])
+
+    st = s["start"]
+    check("day 2, round 3, your turn; seats Meera, Arjun, You",
+          st["day"] == 2 and st["round"] == 2 and st["current_player_name"] == "You"
+          and [p["name"] for p in st["players"]] == ["Meera", "Arjun", "You"])
+    check("day-1 bell took YesBank $25 -> $0: shut",
+          COMPANY_BASE_VALUES[1] == 25 and st["price_history"][-1][1] == 0
+          and _price(st, "YesBank") == 0 and _open(st, "YesBank") is False)
+    check("only YesBank is shut", [c["name"] for c in st["companies"] if not c["is_open"]] == ["YesBank"])
+    me = you(st)
+    check("you hold 10 YesBank (bought day 1 for $250) and $400 cash",
+          "You: Bought 10 of YesBank for 250. Balance: 350." in st["game_log"]
+          and me["stocks"] == {"YesBank": 10} and me["cash"] == 400)
+    check("board net worth $400: the 10 YesBank count $0", _board_worth(st, "You") == 400)
+    check("networth_history matches the board (shut = $0)",
+          all(st["networth_history"][1][p["id"]] == _board_worth(st, p["name"]) for p in st["players"]))
+    check("your hand: YesBank +10, Vodafone -5 (why you sold 10 Vodafone this morning)", st["your_hand"] == [
+        {"company": "YesBank", "value": 10, "positive": True, "is_power": False},
+        {"company": "Vodafone", "value": 5, "positive": False, "is_power": False},
+    ] and "You: Sold 10 of Vodafone for 250. Balance: 400." in st["game_log"])
+
+    # Engine truth behind the copy: a shut company can't be bought; selling pays $0.
+    g = ge.GameState(2, player_ids=[1, 2])
+    g.game_phase = "player_turn"
+    g.companies[1].value, g.companies[1].open = 0, False
+    g.players[0].stocks["YesBank"] = 10
+    r = ge.buy_stock(g, 1, 2, 1)
+    check("engine: buying a shut company fails", not r["success"] and "closed" in r["message"])
+    cash0 = g.players[0].cash
+    r = ge.sell_stock(g, 1, 2, 10)
+    check("engine: selling a shut company pays $0", r["success"] and g.players[0].cash == cash0)
+
+    bl = s["bell"]
+    check("bell: card_reveal day 2", bl["phase"] == "card_reveal" and bl["day"] == 2
+          and bl["game_log"][len(st["game_log"])] == "You: Turn passed.")
+    rd = {r["company_name"]: r for r in bl["reveal_data"]}
+    yb = rd["YesBank"]
+    cards = [(c["player_name"], c["value"] if c["positive"] else -c["value"]) for c in yb["cards"]]
+    check("YesBank cards land: Arjun +5, You +10 -> delta +15", cards == [("Arjun", 5), ("You", 10)]
+          and yb["delta"] == 15)
+    check("...but its price stays $0 -> $0", yb["old_value"] == 0 and yb["new_value"] == 0)
+    check("no chairman/director queue, no currency", bl["chairman_director_queue"] == []
+          and not bl["currency_effects"])
+
+    af = s["after"]
+    check("after: day 3 dealt, YesBank still shut at $0", af["day"] == 3 and af["phase"] == "player_turn"
+          and not af["reveal_data"] and _price(af, "YesBank") == 0 and _open(af, "YesBank") is False)
+    check("after: seats Arjun, You, Meera; Arjun first",
+          [p["name"] for p in af["players"]] == ["Arjun", "You", "Meera"] and af["current_player_name"] == "Arjun")
+    check("networth_history[2]: You $400", af["networth_history"][2][1] == 400 == _board_worth(af, "You"))
+
+    y3 = s["you3"]
+    check("Arjun moved, then your turn round 1", len(_added(af, y3)) == 1 and _added(af, y3)[0].startswith("Arjun: ")
+          and y3["current_player_name"] == "You" and y3["round"] == 0)
+    check("your hand: Debenture, YesBank +5", y3["your_hand"] == [
+        {"company": "Debenture", "value": 0, "positive": True, "is_power": True},
+        {"company": "YesBank", "value": 5, "positive": True, "is_power": False},
+    ])
+
+    ro = s["reopened"]
+    last = ro["game_log"][-1]
+    check("debenture: 'You: YesBank reopened at 25.'", last == "You: YesBank reopened at 25.")
+    m = re.search(r"(\w+) reopened", last)
+    check("DebentureOverlay's log regex fires on the latest line", "reopened at" in last
+          and m is not None and m.group(1) == "YesBank")
+    check("YesBank reopens at its base value $25 (the predict's right answer)",
+          _price(ro, "YesBank") == COMPANY_BASE_VALUES[1] == 25 and _open(ro, "YesBank") is True)
+    check("card consumed; playing it was the move (Meera's turn)",
+          not any(c["company"] == "Debenture" for c in ro["your_hand"]) and ro["current_player_name"] == "Meera")
+    nw_before, nw_after = _board_worth(y3, "You"), _board_worth(ro, "You")
+    check("net worth $400 -> $650 (10 YesBank $0 -> $250)", nw_before == 400 and nw_after == 650
+          and 10 * 25 == nw_after - nw_before)
+    check("you're top of the table after reopening",
+          all(nw_after > _board_worth(ro, p["name"]) for p in ro["players"] if not p["is_you"]))
+
+    y4 = s["you4"]
+    check("Meera and Arjun moved, your turn round 2", len(_added(ro, y4)) == 2 and y4["current_player_name"] == "You"
+          and y4["round"] == 1)
+    avail = y4["available_shares"][1]
+    check("YesBank tradeable: Max 16 ($400 // $25), 190 available", avail == STARTING_SHARES - 10 == 190
+          and min(you(y4)["cash"] // 25, avail) == 16)
+    bo = s["bought"]
+    check("bought 16 YesBank for $400", bo["game_log"][-1] == "You: Bought 16 of YesBank for 400. Balance: 0."
+          and you(bo)["stocks"] == {"YesBank": 26})
+    check("no bot plays a power card", _no_bot_power_cards(bo))
+
+
 for t in (test_setup_hands, test_setup_holdings, test_snap_shape, test_act_logs_like_server,
           test_failed_act_raises, test_bell_and_next_day, test_check_detects_drift,
-          test_orientation_lesson, test_objective_lesson, test_prices_lesson, test_turns_lesson, test_trading_lesson):
+          test_orientation_lesson, test_objective_lesson, test_prices_lesson, test_turns_lesson, test_trading_lesson,
+          test_loan_stock_lesson, test_debenture_lesson):
     t()
 
 print(f"\n{passed} passed, {failed} failed")

@@ -184,7 +184,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
           </h3>
           <div className="flex items-center gap-3">
             <TurnTimerDisplay />
-            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+            <button onClick={onClose} data-tutorial="trade-close" className="text-gray-500 hover:text-white transition-colors">
               <X size={18} />
             </button>
           </div>
