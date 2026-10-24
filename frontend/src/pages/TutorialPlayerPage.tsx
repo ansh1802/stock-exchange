@@ -9,7 +9,7 @@ import { CHAPTERS, findChapter, loadFixture, type Fixture } from '../tutorial/ch
 import TutorialLayer from '../tutorial/components/TutorialLayer'
 import { TutorialContext, type TutorialApi } from '../tutorial/runtime/TutorialContext'
 import {
-  allows, heldRevealStage, initialRun, reduce, rewindToCheckpoint, snapChanged,
+  allows, heldRevealStage, holdsSuspendClose, initialRun, reduce, rewindToCheckpoint, snapChanged,
   type MachineEvent, type RunState,
 } from '../tutorial/runtime/machine'
 import { enterTutorialStore, loadSnapshot, restoreStore } from '../tutorial/runtime/storeSwap'
@@ -120,6 +120,7 @@ function ChapterPlayer({ chapter }: { chapter: Chapter }) {
     allows: allowsMsg,
     frozenTimerSecs: timerSecs,
     heldRevealStage: run.done ? null : heldRevealStage(step),
+    holdSuspendClose: run.done ? false : holdsSuspendClose(step),
     reportRevealStage,
     forcedMobileTab: step.mobileTab ?? null,
   }), [allowsMsg, timerSecs, run.done, step, reportRevealStage])

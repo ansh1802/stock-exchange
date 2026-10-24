@@ -10,6 +10,7 @@ export interface TutorialApi {
   allows(msg: ClientMessage): boolean
   frozenTimerSecs: number // shown remaining seconds, never ticks
   heldRevealStage: string | null
+  holdSuspendClose: boolean // share-suspend overlay never starts its close countdown
   reportRevealStage(key: string): void
   forcedMobileTab: MobileTab | null
 }

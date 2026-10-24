@@ -4,7 +4,7 @@ import type { ClientMessage } from '../../types/messages'
 
 const buy = { type: 'buy', company_num: 4, quantity: 5 } as ClientMessage
 const api = (allow: boolean): TutorialApi => ({
-  allows: () => allow, frozenTimerSecs: 60, heldRevealStage: null,
+  allows: () => allow, frozenTimerSecs: 60, heldRevealStage: null, holdSuspendClose: false,
   reportRevealStage: () => {}, forcedMobileTab: null,
 })
 

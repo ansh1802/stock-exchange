@@ -766,10 +766,156 @@ def test_rights_issue_lesson():
           and g.current_turn == 1 and not g.players[0].hand)
 
 
+def _co(snap, name):
+    return next(c for c in snap["companies"] if c["name"] == name)
+
+
+def _signed(reveal, name):
+    rd = next(r for r in reveal["reveal_data"] if r["company_name"] == name)
+    return rd, [(c["player_name"], c["value"] if c["positive"] else -c["value"]) for c in rd["cards"]]
+
+
+def test_share_suspend_lesson():
+    header("share-suspend lesson")
+    if not check("share-suspend registered", "share-suspend" in CHAPTERS):
+        return
+    import game_engine as ge
+    from engine.constants import COMPANY_BASE_VALUES
+    s = snaps("share-suspend")
+    check("snapshots in order", list(s) == [
+        "start", "bell1", "suspend1", "halted1", "start2", "meera3", "bell2", "suspend2", "your-halt2", "meera-halt"])
+
+    # ── Bell 1: the shield ──
+    st = s["start"]
+    check("day 2, round 3, your turn; seats Meera, Arjun, You",
+          st["day"] == 2 and st["round"] == 2 and st["current_player_name"] == "You"
+          and [p["name"] for p in st["players"]] == ["Meera", "Arjun", "You"])
+    me = you(st)
+    check("you: $0 cash, 7 Cred, 4 TCS, 4 YesBank",
+          me["cash"] == 0 and me["stocks"] == {"Cred": 7, "TCS": 4, "YesBank": 4})
+    check("your hand: Share Suspend, Cred +5", st["your_hand"] == [
+        {"company": "ShareSuspend", "value": 0, "positive": True, "is_power": True},
+        {"company": "Cred", "value": 5, "positive": True, "is_power": False},
+    ])
+    check("prices: Cred $60, TCS $55, YesBank $15",
+          _price(st, "Cred") == 60 and _price(st, "TCS") == 55 and _price(st, "YesBank") == 15)
+    check("predict distractor: Cred's starting price is $40, not its pre-bell $60",
+          COMPANY_BASE_VALUES[2] == 40 != _price(st, "Cred"))
+    day2 = st["game_log"][st["game_log"].index("Day 2: cards dealt."):]
+    check("this morning Meera and Arjun sold all their Cred (4 each)",
+          "Meera: Sold 4 of Cred for 240. Balance: 680." in day2
+          and "Arjun: Sold 4 of Cred for 240. Balance: 680." in day2
+          and all("Cred" not in p["stocks"] for p in st["players"] if not p["is_you"]))
+    check("networth_history[1]: You $700 (= board before the bell)",
+          st["networth_history"][1][1] == 700 == _board_worth(st, "You"))
+    b1 = s["bell1"]
+    check("only you hold a Share Suspend on day 2",
+          [pid for pid, h in b1["all_hands"].items() if any(c["company"] == "ShareSuspend" for c in h)] == [1])
+    check("bell 1: card_reveal day 2, after your pass", b1["phase"] == "card_reveal" and b1["day"] == 2
+          and b1["game_log"][len(st["game_log"])] == "You: Turn passed.")
+    rd, cards = _signed(b1, "Cred")
+    check("Cred: Meera -15 -10, Arjun -15 -5, your +5 -> delta -40",
+          sorted(cards) == sorted([("Meera", -15), ("Meera", -10), ("Arjun", -15), ("Arjun", -5), ("You", 5)])
+          and rd["delta"] == -40)
+    check("Cred $60 -> $20: your 7 shares lose $280", rd["old_value"] == 60 and rd["new_value"] == 20
+          and you(b1)["stocks"]["Cred"] * (rd["old_value"] - rd["new_value"]) == 280)
+    check("bell 1: no chairman/director, no currency", b1["chairman_director_queue"] == [] and not b1["currency_effects"])
+
+    s1 = s["suspend1"]
+    cred = _co(s1, "Cred")
+    check("share_suspend: queue [You], your decision", s1["phase"] == "share_suspend"
+          and s1["suspend_queue"] == [1] and s1["current_player_name"] == "You")
+    check("overlay row: Cred $60 (before the bell) -> $20", cred["pre_fluct_value"] == 60 and cred["value"] == 20)
+    check("standings after the bell: You $420, last",
+          s1["networth_history"][2][1] == 420 == _board_worth(s1, "You")
+          and all(s1["networth_history"][2][p["id"]] > 420 for p in s1["players"] if not p["is_you"]))
+
+    h1 = s["halted1"]
+    check("halt: 'You: Share suspend on Cred: value -> 60.'",
+          "You: Share suspend on Cred: value -> 60." in h1["game_log"])
+    check("after your halt Cred == its pre-bell value ($60)", _price(h1, "Cred") == cred["pre_fluct_value"] == 60)
+    check("Trigger B: your networth_history row rises $420 -> $700, top of the table",
+          h1["networth_history"][2][1] == 700 > s1["networth_history"][2][1]
+          and all(h1["networth_history"][2][1] > h1["networth_history"][2][p["id"]]
+                  for p in h1["players"] if not p["is_you"]))
+    check("halted1: day 3 dealt, seats Arjun, You, Meera", h1["day"] == 3 and h1["phase"] == "player_turn"
+          and not h1["reveal_data"] and [p["name"] for p in h1["players"]] == ["Arjun", "You", "Meera"])
+
+    # ── Bell 2: the weapon, and a company the bell just CLOSED ──
+    s2 = s["start2"]
+    check("start2: day 3, round 3, your turn", s2["day"] == 3 and s2["round"] == 2
+          and s2["current_player_name"] == "You")
+    check("your day-3 hand: Share Suspend, TCS +15, YesBank +5", s2["your_hand"] == [
+        {"company": "ShareSuspend", "value": 0, "positive": True, "is_power": True},
+        {"company": "TCS", "value": 15, "positive": True, "is_power": False},
+        {"company": "YesBank", "value": 5, "positive": True, "is_power": False},
+    ])
+    check("Cred opens day 3 at $60", _price(s2, "Cred") == 60)
+    m3 = s["meera3"]
+    check("you passed; Meera moves last", m3["game_log"][-1] == "You: Turn passed."
+          and m3["current_player_name"] == "Meera" and m3["phase"] == "player_turn")
+
+    b2 = s["bell2"]
+    check("day numbers strictly increase across bells", b1["day"] < b2["day"] == 3)
+    rd, cards = _signed(b2, "TCS")
+    check("TCS: your +15, Arjun +10 -> $55 -> $80 (+$100 on your 4)",
+          sorted(cards) == sorted([("You", 15), ("Arjun", 10)]) and rd["old_value"] == 55
+          and rd["new_value"] == 80 and you(b2)["stocks"]["TCS"] * (rd["new_value"] - rd["old_value"]) == 100)
+    rd, cards = _signed(b2, "YesBank")
+    check("YesBank: your +5, Meera -10, Arjun -10 -> $15 -> $0",
+          sorted(cards) == sorted([("You", 5), ("Meera", -10), ("Arjun", -10)])
+          and rd["old_value"] == 15 and rd["new_value"] == 0)
+
+    q2 = s["suspend2"]
+    yb, tcs = _co(q2, "YesBank"), _co(q2, "TCS")
+    check("queue [You, Meera] (seat order), you first", q2["suspend_queue"] == [1, 2]
+          and q2["current_player_name"] == "You")
+    check("YesBank BANKRUPT -> CLOSED at $0; row $15 -> $0",
+          yb["value"] == 0 and yb["is_open"] is False and yb["pre_fluct_value"] == 15)
+    check("TCS row $55 -> $80", tcs["pre_fluct_value"] == 55 and tcs["value"] == 80)
+    check("standings after bell 2: You $740", q2["networth_history"][3][1] == 740 == _board_worth(q2, "You"))
+
+    y2 = s["your-halt2"]
+    check("your halt: YesBank back to its pre-bell $15", _price(y2, "YesBank") == 15
+          and "You: Share suspend on YesBank: value -> 15." in y2["game_log"])
+    check("...still CLOSED until the suspend phase ends", _open(y2, "YesBank") is False)
+    check("Meera's decision next", y2["suspend_queue"] == [2] and y2["current_player_name"] == "Meera")
+    check("standings still count CLOSED YesBank $0: You stays $740 (engine snapshots before the reopen)",
+          y2["networth_history"][3][1] == 740 == _board_worth(y2, "You"))
+
+    mh = s["meera-halt"]
+    check("Meera halts TCS: 'Meera: Share suspend on TCS: value -> 55.'",
+          "Meera: Share suspend on TCS: value -> 55." in mh["game_log"])
+    check("bell 2 TCS reverts to $55", _price(mh, "TCS") == 55 == tcs["pre_fluct_value"])
+    check("YesBank reopens at day end: is_open again at $15",
+          _open(mh, "YesBank") is True and _price(mh, "YesBank") == 15)
+    nh = mh["networth_history"][3]
+    check("standings: You $740 -> $640 (your $100 TCS gain undone); Arjun $705 passes you",
+          nh[1] == 640 == q2["networth_history"][3][1] - you(mh)["stocks"]["TCS"] * (tcs["value"] - _price(mh, "TCS"))
+          and nh[3] == 705 > nh[1])
+    check("board after YesBank reopens: You $700 = $640 + 4 x $15, still behind Arjun",
+          _board_worth(mh, "You") == 700 == nh[1] + you(mh)["stocks"]["YesBank"] * _price(mh, "YesBank")
+          and _board_worth(mh, "Arjun") == 705)
+    check("day 4 dealt, seats You, Meera, Arjun", mh["day"] == 4 and mh["phase"] == "player_turn"
+          and [p["name"] for p in mh["players"]] == ["You", "Meera", "Arjun"])
+
+    # Engine truth behind the Debenture reconciliation: a company CLOSED on an
+    # earlier day has a pre-bell price of $0, so a halt swaps $0 for $0.
+    g = ge.GameState(2, player_ids=[1, 2])
+    g.companies[1].value, g.companies[1].open = 0, False
+    g.game_phase = "card_reveal"
+    ge.begin_card_reveal(g)
+    g.game_phase = "share_suspend"
+    g.suspend_queue = [1]
+    r = ge.share_suspend_action(g, 1, 2)
+    check("engine: halting a company CLOSED on an earlier day leaves it $0 and CLOSED",
+          r["success"] and g.companies[1].value == 0 and g.companies[1].open is False)
+
+
 for t in (test_setup_hands, test_setup_holdings, test_snap_shape, test_act_logs_like_server,
           test_failed_act_raises, test_bell_and_next_day, test_check_detects_drift,
           test_orientation_lesson, test_objective_lesson, test_prices_lesson, test_turns_lesson, test_trading_lesson,
-          test_loan_stock_lesson, test_debenture_lesson, test_rights_issue_lesson):
+          test_loan_stock_lesson, test_debenture_lesson, test_rights_issue_lesson, test_share_suspend_lesson):
     t()
 
 print(f"\n{passed} passed, {failed} failed")

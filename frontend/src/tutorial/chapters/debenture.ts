@@ -17,7 +17,7 @@ const debenture: Chapter = {
   subtitle: 'Bringing a closed company back',
   minutes: 4,
   hookFrom: 'loan-stock',
-  chips: ['A CLOSED company is frozen at $0 — no buying, no cards — until a Debenture reopens it at its starting price'],
+  chips: ['A company that ends the day CLOSED is frozen at $0 — no buying, no cards — until a Debenture reopens it at its starting price'],
   steps: [
     {
       id: 'hook', snap: 'start', target: 'ticker', targetKey: 'YesBank',

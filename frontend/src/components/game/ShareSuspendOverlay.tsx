@@ -183,13 +183,16 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
   // the finalized state simultaneously), so everyone's countdown is in sync.
   // The graph travel starts when the finalized snapshot lands (same moment) —
   // delay by GRAPH_TRAVEL_MS so the countdown only appears once the line finishes.
+  // Tutorial hold: the countdown waits while coachmarks are read over the overlay.
+  const tutorial = useTutorial()
+  const closeHeld = tutorial?.holdSuspendClose ?? false
   const graphAnimTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => {
-    if (!backendReady || hasQueue || animBusy || countdown !== null) return
+    if (!backendReady || hasQueue || animBusy || countdown !== null || closeHeld) return
     clearTimeout(graphAnimTimerRef.current)
     graphAnimTimerRef.current = setTimeout(() => setCountdown(5), GRAPH_TRAVEL_MS + 200)
     return () => clearTimeout(graphAnimTimerRef.current)
-  }, [backendReady, hasQueue, animBusy, countdown])
+  }, [backendReady, hasQueue, animBusy, countdown, closeHeld])
 
   // Tick countdown
   useEffect(() => {
@@ -205,7 +208,6 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
 
   // Two-step halt: tapping a row only selects it; the footer Halt button
   // commits. Stops scroll/drag gestures on mobile from firing a suspend.
-  const tutorial = useTutorial()
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null)
   const queueHeadKey = `${gameState?.suspend_queue.length ?? 0}:${gameState?.suspend_queue[0] ?? ''}`
   useEffect(() => {

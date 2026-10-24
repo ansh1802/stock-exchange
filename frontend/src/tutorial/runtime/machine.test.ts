@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { Chapter, Step } from './types'
 import {
-  initialRun, reduce, matchesExpected, allows, heldRevealStage, snapChanged, rewindToCheckpoint,
+  initialRun, reduce, matchesExpected, allows, heldRevealStage, holdsSuspendClose, snapChanged, rewindToCheckpoint,
 } from './machine'
 import type { ClientMessage } from '../../types/messages'
 
@@ -140,5 +140,13 @@ describe('machine', () => {
     expect(rewindToCheckpoint(ch, 5)).toBe(3)
     expect(rewindToCheckpoint(ch, 2)).toBe(0)
     expect(rewindToCheckpoint(mk([{}, {}]), 1)).toBe(0)
+  })
+
+  it('share-suspend overlay is held open on every step except suspend_end', () => {
+    const step = (advance: Step['advance']) => ({ id: 'x', snap: 'a', advance }) as Step
+    expect(holdsSuspendClose(step({ kind: 'next' }))).toBe(true)
+    expect(holdsSuspendClose(step({ kind: 'action', expect: { type: 'share_suspend' } }))).toBe(true)
+    expect(holdsSuspendClose(step({ kind: 'auto', delayMs: 1 }))).toBe(true)
+    expect(holdsSuspendClose(step({ kind: 'suspend_end' }))).toBe(false)
   })
 })

@@ -41,6 +41,11 @@ export function heldRevealStage(step: Step): string | null {
   return step.holdRevealAt ?? (step.advance.kind === 'reveal_wait' ? step.advance.at : null)
 }
 
+/** The share-suspend overlay's close countdown waits for a `suspend_end` step (coachmarks read over it). */
+export function holdsSuspendClose(step: Step): boolean {
+  return step.advance.kind !== 'suspend_end'
+}
+
 export function snapChanged(ch: Chapter, fromIdx: number, toIdx: number): boolean {
   return ch.steps[fromIdx]?.snap !== ch.steps[toIdx]?.snap
 }
