@@ -22,7 +22,7 @@ export default function MobileCardStrip({
   const cards = useMemo(() => hand, [hand])
 
   return (
-    <div className="relative border-t border-gray-800 bg-gray-900">
+    <div data-tutorial="hand" className="relative border-t border-gray-800 bg-gray-900">
       {/* Protruding chevron tab — centred, bumps above the strip */}
       <button
         onClick={onOpenDrawer}

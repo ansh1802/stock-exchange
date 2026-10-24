@@ -133,7 +133,7 @@ export default function PlayerHand({ send }: Props) {
       )}
 
       {/* Cards */}
-      <div className="flex gap-2 px-4 py-3 overflow-x-auto">
+      <div data-tutorial="hand" className="flex gap-2 px-4 py-3 overflow-x-auto">
         {hand.map((card, i) => (
           <CardComponent
             key={i}

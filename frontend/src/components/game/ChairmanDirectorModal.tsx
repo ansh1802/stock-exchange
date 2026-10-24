@@ -128,7 +128,7 @@ export default function ChairmanDirectorModal({ send, inline }: Props) {
   const roleBg = isChairman ? 'bg-amber-900/20 border-amber-800/30' : 'bg-sky-900/20 border-sky-800/30'
 
   const content = (
-    <div className={cn('rounded-xl p-4 space-y-3 border', roleBg)}>
+    <div data-tutorial="cd-modal" className={cn('rounded-xl p-4 space-y-3 border', roleBg)}>
       <div className="flex items-center gap-2">
         <span className={cn('w-2.5 h-2.5 rounded-full', COMPANY_COLOR[companyName])} />
         <h3 className={cn('text-sm font-bold', roleColor)}>{roleLabel} Power</h3>

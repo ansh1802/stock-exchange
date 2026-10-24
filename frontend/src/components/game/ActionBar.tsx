@@ -33,11 +33,12 @@ export default function ActionBar({ send }: Props) {
 
   return (
     <>
-      <div className="px-4 py-2 bg-gray-900 border-t border-gray-800">
+      <div data-tutorial="action-bar" className="px-4 py-2 bg-gray-900 border-t border-gray-800">
         {isMyTurn ? (
           <div className="flex gap-2 max-w-lg mx-auto">
             <motion.button
               onClick={() => setTradeMode('buy')}
+              data-tutorial="buy-button"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               className={cn(buttonClass, 'bg-emerald-600 hover:bg-emerald-500 text-white')}
@@ -46,6 +47,7 @@ export default function ActionBar({ send }: Props) {
             </motion.button>
             <motion.button
               onClick={() => setTradeMode('sell')}
+              data-tutorial="sell-button"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               className={cn(buttonClass, 'bg-red-600 hover:bg-red-500 text-white')}

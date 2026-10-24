@@ -393,6 +393,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
             </div>
 
             <div
+              data-tutorial="suspend-list"
               className={cn(
                 'grid gap-1.5 grid-cols-2 md:grid-cols-1',
                 myDecision ? '' : 'opacity-80',
@@ -465,6 +466,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
               <div className="flex gap-2 pt-1 md:mt-auto">
                 <motion.button
                   onClick={handleHalt}
+                  data-tutorial="suspend-confirm"
                   disabled={selectedCompany === null || !tutorialAllows(tutorial, { type: 'share_suspend', company_num: selectedCompany })}
                   whileTap={selectedCompany !== null ? { scale: 0.98 } : {}}
                   className="flex-1 min-h-[48px] px-3 rounded-xl font-bold transition-colors bg-amber-500 text-gray-950 hover:bg-amber-400 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed"

@@ -231,6 +231,7 @@ export default function CardRevealOverlay({ revealData, onComplete, send }: Prop
 
   return (
     <motion.div
+      data-tutorial="reveal-overlay"
       className="fixed inset-0 z-[60] flex items-center justify-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}

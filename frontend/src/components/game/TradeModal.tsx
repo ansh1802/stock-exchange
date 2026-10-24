@@ -176,7 +176,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
       >
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h3 className={cn(
+          <h3 data-tutorial="trade-mode" className={cn(
             'text-lg font-bold',
             isBuy ? 'text-emerald-400' : 'text-red-400',
           )}>
@@ -191,7 +191,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
         </div>
 
         {/* Company selector */}
-        <div className={cn('grid gap-2', isMobile ? 'grid-cols-2' : 'grid-cols-3')}>
+        <div data-tutorial="trade-company" className={cn('grid gap-2', isMobile ? 'grid-cols-2' : 'grid-cols-3')}>
           {gameState.companies.map((co, i) => {
             const disabled = isBuy && (!co.is_open || co.value <= 0)
             const holdingQty = me.stocks[co.name] ?? 0
@@ -265,7 +265,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
             </div>
 
             {/* Quantity slider — always spans 0..current max, rescales as max changes */}
-            <div className="px-1">
+            <div data-tutorial="trade-slider" className="px-1">
               {/* 44px-tall hit area; the visual track is a thin bar centred inside it */}
               <div className="relative h-11">
                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-gray-700 overflow-hidden">
@@ -331,6 +331,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setQuantity(maxQty)}
+                data-tutorial="trade-max"
                 disabled={maxQty === 0}
                 className={cn(
                   'text-sm font-medium rounded-lg border disabled:opacity-30 disabled:cursor-not-allowed',
@@ -344,6 +345,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
               </button>
               <button
                 onClick={() => riQty !== null && setQuantity(riQty)}
+                data-tutorial="trade-ri"
                 disabled={riQty === null || riQty === 0}
                 title={
                   isBuy
@@ -379,6 +381,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
         {/* Confirm */}
         <motion.button
           onClick={handleExecute}
+          data-tutorial="trade-confirm"
           disabled={confirmDisabled}
           whileHover={canExecute ? { scale: 1.02 } : {}}
           whileTap={canExecute ? { scale: 0.98 } : {}}

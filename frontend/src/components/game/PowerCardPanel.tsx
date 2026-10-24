@@ -19,7 +19,7 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
 
   if (name === 'LoanStock') {
     return (
-      <div className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 flex items-center gap-3">
+      <div data-tutorial="power-panel" className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 flex items-center gap-3">
         <span className="text-amber-400 text-sm font-medium">
           Loan Stock: +<span className="font-mono">${loanAmount}</span>
           <span className="text-amber-600 text-xs ml-1">(10% of your net worth)</span>
@@ -39,7 +39,7 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
   if (name === 'Debenture') {
     const closedCompanies = companies.filter((c) => !c.is_open)
     return (
-      <div className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 space-y-2">
+      <div data-tutorial="power-panel" className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-amber-400 text-sm font-medium">Debenture: Reopen a closed company</span>
           <button onClick={onCancel} className="text-gray-400 text-sm hover:text-white ml-auto">Cancel</button>
@@ -68,7 +68,7 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
   if (name === 'RightsIssue') {
     const openCompanies = companies.filter((c) => c.is_open)
     return (
-      <div className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 space-y-2">
+      <div data-tutorial="power-panel" className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-amber-400 text-sm font-medium">Rights Issue: Select a company</span>
           <button onClick={onCancel} className="text-gray-400 text-sm hover:text-white ml-auto">Cancel</button>

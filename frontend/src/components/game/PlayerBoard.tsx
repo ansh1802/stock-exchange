@@ -70,7 +70,7 @@ export default function PlayerBoard() {
   const slots = Array.from({ length: 6 }, (_, i) => players[i] ?? null)
 
   return (
-    <div className="grid grid-cols-3 grid-rows-2 gap-3 h-full">
+    <div data-tutorial="player-board" className="grid grid-cols-3 grid-rows-2 gap-3 h-full">
       {slots.map((player, slotIdx) => {
         if (!player) {
           return (
@@ -92,6 +92,7 @@ export default function PlayerBoard() {
         return (
           <div
             key={player.id}
+            data-tutorial={isYou ? 'player-self' : undefined}
             className={cn(
               'rounded-xl border p-4 flex flex-col gap-2.5 transition-all duration-300',
               isCurrent && !isDisconnected && cn('ring-2', style.ring, style.border),

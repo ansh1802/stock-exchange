@@ -57,7 +57,7 @@ export default function RightsIssueModal({ send }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-sm space-y-4">
+      <div data-tutorial="rights-modal" className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-sm space-y-4">
         <h3 className="text-lg font-bold text-white">Rights Issue</h3>
         <p className="text-sm text-gray-400">
           <span className="text-white font-medium">{company?.name}</span> shares available at{' '}
