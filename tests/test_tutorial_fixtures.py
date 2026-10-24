@@ -242,7 +242,7 @@ def test_prices_lesson():
           cards("TCS") == [("You", 10), ("Meera", -5)] and tcs["delta"] == 5 > 0
           and tcs["old_value"] == 55 and tcs["new_value"] == 60)
     rel = rd["Reliance"]
-    # Card order pins the hold stage `revealing_cards:Reliance:2` (Arjun's card, the last).
+    # Copy names the cards in this order; the hold is `final_value:Reliance` ($75 -> $85 on screen).
     check("Reliance: You -15, Meera +15, Arjun +10 -> +10, $75 to $85",
           cards("Reliance") == [("You", -15), ("Meera", 15), ("Arjun", 10)] and rel["delta"] == 10 > 0
           and rel["old_value"] == 75 and rel["new_value"] == 85)

@@ -3,8 +3,8 @@ import type { Chapter } from '../runtime/types'
 /**
  * Spec Ch 3 — how prices move (fixture: backend/tutorial/chapters/prices.py).
  * The bell walks companies in ticker order, so YesBank (2nd) is explained
- * before TCS (4th) and Reliance (5th). `revealing_cards:Reliance:2` is
- * Arjun's card, the last of three (order pinned in test_prices_lesson).
+ * before TCS (4th) and Reliance (5th). Holds sit on final_value stages,
+ * where the overlay shows `$old → $new` (card order pinned in test_prices_lesson).
  */
 const prices: Chapter = {
   id: 'prices',
@@ -75,9 +75,9 @@ const prices: Chapter = {
         wrong: 'Look again — your −15 is about to be outweighed.',
       },
     },
-    { id: 'reliance-cards', snap: 'bell', advance: { kind: 'reveal_wait', at: 'revealing_cards:Reliance:2' } },
+    { id: 'reliance-cards', snap: 'bell', advance: { kind: 'reveal_wait', at: 'final_value:Reliance' } },
     {
-      id: 'reliance', snap: 'bell', target: 'reveal-overlay', holdRevealAt: 'revealing_cards:Reliance:2',
+      id: 'reliance', snap: 'bell', target: 'reveal-overlay', holdRevealAt: 'final_value:Reliance',
       text: 'Meera’s +15 and Arjun’s +10 outweigh your −15: **+10**, $75 → **$85**. Your cards are only part of the story.',
       advance: { kind: 'next' },
     },
@@ -101,6 +101,11 @@ const prices: Chapter = {
     {
       id: 'mirror', snap: 'bell', target: 'reveal-overlay', holdRevealAt: 'currency_settlement:0',
       text: 'So Currency + rewards holding cash. Its mirror, **Currency −**, takes 10% — a reason to spend before the bell.',
+      advance: { kind: 'next' },
+    },
+    {
+      id: 'next-up', snap: 'bell', target: 'reveal-overlay', holdRevealAt: 'currency_settlement:0',
+      text: 'You knew your +10 would lift TCS. Next: you get exactly three moves a day to act on what you know.',
       advance: { kind: 'next' },
     },
     { id: 'end', snap: 'bell', advance: { kind: 'reveal_end' } },
