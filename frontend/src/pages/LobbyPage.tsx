@@ -141,24 +141,30 @@ export default function LobbyPage() {
                   marginTop: 4,
                 }}
               >
-                First time? Read the rulebook → 6 min
+                First time? Guided tutorial on the real board
               </div>
             </Link>
           ) : (
-            <div className="text-center mb-3">
-              <Link
-                to="/rulebook"
-                className="font-mono"
-                style={{
-                  fontSize: 10,
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(244,236,219,0.55)',
-                  textDecoration: 'none',
-                }}
-              >
-                ⓘ Open rulebook
-              </Link>
+            <div className="text-center mb-3 flex items-center justify-center gap-4">
+              {[
+                { to: '/tutorial', label: 'Tutorial' },
+                { to: '/rulebook', label: 'ⓘ Open rulebook' },
+              ].map((l) => (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  className="font-mono"
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(244,236,219,0.55)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  {l.label}
+                </Link>
+              ))}
             </div>
           )}
 
@@ -272,7 +278,7 @@ export default function LobbyPage() {
     )
   }
 
-  // v1 — unchanged
+  // v1
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-md space-y-8">
@@ -323,6 +329,13 @@ export default function LobbyPage() {
             Join Room
           </button>
         </form>
+
+        <Link
+          to="/tutorial"
+          className="block w-full py-2.5 text-center text-sm text-emerald-400 hover:text-emerald-300 border border-gray-800 hover:border-emerald-500/40 rounded-xl transition-colors"
+        >
+          {tutorialCompleted ? 'Tutorial' : 'New here? Play the guided tutorial'}
+        </Link>
 
         <PublicRooms onPick={pickRoom} variant="v1" />
       </div>

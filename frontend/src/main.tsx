@@ -5,6 +5,10 @@ import './index.css'
 import './theme-v2.css'
 import App from './App'
 import MobileAwareToaster from './components/MobileAwareToaster'
+import { useGameStore } from './store/useGameStore'
+
+// e2e hook: Playwright reads the live store. Dev builds only.
+if (import.meta.env.DEV) (window as unknown as { __store: typeof useGameStore }).__store = useGameStore
 
 // Visual Refactor: ?theme=v1 falls back to legacy palette. v2 is default.
 {

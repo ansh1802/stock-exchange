@@ -7,6 +7,15 @@ const KEY_COMPLETED = 'se.tutorial.completed'
 const KEY_TOOLTIPS_SEEN = 'se.tutorial.tooltipsSeen'
 const KEY_LAST_CHAPTER = 'se.tutorial.lastChapter'
 const KEY_TIPS_DISABLED = 'se.tutorial.tipsDisabled'
+const KEY_CHAPTERS_DONE = 'se.tutorial.chaptersDone'
+
+function readDone(): string[] {
+  try {
+    const raw = localStorage.getItem(KEY_CHAPTERS_DONE)
+    const arr = raw ? (JSON.parse(raw) as unknown) : []
+    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === 'string') : []
+  } catch { return [] }
+}
 
 export const tutorialStorage = {
   isCompleted(): boolean {
@@ -17,6 +26,27 @@ export const tutorialStorage = {
   },
   resetCompleted() {
     try { localStorage.removeItem(KEY_COMPLETED) } catch { /* ignore */ }
+  },
+
+  // Guided-tutorial progress, per chapter id. Finishing `recap` = tutorial done.
+  isChapterDone(id: string): boolean {
+    return readDone().includes(id)
+  },
+  markChapterDone(id: string) {
+    const done = readDone()
+    if (!done.includes(id)) {
+      done.push(id)
+      try { localStorage.setItem(KEY_CHAPTERS_DONE, JSON.stringify(done)) } catch { /* ignore */ }
+    }
+    if (id === 'recap') tutorialStorage.markCompleted()
+  },
+  /** First id not yet done; the first id when all are done (replay). */
+  firstIncompleteChapter(ids: string[]): string {
+    const done = readDone()
+    return ids.find((id) => !done.includes(id)) ?? ids[0]
+  },
+  resetChapters() {
+    try { localStorage.removeItem(KEY_CHAPTERS_DONE) } catch { /* ignore */ }
   },
 
   hasSeenTooltip(id: string): boolean {

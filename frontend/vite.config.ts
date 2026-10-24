@@ -1,4 +1,5 @@
 import { defineConfig, createLogger } from 'vite'
+import { configDefaults } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -24,6 +25,8 @@ logger.error = (msg, opts) => {
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   customLogger: logger,
+  // Playwright specs live in e2e/ — keep them out of vitest.
+  test: { exclude: [...configDefaults.exclude, 'e2e/**'] },
   server: {
     proxy: {
       '/api': 'http://localhost:8000',
