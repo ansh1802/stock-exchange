@@ -1,0 +1,1915 @@
+{
+ "chapter": "trading",
+ "human_id": 1,
+ "snapshots": {
+  "after": {
+   "all_hands": null,
+   "available_shares": [
+    195,
+    200,
+    196,
+    178,
+    200,
+    200
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 25,
+     "ticker": "VODA",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 20,
+     "ticker": "YESB",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 45,
+     "ticker": "CRED",
+     "value": 45
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 80,
+     "ticker": "TCS",
+     "value": 80
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 80,
+     "ticker": "RELI",
+     "value": 80
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 85,
+     "ticker": "INFO",
+     "value": 85
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "Arjun",
+   "current_turn": 0,
+   "day": 2,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "Meera: Bought 6 of TCS for 330. Balance: 270.",
+    "Arjun: Bought 5 of TCS for 275. Balance: 325.",
+    "Kabir: Bought 5 of Vodafone for 100. Balance: 500.",
+    "You: Bought 10 of TCS for 550. Balance: 50.",
+    "Meera: Bought 3 of TCS for 165. Balance: 105.",
+    "Arjun: Turn passed.",
+    "Kabir: Bought 4 of Cred for 160. Balance: 340.",
+    "You: Sold 2 of TCS for 110. Balance: 160.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "Kabir: Turn passed.",
+    "You: Turn passed.",
+    "Cards revealed.",
+    "Day 2 begins.",
+    "Day 2: cards dealt."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600,
+     "4": 600
+    },
+    {
+     "1": 800,
+     "2": 825,
+     "3": 725,
+     "4": 645
+    }
+   ],
+   "num_players": 4,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 325,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 5
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 340,
+     "connected": true,
+     "id": 4,
+     "is_you": false,
+     "left": false,
+     "name": "Kabir",
+     "stocks": {
+      "Cred": 4,
+      "Vodafone": 5
+     }
+    },
+    {
+     "bot": null,
+     "cash": 160,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "TCS": 8
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 105,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "TCS": 9
+     }
+    }
+   ],
+   "price_history": [
+    [
+     25,
+     20,
+     45,
+     80,
+     80,
+     85
+    ]
+   ],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 0,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "Reliance",
+     "is_power": false,
+     "positive": true,
+     "value": 5
+    },
+    {
+     "company": "Vodafone",
+     "is_power": false,
+     "positive": false,
+     "value": 5
+    }
+   ]
+  },
+  "arjun": {
+   "all_hands": null,
+   "available_shares": [
+    200,
+    200,
+    200,
+    189,
+    200,
+    200
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 40,
+     "ticker": "CRED",
+     "value": 40
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 55,
+     "ticker": "TCS",
+     "value": 55
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 75,
+     "ticker": "RELI",
+     "value": 75
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "Kabir",
+   "current_turn": 2,
+   "day": 1,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "Meera: Bought 6 of TCS for 330. Balance: 270.",
+    "Arjun: Bought 5 of TCS for 275. Balance: 325."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600,
+     "4": 600
+    }
+   ],
+   "num_players": 4,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 270,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "TCS": 6
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 325,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 5
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 600,
+     "connected": true,
+     "id": 4,
+     "is_you": false,
+     "left": false,
+     "name": "Kabir",
+     "stocks": {}
+    },
+    {
+     "bot": null,
+     "cash": 600,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {}
+    }
+   ],
+   "price_history": [],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 0,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "TCS",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    },
+    {
+     "company": "Infosys",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    }
+   ]
+  },
+  "bell": {
+   "all_hands": {
+    "1": [
+     {
+      "company": "TCS",
+      "is_power": false,
+      "positive": true,
+      "value": 10
+     },
+     {
+      "company": "Infosys",
+      "is_power": false,
+      "positive": true,
+      "value": 10
+     }
+    ],
+    "2": [
+     {
+      "company": "TCS",
+      "is_power": false,
+      "positive": true,
+      "value": 10
+     },
+     {
+      "company": "Reliance",
+      "is_power": false,
+      "positive": true,
+      "value": 5
+     }
+    ],
+    "3": [
+     {
+      "company": "TCS",
+      "is_power": false,
+      "positive": true,
+      "value": 5
+     },
+     {
+      "company": "YesBank",
+      "is_power": false,
+      "positive": false,
+      "value": 5
+     }
+    ],
+    "4": [
+     {
+      "company": "Vodafone",
+      "is_power": false,
+      "positive": true,
+      "value": 5
+     },
+     {
+      "company": "Cred",
+      "is_power": false,
+      "positive": true,
+      "value": 5
+     },
+     {
+      "company": "Infosys",
+      "is_power": false,
+      "positive": false,
+      "value": 5
+     }
+    ]
+   },
+   "available_shares": [
+    195,
+    200,
+    196,
+    178,
+    200,
+    200
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 40,
+     "ticker": "CRED",
+     "value": 40
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 55,
+     "ticker": "TCS",
+     "value": 55
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 75,
+     "ticker": "RELI",
+     "value": 75
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "Meera",
+   "current_turn": 0,
+   "day": 1,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "Meera: Bought 6 of TCS for 330. Balance: 270.",
+    "Arjun: Bought 5 of TCS for 275. Balance: 325.",
+    "Kabir: Bought 5 of Vodafone for 100. Balance: 500.",
+    "You: Bought 10 of TCS for 550. Balance: 50.",
+    "Meera: Bought 3 of TCS for 165. Balance: 105.",
+    "Arjun: Turn passed.",
+    "Kabir: Bought 4 of Cred for 160. Balance: 340.",
+    "You: Sold 2 of TCS for 110. Balance: 160.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "Kabir: Turn passed.",
+    "You: Turn passed.",
+    "Cards revealed."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600,
+     "4": 600
+    }
+   ],
+   "num_players": 4,
+   "phase": "card_reveal",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 105,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "TCS": 9
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 325,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 5
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 340,
+     "connected": true,
+     "id": 4,
+     "is_you": false,
+     "left": false,
+     "name": "Kabir",
+     "stocks": {
+      "Cred": 4,
+      "Vodafone": 5
+     }
+    },
+    {
+     "bot": null,
+     "cash": 160,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "TCS": 8
+     }
+    }
+   ],
+   "price_history": [],
+   "reveal_data": [
+    {
+     "cards": [
+      {
+       "player_id": 4,
+       "player_name": "Kabir",
+       "positive": true,
+       "value": 5
+      }
+     ],
+     "company_name": "Vodafone",
+     "delta": 5,
+     "new_value": 25,
+     "old_value": 20
+    },
+    {
+     "cards": [
+      {
+       "player_id": 3,
+       "player_name": "Arjun",
+       "positive": false,
+       "value": 5
+      }
+     ],
+     "company_name": "YesBank",
+     "delta": -5,
+     "new_value": 20,
+     "old_value": 25
+    },
+    {
+     "cards": [
+      {
+       "player_id": 4,
+       "player_name": "Kabir",
+       "positive": true,
+       "value": 5
+      }
+     ],
+     "company_name": "Cred",
+     "delta": 5,
+     "new_value": 45,
+     "old_value": 40
+    },
+    {
+     "cards": [
+      {
+       "player_id": 2,
+       "player_name": "Meera",
+       "positive": true,
+       "value": 10
+      },
+      {
+       "player_id": 3,
+       "player_name": "Arjun",
+       "positive": true,
+       "value": 5
+      },
+      {
+       "player_id": 1,
+       "player_name": "You",
+       "positive": true,
+       "value": 10
+      }
+     ],
+     "company_name": "TCS",
+     "delta": 25,
+     "new_value": 80,
+     "old_value": 55
+    },
+    {
+     "cards": [
+      {
+       "player_id": 2,
+       "player_name": "Meera",
+       "positive": true,
+       "value": 5
+      }
+     ],
+     "company_name": "Reliance",
+     "delta": 5,
+     "new_value": 80,
+     "old_value": 75
+    },
+    {
+     "cards": [
+      {
+       "player_id": 4,
+       "player_name": "Kabir",
+       "positive": false,
+       "value": 5
+      },
+      {
+       "player_id": 1,
+       "player_name": "You",
+       "positive": true,
+       "value": 10
+      }
+     ],
+     "company_name": "Infosys",
+     "delta": 5,
+     "new_value": 85,
+     "old_value": 80
+    }
+   ],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 3,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "TCS",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    },
+    {
+     "company": "Infosys",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    }
+   ]
+  },
+  "bought": {
+   "all_hands": null,
+   "available_shares": [
+    195,
+    200,
+    200,
+    179,
+    200,
+    200
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 40,
+     "ticker": "CRED",
+     "value": 40
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 55,
+     "ticker": "TCS",
+     "value": 55
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 75,
+     "ticker": "RELI",
+     "value": 75
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "Meera",
+   "current_turn": 0,
+   "day": 1,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "Meera: Bought 6 of TCS for 330. Balance: 270.",
+    "Arjun: Bought 5 of TCS for 275. Balance: 325.",
+    "Kabir: Bought 5 of Vodafone for 100. Balance: 500.",
+    "You: Bought 10 of TCS for 550. Balance: 50."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600,
+     "4": 600
+    }
+   ],
+   "num_players": 4,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 270,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "TCS": 6
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 325,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 5
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 500,
+     "connected": true,
+     "id": 4,
+     "is_you": false,
+     "left": false,
+     "name": "Kabir",
+     "stocks": {
+      "Vodafone": 5
+     }
+    },
+    {
+     "bot": null,
+     "cash": 50,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "TCS": 10
+     }
+    }
+   ],
+   "price_history": [],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 1,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "TCS",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    },
+    {
+     "company": "Infosys",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    }
+   ]
+  },
+  "meera": {
+   "all_hands": null,
+   "available_shares": [
+    200,
+    200,
+    200,
+    194,
+    200,
+    200
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 40,
+     "ticker": "CRED",
+     "value": 40
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 55,
+     "ticker": "TCS",
+     "value": 55
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 75,
+     "ticker": "RELI",
+     "value": 75
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "Arjun",
+   "current_turn": 1,
+   "day": 1,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "Meera: Bought 6 of TCS for 330. Balance: 270."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600,
+     "4": 600
+    }
+   ],
+   "num_players": 4,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 270,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "TCS": 6
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 600,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {}
+    },
+    {
+     "bot": "easy",
+     "cash": 600,
+     "connected": true,
+     "id": 4,
+     "is_you": false,
+     "left": false,
+     "name": "Kabir",
+     "stocks": {}
+    },
+    {
+     "bot": null,
+     "cash": 600,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {}
+    }
+   ],
+   "price_history": [],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 0,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "TCS",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    },
+    {
+     "company": "Infosys",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    }
+   ]
+  },
+  "sold": {
+   "all_hands": null,
+   "available_shares": [
+    195,
+    200,
+    196,
+    178,
+    200,
+    200
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 40,
+     "ticker": "CRED",
+     "value": 40
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 55,
+     "ticker": "TCS",
+     "value": 55
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 75,
+     "ticker": "RELI",
+     "value": 75
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "Meera",
+   "current_turn": 0,
+   "day": 1,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "Meera: Bought 6 of TCS for 330. Balance: 270.",
+    "Arjun: Bought 5 of TCS for 275. Balance: 325.",
+    "Kabir: Bought 5 of Vodafone for 100. Balance: 500.",
+    "You: Bought 10 of TCS for 550. Balance: 50.",
+    "Meera: Bought 3 of TCS for 165. Balance: 105.",
+    "Arjun: Turn passed.",
+    "Kabir: Bought 4 of Cred for 160. Balance: 340.",
+    "You: Sold 2 of TCS for 110. Balance: 160."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600,
+     "4": 600
+    }
+   ],
+   "num_players": 4,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 105,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "TCS": 9
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 325,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 5
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 340,
+     "connected": true,
+     "id": 4,
+     "is_you": false,
+     "left": false,
+     "name": "Kabir",
+     "stocks": {
+      "Cred": 4,
+      "Vodafone": 5
+     }
+    },
+    {
+     "bot": null,
+     "cash": 160,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "TCS": 8
+     }
+    }
+   ],
+   "price_history": [],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 2,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "TCS",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    },
+    {
+     "company": "Infosys",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    }
+   ]
+  },
+  "start": {
+   "all_hands": null,
+   "available_shares": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 40,
+     "ticker": "CRED",
+     "value": 40
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 55,
+     "ticker": "TCS",
+     "value": 55
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 75,
+     "ticker": "RELI",
+     "value": 75
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "Meera",
+   "current_turn": 0,
+   "day": 1,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600,
+     "4": 600
+    }
+   ],
+   "num_players": 4,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 600,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {}
+    },
+    {
+     "bot": "easy",
+     "cash": 600,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {}
+    },
+    {
+     "bot": "easy",
+     "cash": 600,
+     "connected": true,
+     "id": 4,
+     "is_you": false,
+     "left": false,
+     "name": "Kabir",
+     "stocks": {}
+    },
+    {
+     "bot": null,
+     "cash": 600,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {}
+    }
+   ],
+   "price_history": [],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 0,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "TCS",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    },
+    {
+     "company": "Infosys",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    }
+   ]
+  },
+  "you1": {
+   "all_hands": null,
+   "available_shares": [
+    195,
+    200,
+    200,
+    189,
+    200,
+    200
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 40,
+     "ticker": "CRED",
+     "value": 40
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 55,
+     "ticker": "TCS",
+     "value": 55
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 75,
+     "ticker": "RELI",
+     "value": 75
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "You",
+   "current_turn": 3,
+   "day": 1,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "Meera: Bought 6 of TCS for 330. Balance: 270.",
+    "Arjun: Bought 5 of TCS for 275. Balance: 325.",
+    "Kabir: Bought 5 of Vodafone for 100. Balance: 500."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600,
+     "4": 600
+    }
+   ],
+   "num_players": 4,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 270,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "TCS": 6
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 325,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 5
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 500,
+     "connected": true,
+     "id": 4,
+     "is_you": false,
+     "left": false,
+     "name": "Kabir",
+     "stocks": {
+      "Vodafone": 5
+     }
+    },
+    {
+     "bot": null,
+     "cash": 600,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {}
+    }
+   ],
+   "price_history": [],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 0,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "TCS",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    },
+    {
+     "company": "Infosys",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    }
+   ]
+  },
+  "you2": {
+   "all_hands": null,
+   "available_shares": [
+    195,
+    200,
+    196,
+    176,
+    200,
+    200
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 40,
+     "ticker": "CRED",
+     "value": 40
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 55,
+     "ticker": "TCS",
+     "value": 55
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 75,
+     "ticker": "RELI",
+     "value": 75
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "You",
+   "current_turn": 3,
+   "day": 1,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "Meera: Bought 6 of TCS for 330. Balance: 270.",
+    "Arjun: Bought 5 of TCS for 275. Balance: 325.",
+    "Kabir: Bought 5 of Vodafone for 100. Balance: 500.",
+    "You: Bought 10 of TCS for 550. Balance: 50.",
+    "Meera: Bought 3 of TCS for 165. Balance: 105.",
+    "Arjun: Turn passed.",
+    "Kabir: Bought 4 of Cred for 160. Balance: 340."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600,
+     "4": 600
+    }
+   ],
+   "num_players": 4,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 105,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "TCS": 9
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 325,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 5
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 340,
+     "connected": true,
+     "id": 4,
+     "is_you": false,
+     "left": false,
+     "name": "Kabir",
+     "stocks": {
+      "Cred": 4,
+      "Vodafone": 5
+     }
+    },
+    {
+     "bot": null,
+     "cash": 50,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "TCS": 10
+     }
+    }
+   ],
+   "price_history": [],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 1,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "TCS",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    },
+    {
+     "company": "Infosys",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    }
+   ]
+  },
+  "you3": {
+   "all_hands": null,
+   "available_shares": [
+    195,
+    200,
+    196,
+    178,
+    200,
+    200
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 40,
+     "ticker": "CRED",
+     "value": 40
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 55,
+     "ticker": "TCS",
+     "value": 55
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 75,
+     "ticker": "RELI",
+     "value": 75
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "You",
+   "current_turn": 3,
+   "day": 1,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "Meera: Bought 6 of TCS for 330. Balance: 270.",
+    "Arjun: Bought 5 of TCS for 275. Balance: 325.",
+    "Kabir: Bought 5 of Vodafone for 100. Balance: 500.",
+    "You: Bought 10 of TCS for 550. Balance: 50.",
+    "Meera: Bought 3 of TCS for 165. Balance: 105.",
+    "Arjun: Turn passed.",
+    "Kabir: Bought 4 of Cred for 160. Balance: 340.",
+    "You: Sold 2 of TCS for 110. Balance: 160.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "Kabir: Turn passed."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600,
+     "4": 600
+    }
+   ],
+   "num_players": 4,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 105,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "TCS": 9
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 325,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 5
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 340,
+     "connected": true,
+     "id": 4,
+     "is_you": false,
+     "left": false,
+     "name": "Kabir",
+     "stocks": {
+      "Cred": 4,
+      "Vodafone": 5
+     }
+    },
+    {
+     "bot": null,
+     "cash": 160,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "TCS": 8
+     }
+    }
+   ],
+   "price_history": [],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 2,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "TCS",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    },
+    {
+     "company": "Infosys",
+     "is_power": false,
+     "positive": true,
+     "value": 10
+    }
+   ]
+  }
+ }
+}
