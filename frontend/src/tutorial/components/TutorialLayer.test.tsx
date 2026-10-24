@@ -80,6 +80,65 @@ describe('TutorialLayer', () => {
     expect(order).toEqual(['native', 'native', 'advance'])
   })
 
+  it('a queued click advance survives a re-render with a new onClick (latest callback runs once)', async () => {
+    const btn = visible(document.createElement('button'))
+    btn.setAttribute('data-tutorial', 'buy-button')
+    document.body.appendChild(btn)
+    const step: Step = { id: 's', snap: 'a', target: 'buy-button', advance: { kind: 'click' } }
+    const h1 = cb()
+    render(step, h1)
+    await wait(50)
+    const h2 = cb()
+    act(() => {
+      btn.click()
+      root.render(<TutorialLayer step={step} picked={null} isMobile={false} {...h2} />) // before the 0 ms timer
+    })
+    await wait(20)
+    expect(h1.onClick).not.toHaveBeenCalled()
+    expect(h2.onClick).toHaveBeenCalledOnce()
+    btn.click() // a later duplicate in the same step is still ignored
+    await wait(20)
+    expect(h2.onClick).toHaveBeenCalledOnce()
+  })
+
+  it('a queued click advance is dropped when the step itself changes first', async () => {
+    const btn = visible(document.createElement('button'))
+    btn.setAttribute('data-tutorial', 'buy-button')
+    document.body.appendChild(btn)
+    const h = cb()
+    render({ id: 's', snap: 'a', target: 'buy-button', advance: { kind: 'click' } }, h)
+    await wait(50)
+    act(() => {
+      btn.click()
+      root.render(<TutorialLayer step={{ id: 't', snap: 'a', text: 'x', advance: { kind: 'next' } }} picked={null} isMobile={false} {...h} />)
+    })
+    await wait(20)
+    expect(h.onClick).not.toHaveBeenCalled()
+  })
+
+  it('a queued value read (tick click) survives a re-render with a new onValue', async () => {
+    const wrap = visible(document.createElement('div'))
+    wrap.setAttribute('data-tutorial', 'trade-slider')
+    const input = document.createElement('input')
+    input.type = 'range'; input.max = '100'
+    const tick = document.createElement('button')
+    wrap.append(input, tick)
+    document.body.appendChild(wrap)
+    const step: Step = { id: 'v', snap: 'a', target: 'trade-slider', advance: { kind: 'value', equals: 25 } }
+    const h1 = cb()
+    render(step, h1)
+    await wait(50)
+    const h2 = cb()
+    act(() => {
+      input.value = '25' // what React would set from the tick's onClick
+      tick.click()
+      root.render(<TutorialLayer step={step} picked={null} isMobile={false} {...h2} />)
+    })
+    await wait(20)
+    expect(h1.onValue).not.toHaveBeenCalled()
+    expect(h2.onValue).toHaveBeenCalledWith(25)
+  })
+
   it('read-only step with a target blocks the target too (single full blocker)', async () => {
     const t = visible(document.createElement('div'))
     t.setAttribute('data-tutorial', 'ticker')

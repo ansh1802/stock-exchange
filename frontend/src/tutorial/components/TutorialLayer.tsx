@@ -94,20 +94,41 @@ export default function TutorialLayer({
 
   const interactive = INTERACTIVE.has(kind) && !!el && !!rect && !missing
 
+  // Advances are deferred a tick (see below). The callbacks live in refs and
+  // queued timers belong to the step, so a parent re-render (new callback
+  // identity) or a target remount between the click and the timer can't
+  // cancel an advance; only a step change (or unmount) drops what's queued.
+  const onClickRef = useRef(onClick)
+  const onValueRef = useRef(onValue)
+  useLayoutEffect(() => {
+    onClickRef.current = onClick
+    onValueRef.current = onValue
+  })
+  const queued = useRef(new Set<ReturnType<typeof setTimeout>>())
+  const clickedStep = useRef<Step | null>(null)
+  useEffect(() => {
+    const pending = queued.current
+    return () => { pending.forEach(clearTimeout); pending.clear() }
+  }, [step])
+  // Stable: only touches the `queued` set, never render-time values.
+  const queueRef = useRef((fn: () => void) => {
+    const t = setTimeout(() => { queued.current.delete(t); fn() }, 0)
+    queued.current.add(t)
+  })
+
   // `click` advance: capture listener on the target; defer so the target's own
   // (React, bubble-phase) handler runs first — e.g. Buy opens the trade popup.
+  // Fires once per step, even if the target remounts in between.
   useEffect(() => {
     if (kind !== 'click' || !el) return
-    let fired = false
-    let t: ReturnType<typeof setTimeout> | undefined
     const handler = () => {
-      if (fired) return
-      fired = true
-      t = setTimeout(onClick, 0)
+      if (clickedStep.current === step) return
+      clickedStep.current = step
+      queueRef.current(() => onClickRef.current())
     }
     el.addEventListener('click', handler, true)
-    return () => { el.removeEventListener('click', handler, true); clearTimeout(t) }
-  }, [kind, el, onClick])
+    return () => el.removeEventListener('click', handler, true)
+  }, [kind, el, step])
 
   // `value` advance: the native range input inside the target. While a drag is
   // in progress the value is reported on release, so the step can't advance
@@ -118,9 +139,9 @@ export default function TutorialLayer({
     const input = el.matches('input[type=range]') ? (el as HTMLInputElement) : el.querySelector<HTMLInputElement>('input[type=range]')
     if (!input) return
     let dragging = false
-    let t: ReturnType<typeof setTimeout> | undefined
-    const report = () => onValue(Number(input.value))
-    const later = () => { clearTimeout(t); t = setTimeout(report, 0) }
+    // A detached input keeps its last value, so a report queued just before a remount still reads it.
+    const report = () => onValueRef.current(Number(input.value))
+    const later = () => queueRef.current(report)
     const onInput = () => { if (!dragging) report() }
     const onDown = (e: PointerEvent) => { if (e.target === input) dragging = true }
     const onUp = () => { if (dragging) { dragging = false; later() } }
@@ -130,14 +151,13 @@ export default function TutorialLayer({
     window.addEventListener('pointerup', onUp, true)
     window.addEventListener('pointercancel', onUp, true)
     return () => {
-      clearTimeout(t)
       input.removeEventListener('input', onInput)
       el.removeEventListener('pointerdown', onDown, true)
       el.removeEventListener('click', later, true)
       window.removeEventListener('pointerup', onUp, true)
       window.removeEventListener('pointercancel', onUp, true)
     }
-  }, [kind, el, onValue])
+  }, [kind, el])
 
   // Keyboard can't reach around the lock: activation keys only work inside the
   // coachmark, or inside the target on an action step.
