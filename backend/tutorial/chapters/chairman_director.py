@@ -2,7 +2,7 @@
 
 One game, days 5-10, played through the engine from a seeded day-5 table.
 Holdings of 100+ need a few thousand dollars, which no one has early on, so
-the chapter opens on day 5 of a strong game (net worths $3.6k-$5.2k; the
+the chapter opens on day 5 of a strong game (net worths $2.5k-$5.4k; the
 balance sims' winners finish near $26k). Your moves that teach nothing (other
 rounds' passes, and the day-6/8/9 YesBank top-ups the copy reports) are played
 off screen. end_day rotates the seats: day 5 Arjun, You, Meera -> day 10
@@ -12,15 +12,15 @@ Meera, Arjun, You.
   Day 6  You bought 50 more -> 100: chairman. Bell: your -5, Meera +10,
          Arjun -10 -> $5; you discard your -5 and remove Arjun's -10 -> $20.
   Day 7  Meera has been Cred's chairman (100). You buy the other 100 Cred:
-         double director under her chair. Bell: $15 -> $20; Meera discards her
-         -5 -> $25; you discard your -10 and -5 -> $40.
+         double director under Meera's chair. Bell: $15 -> $20; Meera discards
+         their -5 -> $25; you discard your -10 and -5 -> $40.
   Day 8  150 YesBank: chairman then director. Bell $20 -> $5; chairman (own
          -10 + Arjun's -10) -> $25; director (-5) -> $30.
   Day 9  You bought the last 50: all 200. Bell $30 -> $10; chairman (own -10 +
          Meera's -10) -> $30; double director (-5, -5) -> $40. TCS crashes
          $45 -> $5.
-  Day 10 Meera (seated first) buys 100 TCS, Arjun 50. Your $400 buys 80, but
-         only 50 remain: Max 50.
+  Day 10 Meera (seated first) buys 100 TCS, Arjun 50. Your $600 is the most
+         cash at the table and buys 120, but only 50 remain: Max 50.
 """
 
 from tutorial.scenario import Scenario
@@ -64,12 +64,12 @@ def build():
         price_history=CLOSES,
         networth_history=[
             {YOU: 600, MEERA: 600, ARJUN: 600},
-            {YOU: 1500, MEERA: 1200, ARJUN: 1100},
-            {YOU: 2700, MEERA: 2300, ARJUN: 2000},
-            {YOU: 4000, MEERA: 3300, ARJUN: 2900},
-            {YOU: 5150, MEERA: 4100, ARJUN: 3600},
+            {YOU: 1500, MEERA: 1000, ARJUN: 1100},
+            {YOU: 2700, MEERA: 1500, ARJUN: 2000},
+            {YOU: 4000, MEERA: 2000, ARJUN: 2800},
+            {YOU: 5350, MEERA: 2450, ARJUN: 3380},
         ],
-        cash={YOU: 4925, MEERA: 2600, ARJUN: 1700},
+        cash={YOU: 5125, MEERA: 950, ARJUN: 1100},
         stocks={YOU: {"YesBank": 45}, MEERA: {"Cred": 100}, ARJUN: {"Reliance": 20}},
         hands={
             YOU: ["YesBank-10", "Infosys+10"],

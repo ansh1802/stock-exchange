@@ -3,7 +3,7 @@
 Four seats so the 8b queue can skip a bot *between* Arjun and You and your own
 move still follows in the same round. Days 1-2 are engine history; end_day's
 seat rotation makes day 3's order Arjun, Kabir, You, Meera.
-  Day 1: you buy 6 YesBank on your YesBank +10; Arjun buys 4 on his +5,
+  Day 1: you buy 6 YesBank on your YesBank +10; Arjun buys 4 on their +5,
          Kabir's -5 nets it out: YesBank $25 -> $35.
   Day 2: you pass all day; nobody touches TCS or YesBank.
 Day 3, cash $450, hand Rights Issue + TCS +10.

@@ -181,14 +181,14 @@ const shareSuspend: Chapter = {
     },
     {
       id: 'predict-meera', snap: 'your-halt2', target: 'suspend-list',
-      text: 'Meera holds a Share Suspend too. Which company will she halt?',
+      text: 'Meera holds a Share Suspend too. Which company will Meera halt?',
       advance: {
         kind: 'predict',
         options: [
           { label: 'TCS — your $100 gain tonight', correct: true },
           { label: 'YesBank — your rescue', correct: false },
         ],
-        right: 'Exactly — she went for your biggest gain tonight.',
+        right: 'Exactly — Meera went for your biggest gain tonight.',
         wrong: 'Not this time — Meera went for TCS, your biggest gain tonight.',
       },
     },

@@ -1012,7 +1012,7 @@ def test_chairman_director_lesson():
     check("bell 6: You are YesBank chairman", _cd_roles(bell) == [("YesBank", "chairman")])
     check("YesBank: your -5, Meera +10, Arjun -10 -> $10 -> $5",
           cards == [("You", -5), ("Meera", 10), ("Arjun", -10)] and rd["old_value"] == 10 and rd["new_value"] == 5)
-    check("Arjun's -10 is his first YesBank card (other:3:0)",
+    check("Arjun's -10 is Arjun's first YesBank card (other:3:0)",
           [c for c in bell["all_hands"][3] if c["company"] == "YesBank"][0] == {
               "company": "YesBank", "value": 10, "positive": False, "is_power": False})
     rd = _reveal(s["cd6"], "YesBank")
@@ -1042,7 +1042,7 @@ def test_chairman_director_lesson():
           and rd["old_value"] == 15 and rd["new_value"] == 20)
     m7 = s["cd7-meera"]
     rd = _reveal(m7, "Cred")
-    check("Meera discards her own -5: Cred -> $25; your turn", rd["new_value"] == 25
+    check("Meera discards their own -5: Cred -> $25; your turn", rd["new_value"] == 25
           and _queue(m7) == [[1, "Cred", "double_director"]] and m7["current_player_name"] == "You"
           and "Meera: Chairman discarded a Cred card." in m7["game_log"])
     rd = _reveal(s["cd7"], "Cred")
@@ -1080,7 +1080,7 @@ def test_chairman_director_lesson():
     check("YesBank: your -10 -5 -5, Meera -10, Arjun +10 -> $30 -> $10",
           cards == [("You", -10), ("You", -5), ("You", -5), ("Meera", -10), ("Arjun", 10)]
           and rd["old_value"] == 30 and rd["new_value"] == 10)
-    check("Meera's -10 is her first YesBank card (other:2:0)",
+    check("Meera's -10 is Meera's first YesBank card (other:2:0)",
           [c for c in bell["all_hands"][2] if c["company"] == "YesBank"][0]["value"] == 10)
     c9 = s["cd9-chair"]
     check("chairman (own -10 + Meera's -10): back to $30; double director next",
@@ -1099,21 +1099,24 @@ def test_chairman_director_lesson():
     check("day 10: seats rotated to Meera, Arjun, You; TCS $5, all 200 in the bank",
           dawn["day"] == 10 and _seats(dawn) == ["Meera", "Arjun", "You"] and dawn["current_player_name"] == "Meera"
           and _price(dawn, "TCS") == 5 and dawn["available_shares"][3] == STARTING_SHARES)
+    check("you have the most cash at the table, yet move last",
+          you(dawn)["cash"] == 600 > max(p["cash"] for p in dawn["players"] if not p["is_you"])
+          and _seats(dawn)[-1] == "You")
     check("Meera buys 100 TCS first", _logged(s["d10-meera"], "Meera: Bought 100 of TCS for 500"))
     d10 = s["d10"]
     me = you(d10)
     check("Arjun buys 50 next; your turn with 50 left", _logged(d10, "Arjun: Bought 50 of TCS for 250")
           and d10["current_player_name"] == "You" and d10["available_shares"][3] == 50)
     check("bots hold 100 and 50", sorted(p["stocks"].get("TCS", 0) for p in d10["players"] if not p["is_you"]) == [50, 100])
-    check("your $400 buys 80 (>= 70), but only 50 remain: slider max 50",
-          me["cash"] == 400 and me["cash"] // _price(d10, "TCS") == 80 >= 70
+    check("your $600 buys 120 (>= 70), but only 50 remain: slider max 50",
+          me["cash"] == 600 and me["cash"] // _price(d10, "TCS") == 120 >= 70
           and min(me["cash"] // _price(d10, "TCS"), d10["available_shares"][3]) == 50)
     log = d10["game_log"]
     check("both bot buys precede your move; Arjun's is the last entry",
           log[-2].startswith("Meera: Bought 100 of TCS for 500") and log[-1].startswith("Arjun: Bought 50 of TCS for 250"))
     bt = s["d10-bought"]
     check("you buy the last 50 for $250; the bank is out", _logged(bt, "You: Bought 50 of TCS for 250")
-          and you(bt)["stocks"]["TCS"] == 50 and bt["available_shares"][3] == 0 and you(bt)["cash"] == 150)
+          and you(bt)["stocks"]["TCS"] == 50 and bt["available_shares"][3] == 0 and you(bt)["cash"] == 350)
     check("moving first won Meera TCS's chair (100); Arjun and You are its directors",
           bt["chairman"]["TCS"] == 2 and sorted(bt["directors"]["TCS"]) == [1, 3])
     check("bots never play power cards", _no_bot_power_cards(bt))

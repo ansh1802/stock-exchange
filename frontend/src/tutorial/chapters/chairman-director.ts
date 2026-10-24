@@ -5,12 +5,12 @@ import type { Chapter, Step } from '../runtime/types'
  * One game, days 5–10, one bell per position:
  *   Day 5  buy 5 YesBank → 50, director: discard your −10 ($5 → $10, not $0).
  *   Day 6  100 YesBank, chairman: your −5 + Arjun's −10 ($10 → $20, not $5).
- *   Day 7  buy 100 Cred under Meera's chair → double director: Meera drops her
+ *   Day 7  buy 100 Cred under Meera's chair → double director: Meera drops their
  *          −5, you drop −10 and −5 ($15 → $40).
  *   Day 8  150 YesBank: chairman (−10 + Arjun's −10), then director (−5): $20 → $30.
  *   Day 9  all 200 YesBank: chairman (−10 + Meera's −10), double director
  *          (−5, −5): $30 → $40. TCS crashes $45 → $5.
- *   Day 10 Meera and Arjun, seated first, buy 150 TCS; your $400 buys 80 but Max is 50.
+ *   Day 10 Meera and Arjun, seated first, buy 150 TCS; your $600 (the most cash at the table) buys 120 but Max is 50.
  * Chairman/director modal keys: `own:<i>` (your cards of that company, in hand
  * order), `other:<playerId>:<i>`, and `confirm`.
  */
@@ -207,7 +207,7 @@ const chairmanDirector: Chapter = {
     // ── Day 7: double director under Meera's chair ──
     {
       id: 'meera-chair', snap: 'd7', target: 'player-board', mobileTab: 'players',
-      text: 'Day 7: Meera holds **100 Cred** — the crown by it makes her its chairman. The bank holds the other 100.',
+      text: 'Day 7: Meera holds **100 Cred** — the crown by it makes Meera its chairman. The bank holds the other 100.',
       advance: { kind: 'next' },
     },
     {
@@ -216,7 +216,7 @@ const chairmanDirector: Chapter = {
       advance: {
         kind: 'predict',
         options: [
-          { label: 'Meera — she got there first', correct: true },
+          { label: 'Meera — got there first', correct: true },
           { label: 'You — the newest 100', correct: false },
         ],
         right: 'Exactly — one chairman per company, and Meera keeps the chair.',
@@ -264,15 +264,15 @@ const chairmanDirector: Chapter = {
     { id: 'to-cd7', snap: 'bell7', advance: { kind: 'reveal_wait', at: cd('Cred') } },
     atCd('Cred', {
       id: 'predict-meera', snap: 'bell7',
-      text: 'The chairman acts first. Meera holds Cred −5 and +15 — which way will her move push Cred?',
+      text: 'The chairman acts first. Meera holds Cred −5 and +15 — which way will Meera’s move push Cred?',
       advance: {
         kind: 'predict',
         options: [
-          { label: 'Up — she holds 100 Cred', correct: true },
+          { label: 'Up — Meera holds 100 Cred', correct: true },
           { label: 'Down', correct: false },
         ],
-        right: 'Exactly — she holds 100 Cred, so she throws away a card against it.',
-        wrong: 'Not this time — she holds 100 Cred, so she throws away a card against it.',
+        right: 'Exactly — Meera holds 100 Cred, so a card against Cred goes.',
+        wrong: 'Not this time — Meera holds 100 Cred, so a card against Cred goes.',
       },
     }),
     atCd('Cred', {
@@ -282,7 +282,7 @@ const chairmanDirector: Chapter = {
     }),
     atCd('Cred', {
       id: 'meera-did', snap: 'cd7-meera', target: 'reveal-overlay',
-      text: 'Meera discarded her **−5**: Cred **$15 → $25**. Your turn: discard up to **2** of your own.',
+      text: 'Meera discarded their own **−5**: Cred **$15 → $25**. Your turn: discard up to **2** of your own.',
       advance: { kind: 'next' },
     }),
     atCd('Cred', {
@@ -576,12 +576,12 @@ const chairmanDirector: Chapter = {
     },
     {
       id: 'predict-max', snap: 'd10', target: 'player-self', mobileTab: 'players',
-      text: 'You have **$400** — enough for 80 TCS at $5. Where will your slider max stop?',
+      text: 'You have **$600**, the most cash at the table — enough for 120 TCS at $5. Where will your slider max stop?',
       advance: {
         kind: 'predict',
         options: [
           { label: '50', correct: true },
-          { label: '80', correct: false },
+          { label: '120', correct: false },
         ],
         right: 'Exactly — Max is what your cash buys or what the bank has left.',
         wrong: 'Not this time — Max is what your cash buys or what the bank has left: **50**.',
@@ -599,7 +599,7 @@ const chairmanDirector: Chapter = {
     },
     {
       id: 'max10', snap: 'd10', target: 'trade-max',
-      text: '**Max 50**: your cash buys 80, but the bank has only 50. Tap it.',
+      text: '**Max 50**: your cash buys 120, but the bank has only 50. Tap it.',
       advance: { kind: 'click' },
     },
     {
@@ -609,7 +609,7 @@ const chairmanDirector: Chapter = {
     },
     {
       id: 'turn-order', snap: 'd10-bought', target: 'player-board', mobileTab: 'players',
-      text: 'Meera moved first with the cash: 100 TCS, and its chair. Liquidity and seat order decide who capitalises.',
+      text: 'You had the most money and still got 50: Meera moved first and took 100, and TCS’s chair. Liquidity and seat order decide who capitalises.',
       advance: { kind: 'next' },
     },
     {

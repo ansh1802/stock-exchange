@@ -136,8 +136,8 @@
     ]
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -155,23 +155,23 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     }
    ],
    "num_players": 3,
@@ -179,7 +179,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 1320,
+     "cash": 720,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -191,7 +191,7 @@
     },
     {
      "bot": null,
-     "cash": 4900,
+     "cash": 5100,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -203,7 +203,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2600,
+     "cash": 950,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -486,8 +486,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -499,9 +499,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -518,28 +518,28 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     }
    ],
    "num_players": 3,
@@ -547,7 +547,7 @@
    "players": [
     {
      "bot": null,
-     "cash": 4400,
+     "cash": 4600,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -559,7 +559,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2600,
+     "cash": 950,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -571,7 +571,7 @@
     },
     {
      "bot": "easy",
-     "cash": 1120,
+     "cash": 520,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -881,8 +881,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -894,9 +894,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -907,9 +907,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -926,33 +926,33 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     }
    ],
    "num_players": 3,
@@ -960,7 +960,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 2500,
+     "cash": 850,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -973,7 +973,7 @@
     },
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -986,7 +986,7 @@
     },
     {
      "bot": null,
-     "cash": 2900,
+     "cash": 3100,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -1317,8 +1317,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -1330,9 +1330,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -1343,9 +1343,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -1358,8 +1358,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -1376,38 +1376,38 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     }
    ],
    "num_players": 3,
@@ -1415,7 +1415,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -1428,7 +1428,7 @@
     },
     {
      "bot": null,
-     "cash": 1900,
+     "cash": 2100,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -1441,7 +1441,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2170,
+     "cash": 520,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -1781,8 +1781,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -1794,9 +1794,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -1807,9 +1807,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -1822,8 +1822,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -1835,7 +1835,7 @@
     "You: Director discarded a YesBank card.",
     "Day 9 begins.",
     "Day 9: cards dealt.",
-    "You: Bought 50 of YesBank for 1500. Balance: 400.",
+    "You: Bought 50 of YesBank for 1500. Balance: 600.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -1854,43 +1854,43 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     },
     {
-     "1": 10400,
-     "2": 6630,
-     "3": 4240
+     "1": 10600,
+     "2": 4980,
+     "3": 3640
     }
    ],
    "num_players": 3,
@@ -1898,7 +1898,7 @@
    "players": [
     {
      "bot": null,
-     "cash": 400,
+     "cash": 600,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -1911,7 +1911,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2170,
+     "cash": 520,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -1925,7 +1925,7 @@
     },
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -2216,8 +2216,8 @@
     ]
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -2236,28 +2236,28 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     }
    ],
    "num_players": 3,
@@ -2265,7 +2265,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 1320,
+     "cash": 720,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -2277,7 +2277,7 @@
     },
     {
      "bot": null,
-     "cash": 4900,
+     "cash": 5100,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -2289,7 +2289,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2600,
+     "cash": 950,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -2511,8 +2511,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -2524,9 +2524,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -2544,33 +2544,33 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     }
    ],
    "num_players": 3,
@@ -2578,7 +2578,7 @@
    "players": [
     {
      "bot": null,
-     "cash": 4400,
+     "cash": 4600,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -2590,7 +2590,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2600,
+     "cash": 950,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -2602,7 +2602,7 @@
     },
     {
      "bot": "easy",
-     "cash": 1120,
+     "cash": 520,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -2828,8 +2828,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -2841,9 +2841,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -2854,9 +2854,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -2875,38 +2875,38 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     }
    ],
    "num_players": 3,
@@ -2914,7 +2914,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 2500,
+     "cash": 850,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -2927,7 +2927,7 @@
     },
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -2940,7 +2940,7 @@
     },
     {
      "bot": null,
-     "cash": 2900,
+     "cash": 3100,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -3236,8 +3236,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -3249,9 +3249,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -3262,9 +3262,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -3282,33 +3282,33 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     }
    ],
    "num_players": 3,
@@ -3316,7 +3316,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 2500,
+     "cash": 850,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -3329,7 +3329,7 @@
     },
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -3342,7 +3342,7 @@
     },
     {
      "bot": null,
-     "cash": 2900,
+     "cash": 3100,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -3607,8 +3607,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -3620,9 +3620,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -3633,9 +3633,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -3648,8 +3648,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -3668,43 +3668,43 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     },
     {
-     "1": 10400,
-     "2": 6630,
-     "3": 4240
+     "1": 10600,
+     "2": 4980,
+     "3": 3640
     }
    ],
    "num_players": 3,
@@ -3712,7 +3712,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -3725,7 +3725,7 @@
     },
     {
      "bot": null,
-     "cash": 1900,
+     "cash": 2100,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -3738,7 +3738,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2170,
+     "cash": 520,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -4025,8 +4025,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -4038,9 +4038,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -4051,9 +4051,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -4066,8 +4066,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -4085,38 +4085,38 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     }
    ],
    "num_players": 3,
@@ -4124,7 +4124,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -4137,7 +4137,7 @@
     },
     {
      "bot": null,
-     "cash": 1900,
+     "cash": 2100,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -4150,7 +4150,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2170,
+     "cash": 520,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -4406,8 +4406,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -4419,9 +4419,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -4432,9 +4432,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -4447,8 +4447,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -4460,7 +4460,7 @@
     "You: Director discarded a YesBank card.",
     "Day 9 begins.",
     "Day 9: cards dealt.",
-    "You: Bought 50 of YesBank for 1500. Balance: 400.",
+    "You: Bought 50 of YesBank for 1500. Balance: 600.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -4481,48 +4481,48 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     },
     {
-     "1": 10400,
-     "2": 6630,
-     "3": 4240
+     "1": 10600,
+     "2": 4980,
+     "3": 3640
     },
     {
-     "1": 12400,
-     "2": 6630,
-     "3": 4240
+     "1": 12600,
+     "2": 4980,
+     "3": 3640
     }
    ],
    "num_players": 3,
@@ -4530,7 +4530,7 @@
    "players": [
     {
      "bot": null,
-     "cash": 400,
+     "cash": 600,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -4543,7 +4543,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2170,
+     "cash": 520,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -4557,7 +4557,7 @@
     },
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -4855,8 +4855,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -4868,9 +4868,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -4881,9 +4881,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -4896,8 +4896,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -4909,7 +4909,7 @@
     "You: Director discarded a YesBank card.",
     "Day 9 begins.",
     "Day 9: cards dealt.",
-    "You: Bought 50 of YesBank for 1500. Balance: 400.",
+    "You: Bought 50 of YesBank for 1500. Balance: 600.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -4929,43 +4929,43 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     },
     {
-     "1": 10400,
-     "2": 6630,
-     "3": 4240
+     "1": 10600,
+     "2": 4980,
+     "3": 3640
     }
    ],
    "num_players": 3,
@@ -4973,7 +4973,7 @@
    "players": [
     {
      "bot": null,
-     "cash": 400,
+     "cash": 600,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -4986,7 +4986,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2170,
+     "cash": 520,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -5000,7 +5000,7 @@
     },
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -5275,8 +5275,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -5288,9 +5288,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -5301,9 +5301,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -5316,8 +5316,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -5329,7 +5329,7 @@
     "You: Director discarded a YesBank card.",
     "Day 9 begins.",
     "Day 9: cards dealt.",
-    "You: Bought 50 of YesBank for 1500. Balance: 400.",
+    "You: Bought 50 of YesBank for 1500. Balance: 600.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -5343,8 +5343,8 @@
     "You: Double director discarded 2 YesBank card(s).",
     "Day 10 begins.",
     "Day 10: cards dealt.",
-    "Meera: Bought 100 of TCS for 500. Balance: 1670.",
-    "Arjun: Bought 50 of TCS for 250. Balance: 650."
+    "Meera: Bought 100 of TCS for 500. Balance: 20.",
+    "Arjun: Bought 50 of TCS for 250. Balance: 50."
    ],
    "networth_history": [
     {
@@ -5354,48 +5354,48 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     },
     {
-     "1": 10400,
-     "2": 6630,
-     "3": 4240
+     "1": 10600,
+     "2": 4980,
+     "3": 3640
     },
     {
-     "1": 12400,
-     "2": 6630,
-     "3": 4240
+     "1": 12600,
+     "2": 4980,
+     "3": 3640
     }
    ],
    "num_players": 3,
@@ -5403,7 +5403,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 1670,
+     "cash": 20,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -5418,7 +5418,7 @@
     },
     {
      "bot": "easy",
-     "cash": 650,
+     "cash": 50,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -5432,7 +5432,7 @@
     },
     {
      "bot": null,
-     "cash": 400,
+     "cash": 600,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -5629,8 +5629,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -5642,9 +5642,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -5655,9 +5655,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -5670,8 +5670,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -5683,7 +5683,7 @@
     "You: Director discarded a YesBank card.",
     "Day 9 begins.",
     "Day 9: cards dealt.",
-    "You: Bought 50 of YesBank for 1500. Balance: 400.",
+    "You: Bought 50 of YesBank for 1500. Balance: 600.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -5697,9 +5697,9 @@
     "You: Double director discarded 2 YesBank card(s).",
     "Day 10 begins.",
     "Day 10: cards dealt.",
-    "Meera: Bought 100 of TCS for 500. Balance: 1670.",
-    "Arjun: Bought 50 of TCS for 250. Balance: 650.",
-    "You: Bought 50 of TCS for 250. Balance: 150."
+    "Meera: Bought 100 of TCS for 500. Balance: 20.",
+    "Arjun: Bought 50 of TCS for 250. Balance: 50.",
+    "You: Bought 50 of TCS for 250. Balance: 350."
    ],
    "networth_history": [
     {
@@ -5709,48 +5709,48 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     },
     {
-     "1": 10400,
-     "2": 6630,
-     "3": 4240
+     "1": 10600,
+     "2": 4980,
+     "3": 3640
     },
     {
-     "1": 12400,
-     "2": 6630,
-     "3": 4240
+     "1": 12600,
+     "2": 4980,
+     "3": 3640
     }
    ],
    "num_players": 3,
@@ -5758,7 +5758,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 1670,
+     "cash": 20,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -5773,7 +5773,7 @@
     },
     {
      "bot": "easy",
-     "cash": 650,
+     "cash": 50,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -5787,7 +5787,7 @@
     },
     {
      "bot": null,
-     "cash": 150,
+     "cash": 350,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -5982,8 +5982,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -5995,9 +5995,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -6008,9 +6008,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -6023,8 +6023,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -6036,7 +6036,7 @@
     "You: Director discarded a YesBank card.",
     "Day 9 begins.",
     "Day 9: cards dealt.",
-    "You: Bought 50 of YesBank for 1500. Balance: 400.",
+    "You: Bought 50 of YesBank for 1500. Balance: 600.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -6059,48 +6059,48 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     },
     {
-     "1": 10400,
-     "2": 6630,
-     "3": 4240
+     "1": 10600,
+     "2": 4980,
+     "3": 3640
     },
     {
-     "1": 12400,
-     "2": 6630,
-     "3": 4240
+     "1": 12600,
+     "2": 4980,
+     "3": 3640
     }
    ],
    "num_players": 3,
@@ -6108,7 +6108,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 2170,
+     "cash": 520,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -6122,7 +6122,7 @@
     },
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -6135,7 +6135,7 @@
     },
     {
      "bot": null,
-     "cash": 400,
+     "cash": 600,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -6329,8 +6329,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -6342,9 +6342,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -6355,9 +6355,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -6370,8 +6370,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -6383,7 +6383,7 @@
     "You: Director discarded a YesBank card.",
     "Day 9 begins.",
     "Day 9: cards dealt.",
-    "You: Bought 50 of YesBank for 1500. Balance: 400.",
+    "You: Bought 50 of YesBank for 1500. Balance: 600.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -6397,7 +6397,7 @@
     "You: Double director discarded 2 YesBank card(s).",
     "Day 10 begins.",
     "Day 10: cards dealt.",
-    "Meera: Bought 100 of TCS for 500. Balance: 1670."
+    "Meera: Bought 100 of TCS for 500. Balance: 20."
    ],
    "networth_history": [
     {
@@ -6407,48 +6407,48 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     },
     {
-     "1": 10400,
-     "2": 6630,
-     "3": 4240
+     "1": 10600,
+     "2": 4980,
+     "3": 3640
     },
     {
-     "1": 12400,
-     "2": 6630,
-     "3": 4240
+     "1": 12600,
+     "2": 4980,
+     "3": 3640
     }
    ],
    "num_players": 3,
@@ -6456,7 +6456,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 1670,
+     "cash": 20,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -6471,7 +6471,7 @@
     },
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -6484,7 +6484,7 @@
     },
     {
      "bot": null,
-     "cash": 400,
+     "cash": 600,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -6676,7 +6676,7 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320."
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720."
    ],
    "networth_history": [
     {
@@ -6686,23 +6686,23 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     }
    ],
    "num_players": 3,
@@ -6710,7 +6710,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 1320,
+     "cash": 720,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -6722,7 +6722,7 @@
     },
     {
      "bot": null,
-     "cash": 4925,
+     "cash": 5125,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -6734,7 +6734,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2600,
+     "cash": 950,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -6887,8 +6887,8 @@
     ]
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900."
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100."
    ],
    "networth_history": [
     {
@@ -6898,23 +6898,23 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     }
    ],
    "num_players": 3,
@@ -6922,7 +6922,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 1320,
+     "cash": 720,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -6934,7 +6934,7 @@
     },
     {
      "bot": null,
-     "cash": 4900,
+     "cash": 5100,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -6946,7 +6946,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2600,
+     "cash": 950,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -7097,8 +7097,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -7110,9 +7110,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -7127,28 +7127,28 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     }
    ],
    "num_players": 3,
@@ -7156,7 +7156,7 @@
    "players": [
     {
      "bot": null,
-     "cash": 4400,
+     "cash": 4600,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -7168,7 +7168,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2600,
+     "cash": 950,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -7180,7 +7180,7 @@
     },
     {
      "bot": "easy",
-     "cash": 1120,
+     "cash": 520,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -7339,8 +7339,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -7352,9 +7352,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -7365,8 +7365,8 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900."
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300."
    ],
    "networth_history": [
     {
@@ -7376,33 +7376,33 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     }
    ],
    "num_players": 3,
@@ -7410,7 +7410,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 2500,
+     "cash": 850,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -7423,7 +7423,7 @@
     },
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -7436,7 +7436,7 @@
     },
     {
      "bot": null,
-     "cash": 4400,
+     "cash": 4600,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -7611,8 +7611,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -7624,9 +7624,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -7637,9 +7637,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900."
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100."
    ],
    "networth_history": [
     {
@@ -7649,33 +7649,33 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     }
    ],
    "num_players": 3,
@@ -7683,7 +7683,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 2500,
+     "cash": 850,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -7696,7 +7696,7 @@
     },
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -7709,7 +7709,7 @@
     },
     {
      "bot": null,
-     "cash": 2900,
+     "cash": 3100,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -7885,8 +7885,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -7898,9 +7898,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -7911,9 +7911,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -7926,8 +7926,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -7942,38 +7942,38 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     }
    ],
    "num_players": 3,
@@ -7981,7 +7981,7 @@
    "players": [
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
@@ -7994,7 +7994,7 @@
     },
     {
      "bot": null,
-     "cash": 1900,
+     "cash": 2100,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -8007,7 +8007,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2170,
+     "cash": 520,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -8192,8 +8192,8 @@
     "YesBank": []
    },
    "game_log": [
-    "Arjun: Bought 4 of Reliance for 380. Balance: 1320.",
-    "You: Bought 5 of YesBank for 25. Balance: 4900.",
+    "Arjun: Bought 4 of Reliance for 380. Balance: 720.",
+    "You: Bought 5 of YesBank for 25. Balance: 5100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -8205,9 +8205,9 @@
     "You: Director discarded a YesBank card.",
     "Day 6 begins.",
     "Day 6: cards dealt.",
-    "You: Bought 50 of YesBank for 500. Balance: 4400.",
+    "You: Bought 50 of YesBank for 500. Balance: 4600.",
     "Meera: Turn passed.",
-    "Arjun: Bought 2 of Reliance for 200. Balance: 1120.",
+    "Arjun: Bought 2 of Reliance for 200. Balance: 520.",
     "You: Turn passed.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
@@ -8218,9 +8218,9 @@
     "You: Chairman discarded a YesBank card and removed one from Player 3.",
     "Day 7 begins.",
     "Day 7: cards dealt.",
-    "Meera: Bought 10 of Vodafone for 100. Balance: 2500.",
-    "Arjun: Bought 2 of Infosys for 220. Balance: 900.",
-    "You: Bought 100 of Cred for 1500. Balance: 2900.",
+    "Meera: Bought 10 of Vodafone for 100. Balance: 850.",
+    "Arjun: Bought 2 of Infosys for 220. Balance: 300.",
+    "You: Bought 100 of Cred for 1500. Balance: 3100.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -8233,8 +8233,8 @@
     "Day 8 begins.",
     "Day 8: cards dealt.",
     "Arjun: Turn passed.",
-    "You: Bought 50 of YesBank for 1000. Balance: 1900.",
-    "Meera: Bought 3 of Reliance for 330. Balance: 2170.",
+    "You: Bought 50 of YesBank for 1000. Balance: 2100.",
+    "Meera: Bought 3 of Reliance for 330. Balance: 520.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
     "Meera: Turn passed.",
@@ -8246,7 +8246,7 @@
     "You: Director discarded a YesBank card.",
     "Day 9 begins.",
     "Day 9: cards dealt.",
-    "You: Bought 50 of YesBank for 1500. Balance: 400.",
+    "You: Bought 50 of YesBank for 1500. Balance: 600.",
     "Meera: Turn passed.",
     "Arjun: Turn passed.",
     "You: Turn passed.",
@@ -8263,43 +8263,43 @@
     },
     {
      "1": 1500,
-     "2": 1200,
+     "2": 1000,
      "3": 1100
     },
     {
      "1": 2700,
-     "2": 2300,
+     "2": 1500,
      "3": 2000
     },
     {
      "1": 4000,
-     "2": 3300,
-     "3": 2900
+     "2": 2000,
+     "3": 2800
     },
     {
-     "1": 5150,
-     "2": 4100,
-     "3": 3600
+     "1": 5350,
+     "2": 2450,
+     "3": 3380
     },
     {
-     "1": 5400,
-     "2": 4100,
-     "3": 3720
+     "1": 5600,
+     "2": 2450,
+     "3": 3120
     },
     {
-     "1": 6400,
-     "2": 4100,
-     "3": 3850
+     "1": 6600,
+     "2": 2450,
+     "3": 3250
     },
     {
-     "1": 8900,
-     "2": 6650,
-     "3": 3990
+     "1": 9100,
+     "2": 5000,
+     "3": 3390
     },
     {
-     "1": 10400,
-     "2": 6630,
-     "3": 4240
+     "1": 10600,
+     "2": 4980,
+     "3": 3640
     }
    ],
    "num_players": 3,
@@ -8307,7 +8307,7 @@
    "players": [
     {
      "bot": null,
-     "cash": 400,
+     "cash": 600,
      "connected": true,
      "id": 1,
      "is_you": true,
@@ -8320,7 +8320,7 @@
     },
     {
      "bot": "easy",
-     "cash": 2170,
+     "cash": 520,
      "connected": true,
      "id": 2,
      "is_you": false,
@@ -8334,7 +8334,7 @@
     },
     {
      "bot": "easy",
-     "cash": 900,
+     "cash": 300,
      "connected": true,
      "id": 3,
      "is_you": false,
