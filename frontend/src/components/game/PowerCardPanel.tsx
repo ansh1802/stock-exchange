@@ -1,6 +1,8 @@
 import { cn } from '../../lib/cn'
 import { COMPANY_COLOR } from '../../lib/constants'
 import type { Card, Company } from '../../types/game'
+import type { ClientMessage } from '../../types/messages'
+import { useTutorial, tutorialAllows } from '../../tutorial/runtime/TutorialContext'
 
 interface Props {
   card: Card
@@ -11,17 +13,21 @@ interface Props {
 }
 
 export default function PowerCardPanel({ card, companies, loanAmount, onUse, onCancel }: Props) {
+  const tutorial = useTutorial()
   const name = card.company.replace(' ', '')
+  const blocked = (msg: ClientMessage) => !tutorialAllows(tutorial, msg)
 
   if (name === 'LoanStock') {
     return (
-      <div className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 flex items-center gap-3">
+      <div data-tutorial="power-panel" className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 flex items-center gap-3">
         <span className="text-amber-400 text-sm font-medium">
           Loan Stock: +<span className="font-mono">${loanAmount}</span>
           <span className="text-amber-600 text-xs ml-1">(10% of your net worth)</span>
         </span>
         <button
           onClick={() => onUse(card)}
+          data-tutorial-key="use"
+          disabled={blocked({ type: 'loan_stock' })}
           className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-sm rounded-lg"
         >
           Use
@@ -34,7 +40,7 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
   if (name === 'Debenture') {
     const closedCompanies = companies.filter((c) => !c.is_open)
     return (
-      <div className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 space-y-2">
+      <div data-tutorial="power-panel" className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-amber-400 text-sm font-medium">Debenture: Reopen a closed company</span>
           <button onClick={onCancel} className="text-gray-400 text-sm hover:text-white ml-auto">Cancel</button>
@@ -47,6 +53,8 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
               <button
                 key={co.name}
                 onClick={() => onUse(card, companies.indexOf(co) + 1)}
+                data-tutorial-key={co.name}
+                disabled={blocked({ type: 'debenture', company_num: companies.indexOf(co) + 1 })}
                 className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg border border-gray-600"
               >
                 <span className={cn('inline-block w-1.5 h-1.5 rounded-full mr-1', COMPANY_COLOR[co.name])} />
@@ -62,7 +70,7 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
   if (name === 'RightsIssue') {
     const openCompanies = companies.filter((c) => c.is_open)
     return (
-      <div className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 space-y-2">
+      <div data-tutorial="power-panel" className="px-4 py-3 bg-amber-900/20 border-b border-amber-800/30 space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-amber-400 text-sm font-medium">Rights Issue: Select a company</span>
           <button onClick={onCancel} className="text-gray-400 text-sm hover:text-white ml-auto">Cancel</button>
@@ -72,6 +80,8 @@ export default function PowerCardPanel({ card, companies, loanAmount, onUse, onC
             <button
               key={co.name}
               onClick={() => onUse(card, companies.indexOf(co) + 1)}
+              data-tutorial-key={co.name}
+              disabled={blocked({ type: 'rights_issue', company_num: companies.indexOf(co) + 1 })}
               className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg border border-gray-600"
             >
               <span className={cn('inline-block w-1.5 h-1.5 rounded-full mr-1', COMPANY_COLOR[co.name])} />

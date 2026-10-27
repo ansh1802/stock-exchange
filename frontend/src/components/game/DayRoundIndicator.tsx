@@ -17,6 +17,7 @@ function ExitButton({ onExit, disabled }: { onExit: () => void; disabled: boolea
       onClick={onExit}
       disabled={disabled}
       title="Exit room"
+      data-tutorial="exit"
       aria-label="Exit room"
       className="w-9 h-9 -my-1 flex items-center justify-center rounded-md text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-30"
     >
@@ -76,7 +77,7 @@ export default function DayRoundIndicator({ isConnected, onExit }: Props) {
   if (isMobile) {
     return (
       <div className="flex items-center justify-between px-3 py-2 bg-gray-900 border-b border-gray-800">
-        <div className="flex items-center gap-2 font-mono text-xs">
+        <div data-tutorial="day-round" className="flex items-center gap-2 font-mono text-xs">
           <span className="text-gray-300">
             Day <span className="text-white font-bold">{gameState.day}</span>
             <span className="text-gray-500">/10</span>
@@ -103,7 +104,7 @@ export default function DayRoundIndicator({ isConnected, onExit }: Props) {
 
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-800 text-sm">
-      <div className="flex items-center gap-4">
+      <div data-tutorial="day-round" className="flex items-center gap-4">
         <span className="font-mono text-gray-300">
           Day <span className="text-white font-bold">{gameState.day}</span>/10
         </span>

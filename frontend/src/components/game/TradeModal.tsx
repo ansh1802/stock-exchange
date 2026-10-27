@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTutorial, tutorialAllows } from '../../tutorial/runtime/TutorialContext'
 import { motion } from 'framer-motion'
 import { useGameStore } from '../../store/useGameStore'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -47,6 +48,7 @@ function sliderTicks(max: number): number[] {
 export default function TradeModal({ mode, send, onClose }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const isMobile = useIsMobile()
+  const tutorial = useTutorial()
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null)
   const [rawQuantity, setRawQuantity] = useState(1)
 
@@ -131,6 +133,12 @@ export default function TradeModal({ mode, send, onClose }: Props) {
   const canExecute = company && quantity > 0 && quantity <= maxQty &&
     (mode === 'buy' ? company.is_open && company.value > 0 : true)
 
+  const tutorialBlocked = !tutorialAllows(
+    tutorial,
+    selectedCompany === null ? null : { type: mode, company_num: selectedCompany + 1, quantity } as ClientMessage,
+  )
+  const confirmDisabled = !canExecute || tutorialBlocked
+
   const handleExecute = () => {
     if (!canExecute || selectedCompany === null) return
     const companyNum = selectedCompany + 1
@@ -168,7 +176,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
       >
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h3 className={cn(
+          <h3 data-tutorial="trade-mode" className={cn(
             'text-lg font-bold',
             isBuy ? 'text-emerald-400' : 'text-red-400',
           )}>
@@ -176,14 +184,14 @@ export default function TradeModal({ mode, send, onClose }: Props) {
           </h3>
           <div className="flex items-center gap-3">
             <TurnTimerDisplay />
-            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+            <button onClick={onClose} data-tutorial="trade-close" className="text-gray-500 hover:text-white transition-colors">
               <X size={18} />
             </button>
           </div>
         </div>
 
         {/* Company selector */}
-        <div className={cn('grid gap-2', isMobile ? 'grid-cols-2' : 'grid-cols-3')}>
+        <div data-tutorial="trade-company" className={cn('grid gap-2', isMobile ? 'grid-cols-2' : 'grid-cols-3')}>
           {gameState.companies.map((co, i) => {
             const disabled = isBuy && (!co.is_open || co.value <= 0)
             const holdingQty = me.stocks[co.name] ?? 0
@@ -192,6 +200,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
             return (
               <button
                 key={co.name}
+                data-tutorial-key={co.name}
                 onClick={() => { setSelectedCompany(i); setRawQuantity(1) }}
                 disabled={disabled || noShares}
                 className={cn(
@@ -257,7 +266,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
             </div>
 
             {/* Quantity slider — always spans 0..current max, rescales as max changes */}
-            <div className="px-1">
+            <div data-tutorial="trade-slider" className="px-1">
               {/* 44px-tall hit area; the visual track is a thin bar centred inside it */}
               <div className="relative h-11">
                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-gray-700 overflow-hidden">
@@ -323,6 +332,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setQuantity(maxQty)}
+                data-tutorial="trade-max"
                 disabled={maxQty === 0}
                 className={cn(
                   'text-sm font-medium rounded-lg border disabled:opacity-30 disabled:cursor-not-allowed',
@@ -336,6 +346,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
               </button>
               <button
                 onClick={() => riQty !== null && setQuantity(riQty)}
+                data-tutorial="trade-ri"
                 disabled={riQty === null || riQty === 0}
                 title={
                   isBuy
@@ -352,7 +363,7 @@ export default function TradeModal({ mode, send, onClose }: Props) {
               </button>
             </div>
 
-            <div className="text-sm font-mono bg-gray-800/50 px-3 py-2 rounded-lg space-y-1">
+            <div data-tutorial="trade-preview" className="text-sm font-mono bg-gray-800/50 px-3 py-2 rounded-lg space-y-1">
               <div className="text-gray-300">
                 {quantity} × {company.name} @ ${company.value} = {formatCash(cost)}
               </div>
@@ -371,7 +382,8 @@ export default function TradeModal({ mode, send, onClose }: Props) {
         {/* Confirm */}
         <motion.button
           onClick={handleExecute}
-          disabled={!canExecute}
+          data-tutorial="trade-confirm"
+          disabled={confirmDisabled}
           whileHover={canExecute ? { scale: 1.02 } : {}}
           whileTap={canExecute ? { scale: 0.98 } : {}}
           className={cn(

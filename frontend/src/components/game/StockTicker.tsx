@@ -68,6 +68,7 @@ export default function StockTicker() {
     if (isMobile) {
       return (
         <div
+          data-tutorial="ticker"
           className="grid grid-cols-3 gap-px px-1 py-1.5"
           style={{
             background: 'var(--color-paper-line)',
@@ -80,6 +81,7 @@ export default function StockTicker() {
             return (
               <div
                 key={co.name}
+                data-tutorial-key={co.name}
                 className={cn('relative px-2 py-1.5', !co.is_open && 'opacity-50')}
                 style={{ background: 'var(--color-paper)' }}
               >
@@ -121,6 +123,7 @@ export default function StockTicker() {
 
     return (
       <div
+        data-tutorial="ticker"
         className="flex gap-0 px-2 py-2 overflow-x-auto"
         style={{
           background: 'var(--color-paper)',
@@ -136,6 +139,7 @@ export default function StockTicker() {
           return (
             <div
               key={co.name}
+              data-tutorial-key={co.name}
               className={cn(
                 'relative flex-1 min-w-[150px] px-3 py-2 transition-opacity',
                 i > 0 && 'border-l',
@@ -162,7 +166,7 @@ export default function StockTicker() {
                     className="font-mono ml-auto"
                     style={{ fontSize: 9, color: 'var(--color-sell)', letterSpacing: '0.15em' }}
                   >
-                    SUSPENDED
+                    CLOSED
                   </span>
                 )}
               </div>
@@ -180,6 +184,7 @@ export default function StockTicker() {
                 )}
               </div>
               <div
+                data-tutorial="ticker-available"
                 className="font-mono mt-0.5 pl-2"
                 style={{ fontSize: 9, color: 'var(--color-ink-muted)', letterSpacing: '0.1em' }}
               >
@@ -195,12 +200,13 @@ export default function StockTicker() {
   // v1 — unchanged
   if (isMobile) {
     return (
-      <div className="grid grid-cols-3 gap-1.5 px-3 py-1.5 bg-gray-900 border-b border-gray-800">
+      <div data-tutorial="ticker" className="grid grid-cols-3 gap-1.5 px-3 py-1.5 bg-gray-900 border-b border-gray-800">
         {gameState.companies.map((co) => {
           const ticker = co.ticker || COMPANY_TICKER[co.name] || co.name.toUpperCase()
           return (
             <div
               key={co.name}
+              data-tutorial-key={co.name}
               className={cn(
                 'px-2 py-1 rounded-md border',
                 co.is_open
@@ -230,7 +236,7 @@ export default function StockTicker() {
   }
 
   return (
-    <div className="flex gap-1 px-2 py-2 bg-gray-900 border-b border-gray-800 overflow-x-auto">
+    <div data-tutorial="ticker" className="flex gap-1 px-2 py-2 bg-gray-900 border-b border-gray-800 overflow-x-auto">
       {gameState.companies.map((co, i) => {
         const historyForCompany = price_history.map((day) => day[i])
         const sparkData = [...historyForCompany.slice(-5), co.value]
@@ -238,6 +244,7 @@ export default function StockTicker() {
         return (
           <div
             key={co.name}
+            data-tutorial-key={co.name}
             className={cn(
               'flex-1 min-w-[140px] px-3 py-2 rounded-lg border transition-colors',
               co.is_open
@@ -258,7 +265,7 @@ export default function StockTicker() {
                 <Sparkline values={sparkData} color={SPARK_COLORS[co.name] ?? '#9ca3af'} />
               )}
             </div>
-            <div className="text-[10px] text-gray-500 font-mono mt-0.5">
+            <div data-tutorial="ticker-available" className="text-[10px] text-gray-500 font-mono mt-0.5">
               {gameState.available_shares[i]} avail
             </div>
           </div>

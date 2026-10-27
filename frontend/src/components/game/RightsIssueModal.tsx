@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useGameStore } from '../../store/useGameStore'
 import type { ClientMessage } from '../../types/messages'
+import { useTutorial, tutorialAllows } from '../../tutorial/runtime/TutorialContext'
 
 interface Props {
   send: (msg: ClientMessage) => void
@@ -9,6 +10,7 @@ interface Props {
 export default function RightsIssueModal({ send }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
+  const tutorial = useTutorial()
   const [quantity, setQuantity] = useState(0)
   const [confirmingPass, setConfirmingPass] = useState(false)
 
@@ -55,7 +57,7 @@ export default function RightsIssueModal({ send }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-sm space-y-4">
+      <div data-tutorial="rights-modal" className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-sm space-y-4">
         <h3 className="text-lg font-bold text-white">Rights Issue</h3>
         <p className="text-sm text-gray-400">
           <span className="text-white font-medium">{company?.name}</span> shares available at{' '}
@@ -108,6 +110,7 @@ export default function RightsIssueModal({ send }: Props) {
               </button>
               <button
                 onClick={() => setQuantity(maxQty)}
+                data-tutorial-key="max"
                 disabled={maxQty === 0}
                 className="ml-1 px-3 h-8 bg-gray-700 hover:bg-gray-600 disabled:opacity-40 text-gray-300 rounded text-xs font-medium flex-shrink-0"
               >
@@ -136,6 +139,7 @@ export default function RightsIssueModal({ send }: Props) {
                   </button>
                   <button
                     onClick={handlePass}
+                    disabled={!tutorialAllows(tutorial, { type: 'rights_issue_buy', quantity: 0 })}
                     className="flex-1 min-h-[44px] bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg font-medium"
                   >
                     Yes, pass
@@ -146,13 +150,15 @@ export default function RightsIssueModal({ send }: Props) {
             <div className="flex gap-2">
               <button
                 onClick={handleBuy}
-                disabled={quantity === 0}
+                data-tutorial-key="buy"
+                disabled={quantity === 0 || !tutorialAllows(tutorial, { type: 'rights_issue_buy', quantity })}
                 className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg font-medium"
               >
                 {quantity > 0 ? `Buy ${quantity}` : 'Buy'}
               </button>
               <button
                 onClick={handlePass}
+                disabled={!tutorialAllows(tutorial, { type: 'rights_issue_buy', quantity: 0 })}
                 className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg font-medium"
               >
                 Pass

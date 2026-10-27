@@ -82,7 +82,7 @@ export default function MobileLogChat({ send }: Props) {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-gray-950">
+    <div data-tutorial="log" className="flex-1 flex flex-col min-h-0 bg-gray-950">
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto mobile-scroll px-3 py-2 space-y-1.5"

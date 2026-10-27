@@ -60,7 +60,7 @@ export default function GameLog({ send }: Props) {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <div data-tutorial="log" className="flex-1 flex flex-col min-h-0">
       <div className="flex border-b border-gray-800">
         <button
           onClick={() => setTab('log')}

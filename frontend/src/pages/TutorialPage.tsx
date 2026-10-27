@@ -1,19 +1,20 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 import { tutorialStorage } from '../lib/tutorialStorage'
+import { CHAPTERS } from '../tutorial/chapters/index'
 
 /**
- * Tutorial hub. The plan defines a Surface A "scripted bot walkthrough" that
- * is a multi-week build (state machine, three bot personas, scripted decks).
- * That's stubbed here — the route exists, the entry surfaces are wired, but
- * the orchestrator is a "coming soon" panel. Surface B (Rulebook) ships fully
- * (see /rulebook). Surface C (first-encounter tooltips) ships via
- * useFirstEncounterTip.
+ * Tutorial hub: the guided-tutorial chapter list (with per-chapter progress),
+ * the rulebook link and the first-encounter tips toggle.
  */
 export default function TutorialPage() {
   const navigate = useNavigate()
   const [tipsDisabled, setTipsDisabled] = useState(() => tutorialStorage.areTipsDisabled())
-  const [completed, setCompleted] = useState(() => tutorialStorage.isCompleted())
+  const [, rerender] = useReducer((n: number) => n + 1, 0) // re-read storage after a reset
+  const ids = CHAPTERS.map((c) => c.id)
+  const doneIds = new Set(ids.filter((id) => tutorialStorage.isChapterDone(id)))
+  const startId = ids.length > 0 ? tutorialStorage.firstIncompleteChapter(ids) : null
+  const startChapter = CHAPTERS.find((c) => c.id === startId)
 
   useEffect(() => {
     tutorialStorage.setTipsDisabled(tipsDisabled)
@@ -68,7 +69,7 @@ export default function TutorialPage() {
               margin: '4px 0 6px',
             }}
           >
-            Three ways<br />to learn
+            Learn to play
           </h1>
           <p
             style={{
@@ -78,34 +79,72 @@ export default function TutorialPage() {
               marginBottom: 22,
             }}
           >
-            Pick what fits your time.
+            A guided walkthrough on the real board. Every chapter stands alone.
           </p>
 
-          {/* Walkthrough — stubbed */}
-          <div
-            className="px-4 py-4"
-            style={{
-              background: 'var(--color-paper-2)',
-              border: '1px solid var(--color-paper-line)',
-              borderRadius: 3,
-              opacity: 0.6,
-              marginBottom: 10,
-            }}
-          >
-            <div className="flex items-baseline justify-between">
-              <div style={{ fontFamily: 'DM Serif Display, serif', fontSize: 20 }}>Walkthrough</div>
-              <span
-                className="font-mono"
-                style={{ fontSize: 10, color: 'var(--color-ink-muted)', letterSpacing: '0.15em' }}
-              >
-                COMING SOON
-              </span>
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--color-ink-muted)', marginTop: 4 }}>
-              5-minute guided sandbox with scripted opponents. Read the
-              rulebook in the meantime.
-            </div>
-          </div>
+          {startChapter && (
+            <button
+              data-testid="tutorial-start"
+              onClick={() => navigate(`/tutorial/play/${startChapter.id}`)}
+              className="w-full px-4 py-4 text-left"
+              style={{
+                background: 'var(--color-ink)',
+                color: 'var(--color-gold-soft)',
+                border: '1px solid var(--color-gold)',
+                borderRadius: 3,
+                cursor: 'pointer',
+                marginBottom: 10,
+              }}
+            >
+              <div style={{ fontFamily: 'DM Serif Display, serif', fontSize: 20 }}>
+                {doneIds.size === 0 ? 'Start from the beginning' : `Continue: ${startChapter.title}`}
+              </div>
+              <div className="font-mono" style={{ fontSize: 10, letterSpacing: '0.15em', opacity: 0.75, marginTop: 4 }}>
+                {doneIds.size} / {CHAPTERS.length} CHAPTERS DONE
+              </div>
+            </button>
+          )}
+
+          {/* Chapter list */}
+          <ol style={{ listStyle: 'none', padding: 0, margin: '0 0 10px' }}>
+            {CHAPTERS.map((c, i) => {
+              const done = doneIds.has(c.id)
+              return (
+                <li key={c.id} style={{ marginBottom: 6 }}>
+                  <Link
+                    to={`/tutorial/play/${c.id}`}
+                    data-testid={`tutorial-chapter-${c.id}`}
+                    className="flex items-center gap-3 px-4 py-3"
+                    style={{
+                      background: 'var(--color-paper-2)',
+                      border: '1px solid var(--color-paper-line)',
+                      borderRadius: 3,
+                      color: 'var(--color-ink)',
+                      textDecoration: 'none',
+                      minHeight: 44,
+                    }}
+                  >
+                    <span className="font-mono" style={{ fontSize: 11, color: 'var(--color-gold-deep)', width: 18 }}>
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span style={{ display: 'block', fontFamily: 'DM Serif Display, serif', fontSize: 17 }}>{c.title}</span>
+                      <span style={{ display: 'block', fontSize: 12, color: 'var(--color-ink-muted)' }}>{c.subtitle}</span>
+                    </span>
+                    <span className="font-mono" style={{ fontSize: 10, color: 'var(--color-ink-muted)', whiteSpace: 'nowrap' }}>
+                      {c.minutes} MIN
+                    </span>
+                    <span
+                      aria-label={done ? 'completed' : 'not completed'}
+                      style={{ width: 16, textAlign: 'center', color: 'var(--color-gold-deep)', fontSize: 14 }}
+                    >
+                      {done ? '✓' : ''}
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ol>
 
           {/* Rulebook — primary */}
           <Link
@@ -175,23 +214,19 @@ export default function TutorialPage() {
             </div>
           </div>
 
-          {/* Completed toggle */}
+          {/* Progress reset */}
           <div className="flex items-center justify-between" style={{ fontSize: 11, color: 'var(--color-ink-muted)' }}>
             <span>
-              Status:{' '}
+              Progress:{' '}
               <strong style={{ color: 'var(--color-ink)' }}>
-                {completed ? 'tutorial completed' : 'not yet completed'}
+                {doneIds.size} of {CHAPTERS.length} chapters
               </strong>
             </span>
             <button
               onClick={() => {
-                if (completed) {
-                  tutorialStorage.resetCompleted()
-                  setCompleted(false)
-                } else {
-                  tutorialStorage.markCompleted()
-                  setCompleted(true)
-                }
+                tutorialStorage.resetChapters()
+                tutorialStorage.resetCompleted()
+                rerender()
               }}
               className="font-mono"
               style={{
@@ -204,7 +239,7 @@ export default function TutorialPage() {
                 textTransform: 'uppercase',
               }}
             >
-              {completed ? 'Reset' : 'Mark done'}
+              Reset
             </button>
           </div>
         </div>

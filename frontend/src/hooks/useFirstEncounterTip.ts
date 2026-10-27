@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { tutorialStorage } from '../lib/tutorialStorage'
+import { useTutorial } from '../tutorial/runtime/TutorialContext'
 
 /**
  * Fire a tooltip the first time a UI concept appears in real gameplay.
@@ -12,6 +13,7 @@ import { tutorialStorage } from '../lib/tutorialStorage'
  * the consumer can choose anchor refs, layout, and copy.
  */
 export function useFirstEncounterTip(id: string, active: boolean) {
+  const inTutorial = useTutorial() !== null
   const [show, setShow] = useState(() => {
     if (!active) return false
     if (tutorialStorage.areTipsDisabled()) return false
@@ -30,5 +32,7 @@ export function useFirstEncounterTip(id: string, active: boolean) {
     setShow(false)
   }
 
+  // Guided tutorial owns all coaching; never show first-encounter tips there.
+  if (inTutorial) return { show: false, dismiss }
   return { show, dismiss }
 }

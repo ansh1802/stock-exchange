@@ -5,6 +5,7 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 import { cn } from '../../lib/cn'
 import type { ClientMessage } from '../../types/messages'
 import TradeModal from './TradeModal'
+import { useTutorial, tutorialAllows } from '../../tutorial/runtime/TutorialContext'
 
 interface Props {
   send: (msg: ClientMessage) => void
@@ -14,6 +15,7 @@ export default function ActionBar({ send }: Props) {
   const gameState = useGameStore((s) => s.gameState)
   const playerName = useGameStore((s) => s.playerName)
   const isMobile = useIsMobile()
+  const tutorial = useTutorial()
   const [tradeMode, setTradeMode] = useState<'buy' | 'sell' | null>(null)
 
   if (!gameState) return null
@@ -31,11 +33,12 @@ export default function ActionBar({ send }: Props) {
 
   return (
     <>
-      <div className="px-4 py-2 bg-gray-900 border-t border-gray-800">
+      <div data-tutorial="action-bar" className="px-4 py-2 bg-gray-900 border-t border-gray-800">
         {isMyTurn ? (
           <div className="flex gap-2 max-w-lg mx-auto">
             <motion.button
               onClick={() => setTradeMode('buy')}
+              data-tutorial="buy-button"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               className={cn(buttonClass, 'bg-emerald-600 hover:bg-emerald-500 text-white')}
@@ -44,6 +47,7 @@ export default function ActionBar({ send }: Props) {
             </motion.button>
             <motion.button
               onClick={() => setTradeMode('sell')}
+              data-tutorial="sell-button"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               className={cn(buttonClass, 'bg-red-600 hover:bg-red-500 text-white')}
@@ -52,6 +56,8 @@ export default function ActionBar({ send }: Props) {
             </motion.button>
             <motion.button
               onClick={handlePass}
+              data-tutorial="pass-button"
+              disabled={!tutorialAllows(tutorial, { type: 'pass' })}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
               className={cn(buttonClass, 'bg-gray-700 hover:bg-gray-600 text-gray-300')}

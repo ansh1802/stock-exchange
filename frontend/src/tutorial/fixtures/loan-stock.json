@@ -1,0 +1,1101 @@
+{
+ "chapter": "loan-stock",
+ "human_id": 1,
+ "snapshots": {
+  "bought": {
+   "all_hands": null,
+   "available_shares": [
+    195,
+    200,
+    180,
+    196,
+    197,
+    198
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 60,
+     "ticker": "CRED",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 60,
+     "ticker": "TCS",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 35,
+     "ticker": "RELI",
+     "value": 35
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "Meera",
+   "current_turn": 0,
+   "day": 2,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "You: Bought 14 of Cred for 560. Balance: 40.",
+    "Meera: Bought 6 of Cred for 240. Balance: 360.",
+    "Arjun: Bought 4 of TCS for 220. Balance: 380.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "Cards revealed.",
+    "Day 2 begins.",
+    "Day 2: cards dealt.",
+    "Meera: Bought 2 of Infosys for 160. Balance: 200.",
+    "Arjun: Bought 5 of Vodafone for 100. Balance: 280.",
+    "You: Loan Stock used. Received $85 (10% of net worth).",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "You: Bought 3 of Reliance for 105. Balance: 20."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600
+    },
+    {
+     "1": 880,
+     "2": 720,
+     "3": 620
+    }
+   ],
+   "num_players": 3,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 200,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "Cred": 6,
+      "Infosys": 2
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 280,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 4,
+      "Vodafone": 5
+     }
+    },
+    {
+     "bot": null,
+     "cash": 20,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "Cred": 14,
+      "Reliance": 3
+     }
+    }
+   ],
+   "price_history": [
+    [
+     20,
+     25,
+     60,
+     60,
+     35,
+     80
+    ]
+   ],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 2,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "Reliance",
+     "is_power": false,
+     "positive": true,
+     "value": 20
+    }
+   ]
+  },
+  "loaned": {
+   "all_hands": null,
+   "available_shares": [
+    195,
+    200,
+    180,
+    196,
+    200,
+    198
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 60,
+     "ticker": "CRED",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 60,
+     "ticker": "TCS",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 35,
+     "ticker": "RELI",
+     "value": 35
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "Meera",
+   "current_turn": 0,
+   "day": 2,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "You: Bought 14 of Cred for 560. Balance: 40.",
+    "Meera: Bought 6 of Cred for 240. Balance: 360.",
+    "Arjun: Bought 4 of TCS for 220. Balance: 380.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "Cards revealed.",
+    "Day 2 begins.",
+    "Day 2: cards dealt.",
+    "Meera: Bought 2 of Infosys for 160. Balance: 200.",
+    "Arjun: Bought 5 of Vodafone for 100. Balance: 280.",
+    "You: Loan Stock used. Received $85 (10% of net worth)."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600
+    },
+    {
+     "1": 880,
+     "2": 720,
+     "3": 620
+    }
+   ],
+   "num_players": 3,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 200,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "Cred": 6,
+      "Infosys": 2
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 280,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 4,
+      "Vodafone": 5
+     }
+    },
+    {
+     "bot": null,
+     "cash": 125,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "Cred": 14
+     }
+    }
+   ],
+   "price_history": [
+    [
+     20,
+     25,
+     60,
+     60,
+     35,
+     80
+    ]
+   ],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 1,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "Reliance",
+     "is_power": false,
+     "positive": true,
+     "value": 20
+    }
+   ]
+  },
+  "meera": {
+   "all_hands": null,
+   "available_shares": [
+    200,
+    200,
+    180,
+    196,
+    200,
+    198
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 60,
+     "ticker": "CRED",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 60,
+     "ticker": "TCS",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 35,
+     "ticker": "RELI",
+     "value": 35
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "Arjun",
+   "current_turn": 1,
+   "day": 2,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "You: Bought 14 of Cred for 560. Balance: 40.",
+    "Meera: Bought 6 of Cred for 240. Balance: 360.",
+    "Arjun: Bought 4 of TCS for 220. Balance: 380.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "Cards revealed.",
+    "Day 2 begins.",
+    "Day 2: cards dealt.",
+    "Meera: Bought 2 of Infosys for 160. Balance: 200."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600
+    },
+    {
+     "1": 880,
+     "2": 720,
+     "3": 620
+    }
+   ],
+   "num_players": 3,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 200,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "Cred": 6,
+      "Infosys": 2
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 380,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 4
+     }
+    },
+    {
+     "bot": null,
+     "cash": 40,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "Cred": 14
+     }
+    }
+   ],
+   "price_history": [
+    [
+     20,
+     25,
+     60,
+     60,
+     35,
+     80
+    ]
+   ],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 0,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "Reliance",
+     "is_power": false,
+     "positive": true,
+     "value": 20
+    },
+    {
+     "company": "LoanStock",
+     "is_power": true,
+     "positive": true,
+     "value": 0
+    }
+   ]
+  },
+  "start": {
+   "all_hands": null,
+   "available_shares": [
+    200,
+    200,
+    180,
+    196,
+    200,
+    200
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 60,
+     "ticker": "CRED",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 60,
+     "ticker": "TCS",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 35,
+     "ticker": "RELI",
+     "value": 35
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "Meera",
+   "current_turn": 0,
+   "day": 2,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "You: Bought 14 of Cred for 560. Balance: 40.",
+    "Meera: Bought 6 of Cred for 240. Balance: 360.",
+    "Arjun: Bought 4 of TCS for 220. Balance: 380.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "Cards revealed.",
+    "Day 2 begins.",
+    "Day 2: cards dealt."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600
+    },
+    {
+     "1": 880,
+     "2": 720,
+     "3": 620
+    }
+   ],
+   "num_players": 3,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 360,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "Cred": 6
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 380,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 4
+     }
+    },
+    {
+     "bot": null,
+     "cash": 40,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "Cred": 14
+     }
+    }
+   ],
+   "price_history": [
+    [
+     20,
+     25,
+     60,
+     60,
+     35,
+     80
+    ]
+   ],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 0,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "Reliance",
+     "is_power": false,
+     "positive": true,
+     "value": 20
+    },
+    {
+     "company": "LoanStock",
+     "is_power": true,
+     "positive": true,
+     "value": 0
+    }
+   ]
+  },
+  "you1": {
+   "all_hands": null,
+   "available_shares": [
+    195,
+    200,
+    180,
+    196,
+    200,
+    198
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 60,
+     "ticker": "CRED",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 60,
+     "ticker": "TCS",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 35,
+     "ticker": "RELI",
+     "value": 35
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "You",
+   "current_turn": 2,
+   "day": 2,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "You: Bought 14 of Cred for 560. Balance: 40.",
+    "Meera: Bought 6 of Cred for 240. Balance: 360.",
+    "Arjun: Bought 4 of TCS for 220. Balance: 380.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "Cards revealed.",
+    "Day 2 begins.",
+    "Day 2: cards dealt.",
+    "Meera: Bought 2 of Infosys for 160. Balance: 200.",
+    "Arjun: Bought 5 of Vodafone for 100. Balance: 280."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600
+    },
+    {
+     "1": 880,
+     "2": 720,
+     "3": 620
+    }
+   ],
+   "num_players": 3,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 200,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "Cred": 6,
+      "Infosys": 2
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 280,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 4,
+      "Vodafone": 5
+     }
+    },
+    {
+     "bot": null,
+     "cash": 40,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "Cred": 14
+     }
+    }
+   ],
+   "price_history": [
+    [
+     20,
+     25,
+     60,
+     60,
+     35,
+     80
+    ]
+   ],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 0,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "Reliance",
+     "is_power": false,
+     "positive": true,
+     "value": 20
+    },
+    {
+     "company": "LoanStock",
+     "is_power": true,
+     "positive": true,
+     "value": 0
+    }
+   ]
+  },
+  "you2": {
+   "all_hands": null,
+   "available_shares": [
+    195,
+    200,
+    180,
+    196,
+    200,
+    198
+   ],
+   "chairman": {
+    "Cred": null,
+    "Infosys": null,
+    "Reliance": null,
+    "TCS": null,
+    "Vodafone": null,
+    "YesBank": null
+   },
+   "chairman_director_queue": [],
+   "companies": [
+    {
+     "is_open": true,
+     "name": "Vodafone",
+     "pre_fluct_value": 20,
+     "prev_value": 20,
+     "ticker": "VODA",
+     "value": 20
+    },
+    {
+     "is_open": true,
+     "name": "YesBank",
+     "pre_fluct_value": 25,
+     "prev_value": 25,
+     "ticker": "YESB",
+     "value": 25
+    },
+    {
+     "is_open": true,
+     "name": "Cred",
+     "pre_fluct_value": 40,
+     "prev_value": 60,
+     "ticker": "CRED",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "TCS",
+     "pre_fluct_value": 55,
+     "prev_value": 60,
+     "ticker": "TCS",
+     "value": 60
+    },
+    {
+     "is_open": true,
+     "name": "Reliance",
+     "pre_fluct_value": 75,
+     "prev_value": 35,
+     "ticker": "RELI",
+     "value": 35
+    },
+    {
+     "is_open": true,
+     "name": "Infosys",
+     "pre_fluct_value": 80,
+     "prev_value": 80,
+     "ticker": "INFO",
+     "value": 80
+    }
+   ],
+   "currency_effects": [],
+   "current_player_name": "You",
+   "current_turn": 2,
+   "day": 2,
+   "day_end_countdown_deadline": null,
+   "directors": {
+    "Cred": [],
+    "Infosys": [],
+    "Reliance": [],
+    "TCS": [],
+    "Vodafone": [],
+    "YesBank": []
+   },
+   "game_log": [
+    "You: Bought 14 of Cred for 560. Balance: 40.",
+    "Meera: Bought 6 of Cred for 240. Balance: 360.",
+    "Arjun: Bought 4 of TCS for 220. Balance: 380.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "You: Turn passed.",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed.",
+    "Cards revealed.",
+    "Day 2 begins.",
+    "Day 2: cards dealt.",
+    "Meera: Bought 2 of Infosys for 160. Balance: 200.",
+    "Arjun: Bought 5 of Vodafone for 100. Balance: 280.",
+    "You: Loan Stock used. Received $85 (10% of net worth).",
+    "Meera: Turn passed.",
+    "Arjun: Turn passed."
+   ],
+   "networth_history": [
+    {
+     "1": 600,
+     "2": 600,
+     "3": 600
+    },
+    {
+     "1": 880,
+     "2": 720,
+     "3": 620
+    }
+   ],
+   "num_players": 3,
+   "phase": "player_turn",
+   "players": [
+    {
+     "bot": "easy",
+     "cash": 200,
+     "connected": true,
+     "id": 2,
+     "is_you": false,
+     "left": false,
+     "name": "Meera",
+     "stocks": {
+      "Cred": 6,
+      "Infosys": 2
+     }
+    },
+    {
+     "bot": "easy",
+     "cash": 280,
+     "connected": true,
+     "id": 3,
+     "is_you": false,
+     "left": false,
+     "name": "Arjun",
+     "stocks": {
+      "TCS": 4,
+      "Vodafone": 5
+     }
+    },
+    {
+     "bot": null,
+     "cash": 125,
+     "connected": true,
+     "id": 1,
+     "is_you": true,
+     "left": false,
+     "name": "You",
+     "stocks": {
+      "Cred": 14
+     }
+    }
+   ],
+   "price_history": [
+    [
+     20,
+     25,
+     60,
+     60,
+     35,
+     80
+    ]
+   ],
+   "reveal_data": [],
+   "rights_issue_company": null,
+   "rights_issue_queue": [],
+   "room_code": "TUTR",
+   "round": 1,
+   "suspend_queue": [],
+   "turn_timer_deadline": null,
+   "turn_timer_duration": 90,
+   "your_hand": [
+    {
+     "company": "Reliance",
+     "is_power": false,
+     "positive": true,
+     "value": 20
+    }
+   ]
+  }
+ }
+}

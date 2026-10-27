@@ -8,6 +8,8 @@ interface Props {
   onClick?: () => void
   selected?: boolean
   compact?: boolean
+  /** Tutorial spotlight key (`data-tutorial-key`); inert outside the tutorial. */
+  tutorialKey?: string
 }
 
 // v2 company color CSS values (paired with --color-co-* tokens)
@@ -20,7 +22,7 @@ const V2_COMPANY_HEX: Record<string, string> = {
   Infosys: '#3d7a4a',
 }
 
-export default function CardComponent({ card, onClick, selected, compact }: Props) {
+export default function CardComponent({ card, onClick, selected, compact, tutorialKey }: Props) {
   const isPower = card.is_power
   const ticker = COMPANY_TICKER[card.company] ?? card.company.toUpperCase()
   const theme = useTheme()
@@ -45,6 +47,7 @@ export default function CardComponent({ card, onClick, selected, compact }: Prop
       return (
         <button
           onClick={onClick}
+          data-tutorial-key={tutorialKey}
           className={cn(
             'relative flex flex-col items-center justify-center cursor-pointer transition-all',
             'bg-[var(--color-ink)] text-[var(--color-paper)]',
@@ -108,6 +111,7 @@ export default function CardComponent({ card, onClick, selected, compact }: Prop
     return (
       <button
         onClick={onClick}
+        data-tutorial-key={tutorialKey}
         className={cn(
           'relative flex flex-col items-stretch cursor-pointer transition-all',
           'bg-[var(--color-paper)] text-[var(--color-ink)]',
@@ -178,6 +182,7 @@ export default function CardComponent({ card, onClick, selected, compact }: Prop
   return (
     <button
       onClick={onClick}
+      data-tutorial-key={tutorialKey}
       className={cn(
         'flex flex-col items-center justify-center rounded-lg border-2 transition-all',
         compact

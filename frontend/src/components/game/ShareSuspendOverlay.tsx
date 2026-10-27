@@ -5,6 +5,7 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 import { cn } from '../../lib/cn'
 import { COMPANY_COLOR, COMPANY_TEXT_COLOR } from '../../lib/constants'
 import type { ClientMessage } from '../../types/messages'
+import { useTutorial, tutorialAllows } from '../../tutorial/runtime/TutorialContext'
 import NetworthGraph, { TRAVEL_MS as GRAPH_TRAVEL_MS } from './NetworthGraph'
 
 interface Props {
@@ -182,13 +183,16 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
   // the finalized state simultaneously), so everyone's countdown is in sync.
   // The graph travel starts when the finalized snapshot lands (same moment) —
   // delay by GRAPH_TRAVEL_MS so the countdown only appears once the line finishes.
+  // Tutorial hold: the countdown waits while coachmarks are read over the overlay.
+  const tutorial = useTutorial()
+  const closeHeld = tutorial?.holdSuspendClose ?? false
   const graphAnimTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => {
-    if (!backendReady || hasQueue || animBusy || countdown !== null) return
+    if (!backendReady || hasQueue || animBusy || countdown !== null || closeHeld) return
     clearTimeout(graphAnimTimerRef.current)
     graphAnimTimerRef.current = setTimeout(() => setCountdown(5), GRAPH_TRAVEL_MS + 200)
     return () => clearTimeout(graphAnimTimerRef.current)
-  }, [backendReady, hasQueue, animBusy, countdown])
+  }, [backendReady, hasQueue, animBusy, countdown, closeHeld])
 
   // Tick countdown
   useEffect(() => {
@@ -391,6 +395,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
             </div>
 
             <div
+              data-tutorial="suspend-list"
               className={cn(
                 'grid gap-1.5 grid-cols-2 md:grid-cols-1',
                 myDecision ? '' : 'opacity-80',
@@ -431,6 +436,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
                   return (
                     <div
                       key={co.name}
+                      data-tutorial-key={co.name}
                       className="flex items-center justify-between gap-2 px-2.5 md:px-3 min-h-[40px] md:min-h-[42px] rounded-lg border border-dashed border-gray-800"
                     >
                       {inner}
@@ -440,6 +446,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
                 return (
                   <button
                     key={co.name}
+                    data-tutorial-key={co.name}
                     type="button"
                     role="radio"
                     aria-checked={isSelected}
@@ -463,7 +470,8 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
               <div className="flex gap-2 pt-1 md:mt-auto">
                 <motion.button
                   onClick={handleHalt}
-                  disabled={selectedCompany === null}
+                  data-tutorial="suspend-confirm"
+                  disabled={selectedCompany === null || !tutorialAllows(tutorial, { type: 'share_suspend', company_num: selectedCompany })}
                   whileTap={selectedCompany !== null ? { scale: 0.98 } : {}}
                   className="flex-1 min-h-[48px] px-3 rounded-xl font-bold transition-colors bg-amber-500 text-gray-950 hover:bg-amber-400 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed"
                 >
@@ -480,6 +488,7 @@ export default function ShareSuspendOverlay({ send, onComplete }: Props) {
                 </motion.button>
                 <motion.button
                   onClick={handlePass}
+                  disabled={!tutorialAllows(tutorial, { type: 'share_suspend', company_num: 0 })}
                   whileTap={{ scale: 0.98 }}
                   className="px-6 min-h-[48px] bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-medium border border-gray-700 transition-colors"
                 >

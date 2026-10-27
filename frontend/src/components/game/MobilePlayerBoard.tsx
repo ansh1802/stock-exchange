@@ -105,6 +105,7 @@ export default function MobilePlayerBoard() {
   return (
     <div
       ref={scrollContainerRef}
+      data-tutorial="player-board"
       className="flex-1 min-h-0 overflow-y-auto mobile-scroll px-2 py-1.5 space-y-1.5 bg-gray-950"
     >
       {ordered.map((player) => {
@@ -120,6 +121,7 @@ export default function MobilePlayerBoard() {
         return (
           <div
             key={player.id}
+            data-tutorial={isYou ? 'player-self' : undefined}
             ref={(el) => {
               if (el) rowRefs.current.set(player.id, el)
               else rowRefs.current.delete(player.id)

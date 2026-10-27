@@ -133,6 +133,26 @@ async def lobby_tests():
     check("bots don't count toward keeping a room alive", r2.connected_count() == 0)
 
 
+async def tutorial_first_game_tests():
+    # The tutorial's "Play your first game vs bots" (GamePage ?autostart=bots3)
+    # sends exactly these messages as the lone host.
+    header("Tutorial first game: host adds 3 Easy bots, then starts")
+    room = Room("FIRST")
+    ws = FakeWS()
+    host, _, _ = room.add_player("You", ws)
+    for _ in range(3):
+        await server.handle_action(room, host, {"type": "add_bot", "difficulty": "easy"})
+    await server.handle_action(room, host, {"type": "start_game"})
+    check("game started", room.started and room.game is not None)
+    check("4 seats: you + 3 bots",
+          len(room.game.players) == 4 and sum(1 for c in room.players.values() if c.is_bot) == 3)
+    check("all bots are Easy",
+          all(c.bot_difficulty == "easy" for c in room.players.values() if c.is_bot))
+    check("no error sent to the host", ws.last("error") is None)
+    await server.handle_action(room, host, {"type": "leave_room"})
+    await _real_sleep(0.05)
+
+
 async def full_game(difficulties, timer=90):
     room = Room("GAME")
     ws = FakeWS()
@@ -187,6 +207,7 @@ async def game_tests():
 
 async def main():
     await lobby_tests()
+    await tutorial_first_game_tests()
     await game_tests()
     print(f"\n{'═' * 60}\n  RESULTS: {passed} passed, {failed} failed\n{'═' * 60}")
     sys.exit(1 if failed else 0)
